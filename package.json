@@ -1,0 +1,21 @@
+{
+  "name": "group5",
+  "version": "1.0.0",
+  "description": "This is a training project, created on 24/07/2025.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/CrisBy0331/Group5.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/CrisBy0331/Group5/issues"
+  },
+  "homepage": "https://github.com/CrisBy0331/Group5#readme"
+}
