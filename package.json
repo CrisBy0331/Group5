@@ -17,5 +17,12 @@
   "bugs": {
     "url": "https://github.com/CrisBy0331/Group5/issues"
   },
-  "homepage": "https://github.com/CrisBy0331/Group5#readme"
+  "homepage": "https://github.com/CrisBy0331/Group5#readme",
+  "dependencies": {
+    "body-parser": "^2.2.0",
+    "dotenv": "^17.2.1",
+    "express": "^5.1.0",
+    "mysql2": "^3.14.2",
+    "sqlite": "^5.1.1"
+  }
 }
