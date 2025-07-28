@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>财富管理平台</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    function scrollToSection(id) {
+      const element = document.getElementById(id);
+      const headerHeight = document.querySelector('header').offsetHeight;
+      const top = element.getBoundingClientRect().top + window.scrollY - headerHeight;
+      window.scrollTo({ top, behavior: 'smooth' });
+    }
+  </script>
+  <style>
+    @keyframes marquee {
+      0% {
+        transform: translateX(100%);
+      }
+
+      100% {
+        transform: translateX(-100%);
+      }
+    }
+
+    .animate-marquee {
+      display: inline-block;
+      white-space: nowrap;
+      animation: marquee 20s linear infinite;
+    }
+
+    /* 新增样式 */
+    .asset-card {
+      background-color: #ffffff;
+      border-radius: 1rem;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+      transition: all 0.3s ease;
+    }
+
+    .asset-card:hover {
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+      transform: translateY(-3px);
+    }
+  </style>
+</head>
+
+<body class="bg-gradient-to-br from-blue-50 via-white to-blue-100 text-gray-800 min-h-screen">
+  <!-- 顶部导航 -->
+  <header class="bg-white shadow h-16 px-6 flex justify-between items-center sticky top-0 z-50">
+    <!-- Left: Logo and platform name -->
+    <a href="index.html" class="flex items-center space-x-4 group cursor-pointer select-none">
+      <!-- Logo icon -->
+      <svg class="w-9 h-9 text-blue-400 group-hover:text-blue-600 transition" fill="none" stroke="currentColor"
+        stroke-width="2" viewBox="0 0 32 32">
+        <circle cx="16" cy="16" r="13" stroke="currentColor" stroke-width="2" fill="#e0f2fe" />
+        <path d="M10 20c2-4 10-4 12 0" stroke="#38bdf8" stroke-width="2" fill="none" />
+        <path d="M16 10v8" stroke="#2563eb" stroke-width="2" stroke-linecap="round" />
+        <circle cx="16" cy="10" r="2" fill="#2563eb" />
+      </svg>
+      <span class="text-2xl font-extrabold text-blue-400 group-hover:text-blue-600 tracking-wide transition leading-none"
+        style="letter-spacing: 1px;">
+        Future Assets
+      </span>
+    </a>
+    <!-- Right: Login button or avatar -->
+    <div id="userArea">
+      <button id="loginBtn"
+        class="text-blue-400 group-hover:text-blue-600 text-lg font-bold bg-transparent px-4 py-2 rounded transition"
+        onclick="login()">
+        Login
+      </button>
+    </div>
+  </header>
+
+  <!-- 移动端导航栏 -->
+  <nav id="mobileNav" class="md:hidden bg-white shadow p-6 fixed top-16 left-0 w-full z-40 hidden">
+    <a href="javascript:void(0)" onclick="scrollToSection('dashboard')"
+      class="block text-blue-600 font-semibold hover:underline mb-2">仪表盘</a>
+    <a href="javascript:void(0)" onclick="scrollToSection('allocation')"
+      class="block text-gray-700 hover:text-blue-600 mb-2">资产分配</a>
+    <a href="javascript:void(0)" onclick="scrollToSection('positions')"
+      class="block text-gray-700 hover:text-blue-600">持仓概况</a>
+  </nav>
+
+  <!-- 页面布局 -->
+  <div class="flex">
+    <!-- 左侧导航栏 -->
+    <aside class="w-64 bg-white shadow min-h-screen p-6 hidden md:block fixed top-16 left-0 z-40">
+      <nav class="space-y-4 text-base font-medium">
+        <a href="javascript:void(0)" onclick="scrollToSection('dashboard')"
+          class="block text-blue-600 font-semibold hover:underline">仪表盘</a>
+        <a href="javascript:void(0)" onclick="scrollToSection('allocation')"
+          class="block text-gray-700 hover:text-blue-600">资产分配</a>
+        <a href="javascript:void(0)" onclick="scrollToSection('positions')"
+          class="block text-gray-700 hover:text-blue-600">持仓概况</a>
+      </nav>
+    </aside>
+
+    <!-- 右侧内容区域 -->
+    <main class="flex-1 p-6 pt-6 md:ml-64">
+
+      <!-- 用户资料区（预留） -->
+      <section id="userProfile" class="hidden">
+        <h2 class="text-2xl font-bold text-gray-700 mb-4">用户资料</h2>
+        <!-- 用户信息表单、头像上传等 -->
+      </section>
+      <!-- 投资组合管理区（预留） -->
+      <section id="portfolioManage" class="hidden">
+        <h2 class="text-2xl font-bold text-gray-700 mb-4">投资组合管理</h2>
+        <!-- 组合列表、重命名、删除、权限设置等 -->
+      </section>
+      <!-- 资产管理区（预留） -->
+      <section id="assetManage" class="hidden">
+        <h2 class="text-2xl font-bold text-gray-700 mb-4">资产管理</h2>
+        <!-- 资产列表、添加、删除、分类等 -->
+      </section>
+
+      <!-- 仪表盘概览 -->
+      <section id="dashboard">
+        <!-- 实时行情滚动条 -->
+        <div id="marketTicker" class="overflow-hidden whitespace-nowrap bg-white rounded shadow mb-6 h-10 flex items-center">
+          <div id="tickerContent" class="animate-marquee text-blue-500 text-base font-semibold px-4"></div>
+        </div>
+        <h2 class="text-2xl font-bold text-gray-700 mb-4">投资组合概览</h2>
+        <!-- 优化后的卡片布局 -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <!-- 总资产价值卡片 -->
+          <div class="bg-white rounded-xl shadow-lg p-6 transition-all duration-300 hover:shadow-xl transform hover:-translate-y-1 border-l-4 border-blue-500">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="text-gray-600 font-medium">总资产价值</h3>
+              <div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-500">
+                <i class="fa fa-money"></i>
+              </div>
+            </div>
+            <div class="mb-2">
+              <span class="text-3xl font-bold text-gray-800">￥1,248,560</span>
+            </div>
+            <div class="flex items-center">
+              <span class="text-green-600 text-sm font-medium flex items-center">
+                <i class="fa fa-arrow-up mr-1"></i> ￥24,560 (2.01%)
+              </span>
+            </div>
+          </div>
+
+          <!-- 总投资收益卡片 -->
+          <div class="bg-white rounded-xl shadow-lg p-6 transition-all duration-300 hover:shadow-xl transform hover:-translate-y-1 border-l-4 border-green-500">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="text-gray-600 font-medium">总投资收益</h3>
+              <div class="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center text-green-500">
+                <i class="fa fa-line-chart"></i>
+              </div>
+            </div>
+            <div class="mb-2">
+              <span class="text-3xl font-bold text-gray-800">￥248,560</span>
+            </div>
+            <div class="flex items-center">
+              <span class="text-green-600 text-sm font-medium flex items-center">
+                <i class="fa fa-arrow-up mr-1"></i> ￥12,340 (1.05%)
+              </span>
+            </div>
+          </div>
+
+          <!-- 现金余额卡片 -->
+          <div class="bg-white rounded-xl shadow-lg p-6 transition-all duration-300 hover:shadow-xl transform hover:-translate-y-1 border-l-4 border-yellow-500">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="text-gray-600 font-medium">现金余额</h3>
+              <div class="w-10 h-10 rounded-full bg-yellow-100 flex items-center justify-center text-yellow-500">
+                <i class="fa fa-credit-card"></i>
+              </div>
+            </div>
+            <div class="mb-2">
+              <span class="text-3xl font-bold text-gray-800">￥148,200</span>
+            </div>
+            <div class="flex items-center">
+              <span class="text-gray-500 text-sm font-medium flex items-center">
+                <i class="fa fa-minus mr-1"></i> 无变化
+              </span>
+            </div>
+          </div>
+
+          <!-- 年化收益率卡片 -->
+          <div class="bg-white rounded-xl shadow-lg p-6 transition-all duration-300 hover:shadow-xl transform hover:-translate-y-1 border-l-4 border-red-500">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="text-gray-600 font-medium">年化收益率</h3>
+              <div class="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center text-red-500">
+                <i class="fa fa-pie-chart"></i>
+              </div>
+            </div>
+            <div class="mb-2">
+              <span class="text-3xl font-bold text-gray-800">12.8%</span>
+            </div>
+            <div class="flex items-center">
+              <span class="text-red-600 text-sm font-medium flex items-center">
+                <i class="fa fa-arrow-down mr-1"></i> 较上月 -0.7%
+              </span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 资产分配页面 -->
+      <!-- 增加与上方内容的间距 -->
+      <section id="allocation" class="mt-12">
+        <h2 class="text-2xl font-bold text-gray-700 mb-4">资产分配</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="asset-card p-8">
+            <canvas id="assetAllocationChart" height="100"></canvas>
+          </div>
+          <div class="asset-card p-8 flex flex-col justify-center">
+            <h3 class="text-lg font-bold mb-3">资产分配详情</h3>
+            <ul class="space-y-2 text-sm">
+              <li class="flex justify-between"><span class="text-blue-500">● 股票</span><span>42.6%</span></li>
+              <li class="flex justify-between"><span class="text-indigo-500">● 加密货币</span><span>20.3%</span></li>
+              <li class="flex justify-between"><span class="text-green-500">● 基金</span><span>15.2%</span></li>
+              <li class="flex justify-between"><span class="text-yellow-500">● 债券</span><span>12.4%</span></li>
+              <li class="flex justify-between"><span class="text-pink-500">● 现金</span><span>9.5%</span></li>
+            </ul>
+            <p class="text-gray-600 mt-3 text-sm">
+              合理分配可降低风险，建议根据市场和风险承受能力定期调整。
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- 持仓概况页面 -->
+      <section id="positions" class="mt-12">
+        <h2 class="text-2xl font-bold text-gray-700 mb-4">当前持仓</h2>
+
+        <!-- 持仓列表 -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="positionsList">
+          <!-- 持仓项1 -->
+          <div class="bg-white rounded-xl shadow-md overflow-hidden transition-all duration-300 hover:shadow-xl">
+            <div class="p-5">
+              <div class="flex justify-between items-start mb-4">
+                <div>
+                  <h3 class="font-bold text-lg">苹果公司</h3>
+                  <p class="text-gray-500 text-sm">AAPL</p>
+                </div>
+                <div class="bg-green-100 text-green-600 px-2 py-1 rounded text-xs font-medium">
+                  +2.45%
+                </div>
+              </div>
+
+              <div class="flex justify-between items-center mb-4">
+                <div>
+                  <p class="text-gray-500 text-sm">持仓数量</p>
+                  <p class="font-bold">120</p>
+                </div>
+                <div>
+                  <p class="text-gray-500 text-sm">当前价格</p>
+                  <p class="font-bold">￥1,420.50</p>
+                </div>
+                <div>
+                  <p class="text-gray-500 text-sm">持仓市值</p>
+                  <p class="font-bold">￥170,460</p>
+                </div>
+              </div>
+
+              <div class="h-20">
+                <canvas class="stock-chart" data-ticker="AAPL"></canvas>
+              </div>
+            </div>
+
+            <div class="bg-gray-50 px-5 py-3 flex justify-between items-center">
+              <div class="text-gray-500 text-sm">占比 13.7%</div>
+              <button class="text-blue-500 text-sm hover:underline">查看详情</button>
+            </div>
+          </div>
+
+          <!-- 持仓项2 -->
+          <div class="bg-white rounded-xl shadow-md overflow-hidden transition-all duration-300 hover:shadow-xl">
+            <div class="p-5">
+              <div class="flex justify-between items-start mb-4">
+                <div>
+                  <h3 class="font-bold text-lg">微软公司</h3>
+                  <p class="text-gray-500 text-sm">MSFT</p>
+                </div>
+                <div class="bg-red-100 text-red-600 px-2 py-1 rounded text-xs font-medium">
+                  -1.23%
+                </div>
+              </div>
+
+              <div class="flex justify-between items-center mb-4">
+                <div>
+                  <p class="text-gray-500 text-sm">持仓数量</p>
+                  <p class="font-bold">85</p>
+                </div>
+                <div>
+                  <p class="text-gray-500 text-sm">当前价格</p>
+                  <p class="font-bold">￥2,340.00</p>
+                </div>
+                <div>
+                  <p class="text-gray-500 text-sm">持仓市值</p>
+                  <p class="font-bold">￥198,900</p>
+                </div>
+              </div>
+
+              <div class="h-20">
+                <canvas class="stock-chart" data-ticker="MSFT"></canvas>
+              </div>
+            </div>
+
+            <div class="bg-gray-50 px-5 py-3 flex justify-between items-center">
+              <div class="text-gray-500 text-sm">占比 15.9%</div>
+              <button class="text-blue-500 text-sm hover:underline">查看详情</button>
+            </div>
+          </div>
+
+          <!-- 持仓项3 -->
+          <div class="bg-white rounded-xl shadow-md overflow-hidden transition-all duration-300 hover:shadow-xl">
+            <div class="p-5">
+              <div class="flex justify-between items-start mb-4">
+                <div>
+                  <h3 class="font-bold text-lg">特斯拉</h3>
+                  <p class="text-gray-500 text-sm">TSLA</p>
+                </div>
+                <div class="bg-green-100 text-green-600 px-2 py-1 rounded text-xs font-medium">
+                  +3.12%
+                </div>
+              </div>
+
+              <div class="flex justify-between items-center mb-4">
+                <div>
+                  <p class="text-gray-500 text-sm">持仓数量</p>
+                  <p class="font-bold">50</p>
+                </div>
+                <div>
+                  <p class="text-gray-500 text-sm">当前价格</p>
+                  <p class="font-bold">￥785.30</p>
+                </div>
+                <div>
+                  <p class="text-gray-500 text-sm">持仓市值</p>
+                  <p class="font-bold">￥39,265</p>
+                </div>
+              </div>
+
+              <div class="h-20">
+                <canvas class="stock-chart" data-ticker="TSLA"></canvas>
+              </div>
+            </div>
+
+            <div class="bg-gray-50 px-5 py-3 flex justify-between items-center">
+              <div class="text-gray-500 text-sm">占比 3.2%</div>
+              <button class="text-blue-500 text-sm hover:underline">查看详情</button>
+            </div>
+          </div>
+
+          <!-- 持仓项4 -->
+          <div class="bg-white rounded-xl shadow-md overflow-hidden transition-all duration-300 hover:shadow-xl">
+            <div class="p-5">
+              <div class="flex justify-between items-start mb-4">
+                <div>
+                  <h3 class="font-bold text-lg">亚马逊</h3>
+                  <p class="text-gray-500 text-sm">AMZN</p>
+                </div>
+                <div class="bg-green-100 text-green-600 px-2 py-1 rounded text-xs font-medium">
+                  +0.87%
+                </div>
+              </div>
+
+              <div class="flex justify-between items-center mb-4">
+                <div>
+                  <p class="text-gray-500 text-sm">持仓数量</p>
+                  <p class="font-bold">35</p>
+                </div>
+                <div>
+                  <p class="text-gray-500 text-sm">当前价格</p>
+                  <p class="font-bold">￥1,876.20</p>
+                </div>
+                <div>
+                  <p class="text-gray-500 text-sm">持仓市值</p>
+                  <p class="font-bold">￥65,667</p>
+                </div>
+              </div>
+
+              <div class="h-20">
+                <canvas class="stock-chart" data-ticker="AMZN"></canvas>
+              </div>
+            </div>
+
+            <div class="bg-gray-50 px-5 py-3 flex justify-between items-center">
+              <div class="text-gray-500 text-sm">占比 5.3%</div>
+              <button class="text-blue-500 text-sm hover:underline">查看详情</button>
+            </div>
+          </div>
+
+          <!-- 持仓项5 -->
+          <div class="bg-white rounded-xl shadow-md overflow-hidden transition-all duration-300 hover:shadow-xl">
+            <div class="p-5">
+              <div class="flex justify-between items-start mb-4">
+                <div>
+                  <h3 class="font-bold text-lg">阿里巴巴</h3>
+                  <p class="text-gray-500 text-sm">BABA</p>
+                </div>
+                <div class="bg-red-100 text-red-600 px-2 py-1 rounded text-xs font-medium">
+                  -2.35%
+                </div>
+              </div>
+
+              <div class="flex justify-between items-center mb-4">
+                <div>
+                  <p class="text-gray-500 text-sm">持仓数量</p>
+                  <p class="font-bold">100</p>
+                </div>
+                <div>
+                  <p class="text-gray-500 text-sm">当前价格</p>
+                  <p class="font-bold">￥89.65</p>
+                </div>
+                <div>
+                  <p class="text-gray-500 text-sm">持仓市值</p>
+                  <p class="font-bold">￥8,965</p>
+                </div>
+              </div>
+
+              <div class="h-20">
+                <canvas class="stock-chart" data-ticker="BABA"></canvas>
+              </div>
+            </div>
+
+            <div class="bg-gray-50 px-5 py-3 flex justify-between items-center">
+              <div class="text-gray-500 text-sm">占比 0.7%</div>
+              <button class="text-blue-500 text-sm hover:underline">查看详情</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 显示更多按钮 -->
+        <div class="mt-8 text-center">
+          <button id="showMoreBtn"
+            class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg font-medium transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">
+            显示更多 <i class="fa fa-chevron-down ml-1"></i>
+          </button>
+        </div>
+      </section>
+
+      <!-- 弹窗组件 -->
+      <div id="modal" class="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-xl shadow-lg p-8 w-full max-w-md relative">
+          <button onclick="closeModal()"
+            class="absolute top-2 right-2 text-gray-400 hover:text-gray-700 text-2xl">&times;</button>
+          <div id="modalContent">
+            <!-- 动态内容区域 -->
+          </div>
+        </div>
+      </div>
+
+      <script>
+        function scrollToSection(sectionId) {
+          const element = document.getElementById(sectionId);
+          const header = document.querySelector('header');
+          const headerHeight = header ? header.offsetHeight : 0;
+          const top = element.getBoundingClientRect().top + window.scrollY - headerHeight;
+          window.scrollTo({ top, behavior: 'smooth' });
+          // 隐藏移动端菜单
+          const mobileNav = document.getElementById('mobileNav');
+          if (mobileNav && mobileNav.classList.contains('block')) {
+            mobileNav.classList.add('hidden');
+          }
+        }
+
+        function openModal(type) {
+          const modal = document.getElementById('modal');
+          const content = document.getElementById('modalContent');
+          let html = '';
+          if (type === 'newPortfolio') {
+            html = `<h3 class="text-lg font-bold mb-4">新建投资组合</h3>
+                <input class="border rounded px-3 py-2 w-full mb-4" placeholder="请输入组合名称">
+                <button class="bg-blue-500 text-white px-4 py-2 rounded" onclick="alert('创建成功')">创建</button>`;
+          } else if (type === 'userManage') {
+            html = `<h3 class="text-lg font-bold mb-4">用户管理</h3>
+                <p>这里可以进行用户列表、添加、删除等操作。</p>`;
+          } else if (type === 'assetManage') {
+            html = `<h3 class="text-lg font-bold mb-4">资产管理</h3>
+                <p>这里可以管理资产类型、添加资产等。</p>`;
+          } else if (type === 'portfolioManage') {
+            html = `<h3 class="text-lg font-bold mb-4">投资组合管理</h3>
+                <p>这里可以重命名、删除、设置权限等。</p>`;
+          }
+          content.innerHTML = html;
+          modal.classList.remove('hidden');
+        }
+
+        function closeModal() {
+          document.getElementById('modal').classList.add('hidden');
+        }
+
+        // 模拟登录
+        function login() {
+          document.getElementById('userArea').innerHTML = `
+    <div class="relative">
+      <img src="https://avatars.githubusercontent.com/u/1?v=4" alt="User Avatar"
+           class="w-9 h-9 rounded-full object-cover cursor-pointer"
+           onclick="toggleDropdown()" />
+      <div id="dropdownMenu" class="absolute right-0 mt-2 w-28 bg-white border border-gray-200 rounded shadow hidden">
+        <button class="block w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100" onclick="logout()">登出</button>
+      </div>
+    </div>
+  `;
+        }
+
+        // 切换下拉菜单显示
+        function toggleDropdown() {
+          const menu = document.getElementById('dropdownMenu');
+          if (menu) {
+            menu.classList.toggle('hidden');
+          }
+        }
+
+        // 登出并还原为登录按钮
+        function logout() {
+          document.getElementById('userArea').innerHTML = `
+    <button id="loginBtn" class="text-blue-400 group-hover:text-blue-600 text-lg font-bold bg-transparent px-4 py-2 rounded transition" onclick="login()">
+      Login
+    </button>
+  `;
+        }
+
+
+        // 示例API数据拉取与滚动展示
+        async function fetchMarketTicker() {
+          // 这里用模拟数据，实际可替换为你的行情API
+          // const res = await fetch('https://your-api/market-ticker');
+          // const data = await res.json();
+          const data = [
+            { symbol: 'AAPL', price: 192.34, change: '+1.23%' },
+            { symbol: 'MSFT', price: 342.12, change: '-0.45%' },
+            { symbol: 'BTC', price: 67890, change: '+2.1%' },
+            { symbol: 'ETH', price: 3456, change: '-1.2%' },
+            { symbol: 'TSLA', price: 245.67, change: '+0.89%' }
+          ];
+          const ticker = data.map(item =>
+            `<span class="mx-6">${item.symbol}: <span class="font-bold">${item.price}</span> <span class="${item.change.startsWith('+') ? 'text-green-600' : 'text-red-600'}">${item.change}</span></span>`
+          ).join('');
+          document.getElementById('tickerContent').innerHTML = ticker;
+        }
+        fetchMarketTicker();
+        // 可定时刷新
+        setInterval(fetchMarketTicker, 60000);
+
+        // 绘制资产分配饼状图
+        document.addEventListener('DOMContentLoaded', function () {
+          const ctx = document.getElementById('assetAllocationChart').getContext('2d');
+          const assetData = {
+            labels: ['股票', '加密货币', '基金', '债券', '现金'],
+            datasets: [{
+              data: [42.6, 20.3, 15.2, 12.4, 9.5],
+              backgroundColor: [
+                'rgba(54, 162, 235, 0.8)',
+                'rgba(153, 102, 255, 0.8)',
+                'rgba(75, 192, 192, 0.8)',
+                'rgba(255, 205, 86, 0.8)',
+                'rgba(255, 99, 132, 0.8)'
+              ],
+              borderColor: [
+                'rgba(54, 162, 235, 1)',
+                'rgba(153, 102, 255, 1)',
+                'rgba(75, 192, 192, 1)',
+                'rgba(255, 205, 86, 1)',
+                'rgba(255, 99, 132, 1)'
+              ],
+              borderWidth: 1,
+              hoverBackgroundColor: [
+                'rgba(54, 162, 235, 1)',
+                'rgba(153, 102, 255, 1)',
+                'rgba(75, 192, 192, 1)',
+                'rgba(255, 205, 86, 1)',
+                'rgba(255, 99, 132, 1)'
+              ]
+            }]
+          };
+
+          const originalBgColors = assetData.datasets[0].backgroundColor.slice();
+          const dimmedBgColors = originalBgColors.map(color => {
+            const [r, g, b, a] = color.match(/\d+/g);
+            return `rgba(${r}, ${g}, ${b}, 0.3)`;
+          });
+
+          const myChart = new Chart(ctx, {
+            type: 'pie',
+            data: assetData,
+            options: {
+              responsive: true,
+              plugins: {
+                legend: {
+                  position: 'bottom',
+                  labels: {
+                    font: {
+                      size: 12
+                    }
+                  }
+                },
+                tooltip: {
+                  backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                  titleFont: {
+                    size: 14
+                  },
+                  bodyFont: {
+                    size: 12
+                  },
+                  callbacks: {
+                    label: function (context) {
+                      let label = context.label || '';
+                      if (label) {
+                        label += ': ';
+                      }
+                      if (context.parsed !== null) {
+                        label += context.parsed + '%';
+                      }
+                      return label;
+                    }
+                  }
+                }
+              },
+              onHover: function (event, elements, chart) {
+                if (elements.length > 0) {
+                  const index = elements[0].index;
+                  const newBgColors = dimmedBgColors.slice();
+                  newBgColors[index] = originalBgColors[index];
+                  chart.data.datasets[0].backgroundColor = newBgColors;
+                } else {
+                  chart.data.datasets[0].backgroundColor = originalBgColors;
+                }
+                chart.update();
+              }
+            }
+          });
+        });
+      </script>
+</body>
+
+</html>
