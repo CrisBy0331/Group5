@@ -59,6 +59,7 @@ This is a training project, updated on July 28th.
 I. Overview
 
 Objective: The purpose of this document is to clearly and completely define the functional requirements of "Future Asset Management System" and provide a basis for design, development, testing and acceptance.
+
 Overview: This system is an intelligent Web application for individual investors, aiming at "asset visualization, efficient management and scientific decision-making", focusing on the full-cycle management of individual investment assets. The core module includes user management, asset overview, position details and management. The system integrates real-time market and position data, and presents the net asset value, profit and loss and category/market allocation through visualization. Support personalized position screening and sorting, accurately calculate core indicators, and display information in layers from overview to detail. Relying on stable API and secure storage, it covers account management to asset monitoring scenarios to create a convenient and professional asset tracking experience.
 
 II. Second, the functional requirements
