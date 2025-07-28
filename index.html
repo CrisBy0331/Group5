@@ -206,10 +206,12 @@
       <section id="allocation" class="mt-12">
         <h2 class="text-2xl font-bold text-gray-700 mb-4">资产分配</h2>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div class="asset-card p-8">
-            <canvas id="assetAllocationChart" height="100"></canvas>
+          <div class="asset-card p-6">
+            <div style="height: 280px; position: relative;">
+              <canvas id="assetAllocationChart"></canvas>
+            </div>
           </div>
-          <div class="asset-card p-8 flex flex-col justify-center">
+          <div class="asset-card p-6 flex flex-col justify-center">
             <h3 class="text-lg font-bold mb-3">资产分配详情</h3>
             <ul class="space-y-2 text-sm">
               <li class="flex justify-between"><span class="text-blue-500">● 股票</span><span>42.6%</span></li>
@@ -583,22 +585,28 @@
             data: assetData,
             options: {
               responsive: true,
+              maintainAspectRatio: false,
               plugins: {
                 legend: {
-                  position: 'bottom',
+                  position: 'right',
                   labels: {
                     font: {
-                      size: 12
-                    }
+                      size: 11
+                    },
+                    padding: 8,
+                    usePointStyle: true,
+                    pointStyle: 'circle',
+                    pointStyleWidth: 8,
+                    pointStyleHeight: 8
                   }
                 },
                 tooltip: {
                   backgroundColor: 'rgba(0, 0, 0, 0.8)',
                   titleFont: {
-                    size: 14
+                    size: 13
                   },
                   bodyFont: {
-                    size: 12
+                    size: 11
                   },
                   callbacks: {
                     label: function (context) {
