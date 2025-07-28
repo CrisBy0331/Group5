@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <title>注册 · 投资组合管理系统</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root {
+      --primary: #005ce6;
+      --danger: #e74c3c;
+      --bg: #f5f7fa;
+      --radius: 8px;
+      --shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+      --font: "Segoe UI", Roboto, Arial, "PingFang SC", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font);
+      background: var(--bg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+    }
+
+    .card {
+      background: #fff;
+      padding: 48px 40px;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      width: 100%;
+      max-width: 420px;
+    }
+
+    h2 {
+      text-align: center;
+      margin-bottom: 32px;
+      color: #222;
+      font-weight: 600;
+    }
+
+    input {
+      width: 100%;
+      padding: 12px 14px;
+      margin-bottom: 18px;
+      border: 1px solid #d0d7e4;
+      border-radius: var(--radius);
+      font-size: 15px;
+      transition: border 0.2s;
+    }
+
+    input:focus {
+      border-color: var(--primary);
+      outline: none;
+    }
+
+    button {
+      width: 100%;
+      padding: 14px;
+      border: none;
+      border-radius: var(--radius);
+      background: var(--primary);
+      color: #fff;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    button:hover {
+      background: #004bb5;
+    }
+
+    .footer {
+      margin-top: 24px;
+      text-align: center;
+      font-size: 14px;
+    }
+
+    .footer a {
+      color: var(--primary);
+      text-decoration: none;
+    }
+
+    .footer a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="card">
+    <h2>创建账户</h2>
+
+    <form id="registerForm" novalidate>
+      <input type="text" id="regAccount" placeholder="邮箱或手机号" required />
+      <input type="password" id="regPassword" placeholder="密码 (≥8 位)" minlength="8" required />
+      <input type="password" id="confirmPassword" placeholder="确认密码" required />
+      <button type="submit">立即注册</button>
+    </form>
+
+    <div class="footer">
+      已有账号？<a href="index.html">直接登录</a>
+    </div>
+  </div>
+
+  <script>
+    // 功能逻辑 100% 不变
+    document.getElementById('registerForm').addEventListener('submit', function (e) {
+      e.preventDefault();
+      const account = document.getElementById('regAccount').value.trim();
+      const password = document.getElementById('regPassword').value;
+      const confirm = document.getElementById('confirmPassword').value;
+
+      if (password !== confirm) {
+        alert('两次输入的密码不一致');
+        return;
+      }
+
+      alert('注册成功，请验证邮箱/手机号');
+      window.location.href = 'index.html';
+    });
+  </script>
+</body>
+</html>
