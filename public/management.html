@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>持仓管理</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        .header h1 {
+            color: #4a5568;
+            font-size: 2.2rem;
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            color: #718096;
+            font-size: 1rem;
+        }
+
+        .portfolio-section {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .section-header h2 {
+            color: #4a5568;
+            font-size: 1.5rem;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-small {
+            padding: 6px 12px;
+            font-size: 0.8rem;
+        }
+
+        .btn-edit {
+            background: #4299e1;
+        }
+
+        .btn-delete {
+            background: #f56565;
+        }
+
+        .search-bar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .search-bar input {
+            flex: 1;
+            padding: 10px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 0.9rem;
+        }
+
+        .search-bar input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .portfolio-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        .portfolio-table th,
+        .portfolio-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .portfolio-table th {
+            background: #f7fafc;
+            font-weight: 600;
+            color: #4a5568;
+            font-size: 0.9rem;
+        }
+
+        .portfolio-table tr:hover {
+            background: #f7fafc;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 6px;
+        }
+
+        .empty-message {
+            text-align: center;
+            padding: 40px;
+            color: #718096;
+            font-style: italic;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+            
+            .header h1 {
+                font-size: 1.8rem;
+            }
+            
+            .section-header {
+                flex-direction: column;
+                gap: 15px;
+                align-items: stretch;
+            }
+            
+            .search-bar {
+                flex-direction: column;
+            }
+            
+            .portfolio-table {
+                font-size: 0.85rem;
+            }
+            
+            .portfolio-table th,
+            .portfolio-table td {
+                padding: 8px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 头部 -->
+        <div class="header">
+            <h1>
+                <i class="fas fa-chart-line"></i>
+                持仓管理
+            </h1>
+            <!-- <p>简洁高效的持仓管理系统</p> -->
+        </div>
+
+        <!-- 持仓列表 -->
+        <div class="portfolio-section">
+            <div class="section-header">
+                <h2>持仓列表</h2>
+                <button class="btn" onclick="addPortfolio()">
+                    <i class="fas fa-plus"></i>
+                    添加持仓
+                </button>
+            </div>
+
+            <!-- 搜索栏 -->
+            <div class="search-bar">
+                <input type="text" id="searchInput" placeholder="搜索股票代码或名称...">
+                <button class="btn" onclick="filterPortfolio()">
+                    <i class="fas fa-search"></i>
+                    搜索
+                </button>
+            </div>
+
+            <!-- 持仓表格 -->
+            <table class="portfolio-table">
+                <thead>
+                    <tr>
+                        <th>代码</th>
+                        <th>名称</th>
+                        <th>持有量</th>
+                        <th>买入价</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody id="portfolioTableBody">
+                    <!-- 数据将通过JavaScript动态生成 -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        // 模拟持仓数据
+        let portfolioData = [
+            {
+                id: 1,
+                code: '000001',
+                name: '平安银行',
+                quantity: 1000,
+                costPrice: 15.50
+            },
+            {
+                id: 2,
+                code: '000002',
+                name: '万科A',
+                quantity: 500,
+                costPrice: 18.20
+            },
+            {
+                id: 3,
+                code: '600036',
+                name: '招商银行',
+                quantity: 800,
+                costPrice: 45.30
+            },
+            {
+                id: 4,
+                code: '000858',
+                name: '五粮液',
+                quantity: 200,
+                costPrice: 180.00
+            },
+            {
+                id: 5,
+                code: '002415',
+                name: '海康威视',
+                quantity: 300,
+                costPrice: 35.60
+            }
+        ];
+
+        // 初始化页面
+        document.addEventListener('DOMContentLoaded', function() {
+            renderPortfolioTable();
+        });
+
+        // 渲染持仓表格
+        function renderPortfolioTable() {
+            const tbody = document.getElementById('portfolioTableBody');
+            tbody.innerHTML = '';
+
+            if (portfolioData.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="empty-message">暂无持仓数据</td></tr>';
+                return;
+            }
+
+            portfolioData.forEach(item => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${item.code}</td>
+                    <td>${item.name}</td>
+                    <td>${item.quantity.toLocaleString()}</td>
+                    <td>¥${item.costPrice.toFixed(2)}</td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="btn btn-small btn-edit" onclick="editPortfolio(${item.id})">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn btn-small btn-delete" onclick="deletePortfolio(${item.id})">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        // 添加持仓
+        function addPortfolio() {
+            const code = prompt('请输入股票代码：');
+            if (!code) return;
+            
+            const name = prompt('请输入股票名称：');
+            if (!name) return;
+            
+            const quantity = parseInt(prompt('请输入持有量：'));
+            if (!quantity || quantity <= 0) return;
+            
+            const costPrice = parseFloat(prompt('请输入买入价：'));
+            if (!costPrice || costPrice <= 0) return;
+            
+            const newId = Math.max(...portfolioData.map(item => item.id)) + 1;
+            portfolioData.push({
+                id: newId,
+                code: code,
+                name: name,
+                quantity: quantity,
+                costPrice: costPrice
+            });
+            
+            renderPortfolioTable();
+        }
+
+        // 编辑持仓
+        function editPortfolio(id) {
+            const item = portfolioData.find(item => item.id === id);
+            if (!item) return;
+            
+            const code = prompt('请输入股票代码：', item.code);
+            if (!code) return;
+            
+            const name = prompt('请输入股票名称：', item.name);
+            if (!name) return;
+            
+            const quantity = parseInt(prompt('请输入持有量：', item.quantity));
+            if (!quantity || quantity <= 0) return;
+            
+            const costPrice = parseFloat(prompt('请输入买入价：', item.costPrice));
+            if (!costPrice || costPrice <= 0) return;
+            
+            item.code = code;
+            item.name = name;
+            item.quantity = quantity;
+            item.costPrice = costPrice;
+            
+            renderPortfolioTable();
+        }
+
+        // 删除持仓
+        function deletePortfolio(id) {
+            if (confirm('确定要删除这个持仓吗？')) {
+                portfolioData = portfolioData.filter(item => item.id !== id);
+                renderPortfolioTable();
+            }
+        }
+
+        // 搜索功能
+        function filterPortfolio() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const tbody = document.getElementById('portfolioTableBody');
+            const rows = tbody.getElementsByTagName('tr');
+
+            for (let row of rows) {
+                const code = row.cells[0]?.textContent.toLowerCase() || '';
+                const name = row.cells[1]?.textContent.toLowerCase() || '';
+                if (code.includes(searchTerm) || name.includes(searchTerm)) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            }
+        }
+
+        // 回车键搜索
+        document.getElementById('searchInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                filterPortfolio();
+            }
+        });
+    </script>
+</body>
+</html>
