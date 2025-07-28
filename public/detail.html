@@ -1,3 +1,38 @@
 <!DOCTYPE html>
 <html>
+<head>
+    <meta charset="UTF-8">
+    <title>投资产品持仓详情</title>
+    <link rel="stylesheet" href="css/detail.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="lang-switch">
+        <button onclick="switchLang('zh')">中文</button>
+        <button onclick="switchLang('en')">English</button>
+    </div>
+    <div class="portfolio-container">
+        <h1 id="page-title"></h1>
+        <div class="portfolio-summary" id="portfolio-summary"></div>
+        <div class="portfolio-filter">
+            <label for="type-filter" id="type-filter-label"></label>
+            <select id="type-filter"></select>
+            <label for="sort-field" id="sort-field-label" style="margin-left:24px;"></label>
+            <select id="sort-field"></select>
+            <label for="sort-order" id="sort-order-label" style="margin-left:16px;"></label>
+            <select id="sort-order">
+                <option value="desc"></option>
+                <option value="asc"></option>
+            </select>
+        </div>
+        <div id="holdings-list"></div>
+    </div>
+    <script>
+        function switchLang(lang) {
+            // 始终跳转到 detail_zh.html，并带上 lang 参数
+            window.location.href = 'detail.html?lang=' + lang;
+        }
+    </script>
+    <script src="js/detail.js"></script>
+</body>
 </html>

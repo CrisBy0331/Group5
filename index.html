@@ -545,6 +545,8 @@
         // 绘制资产分配饼状图
         document.addEventListener('DOMContentLoaded', function () {
           const ctx = document.getElementById('assetAllocationChart').getContext('2d');
+          // 选中变大功能
+          let activeIndex = null;
           const assetData = {
             labels: ['股票', '加密货币', '基金', '债券', '现金'],
             datasets: [{
@@ -570,15 +572,15 @@
                 'rgba(75, 192, 192, 1)',
                 'rgba(255, 205, 86, 1)',
                 'rgba(255, 99, 132, 1)'
-              ]
+              ],
+              hoverOffset: 18
             }]
           };
 
-          const originalBgColors = assetData.datasets[0].backgroundColor.slice();
-          const dimmedBgColors = originalBgColors.map(color => {
-            const [r, g, b, a] = color.match(/\d+/g);
-            return `rgba(${r}, ${g}, ${b}, 0.3)`;
-          });
+          // 修正选中放大后显示不全：动态调整canvas父容器高度和canvas高度
+          const chartContainer = document.getElementById('assetAllocationChart').parentNode;
+          chartContainer.style.height = '340px';
+          document.getElementById('assetAllocationChart').height = 340;
 
           const myChart = new Chart(ctx, {
             type: 'pie',
@@ -586,18 +588,24 @@
             options: {
               responsive: true,
               maintainAspectRatio: false,
+              layout: {
+                padding: {
+                  top: 32,
+                  bottom: 32
+                }
+              },
               plugins: {
                 legend: {
                   position: 'right',
                   labels: {
                     font: {
-                      size: 11
+                      size: 13
                     },
                     padding: 8,
                     usePointStyle: true,
                     pointStyle: 'circle',
-                    pointStyleWidth: 8,
-                    pointStyleHeight: 8
+                    boxWidth: 5,
+                    boxHeight: 5
                   }
                 },
                 tooltip: {
@@ -622,16 +630,21 @@
                   }
                 }
               },
+              // 悬停选中放大
               onHover: function (event, elements, chart) {
                 if (elements.length > 0) {
-                  const index = elements[0].index;
-                  const newBgColors = dimmedBgColors.slice();
-                  newBgColors[index] = originalBgColors[index];
-                  chart.data.datasets[0].backgroundColor = newBgColors;
+                  chart.setActiveElements([{
+                    datasetIndex: elements[0].datasetIndex,
+                    index: elements[0].index
+                  }]);
                 } else {
-                  chart.data.datasets[0].backgroundColor = originalBgColors;
+                  chart.setActiveElements([]);
                 }
                 chart.update();
+              },
+              animation: {
+                animateRotate: true,
+                animateScale: true
               }
             }
           });
