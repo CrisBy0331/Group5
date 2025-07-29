@@ -282,31 +282,41 @@
                 return;
             }
 
-            const price = parseFloat(prompt('请输入买入价格：'));
-            if (!price || price <= 0) {
+            const priceInput = prompt('请输入买入价格（留空使用当前市价）：');
+            const price = priceInput && priceInput.trim() !== '' ? parseFloat(priceInput) : null;
+            
+            // Only validate price if it was provided
+            if (price !== null && price <= 0) {
                 alert('价格必须是正数');
                 return;
             }
 
             try {
                 const userId = getCurrentUserId();
+                const requestBody = {
+                    ticker: ticker,
+                    type: type,
+                    name: name,
+                    quantity: quantity
+                };
+                
+                // Only include price if it was provided
+                if (price !== null) {
+                    requestBody.price = price;
+                }
+
                 const response = await fetch(`${API_BASE_URL}/holdings/${userId}/buy`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({
-                        ticker: ticker,
-                        type: type,
-                        name: name,
-                        price: price,
-                        quantity: quantity
-                    }),
+                    body: JSON.stringify(requestBody),
                 });
 
                 const result = await response.json();
                 if (response.ok) {
-                    alert(result.message);
+                    const priceUsed = result.used_price ? ` (价格: ¥${result.used_price.toFixed(2)})` : '';
+                    alert(result.message + priceUsed);
                     loadPortfolioData(); // Reload data
                 } else {
                     alert('买入失败: ' + result.message);
@@ -325,31 +335,41 @@
                 return;
             }
 
-            const price = parseFloat(prompt('请输入买入价格：'));
-            if (!price || price <= 0) {
+            const priceInput = prompt('请输入买入价格（留空使用当前市价）：');
+            const price = priceInput && priceInput.trim() !== '' ? parseFloat(priceInput) : null;
+            
+            // Only validate price if it was provided
+            if (price !== null && price <= 0) {
                 alert('价格必须是正数');
                 return;
             }
 
             try {
                 const userId = getCurrentUserId();
+                const requestBody = {
+                    ticker: ticker,
+                    type: type,
+                    name: name,
+                    quantity: quantity
+                };
+                
+                // Only include price if it was provided
+                if (price !== null) {
+                    requestBody.price = price;
+                }
+
                 const response = await fetch(`${API_BASE_URL}/holdings/${userId}/buy`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({
-                        ticker: ticker,
-                        type: type,
-                        name: name,
-                        price: price,
-                        quantity: quantity
-                    }),
+                    body: JSON.stringify(requestBody),
                 });
 
                 const result = await response.json();
                 if (response.ok) {
-                    alert(`买入成功! ${result.message}`);
+                    const priceUsed = result.used_price ? ` (价格: ¥${result.used_price.toFixed(2)})` : '';
+                    alert(`买入成功! ${result.message}${priceUsed}`);
                     loadPortfolioData(); // Reload data
                 } else {
                     alert('买入失败: ' + result.message);
@@ -373,22 +393,40 @@
                 return;
             }
 
+            const priceInput = prompt('请输入卖出价格（留空使用当前市价）：');
+            const price = priceInput && priceInput.trim() !== '' ? parseFloat(priceInput) : null;
+            
+            // Only validate price if it was provided
+            if (price !== null && price <= 0) {
+                alert('价格必须是正数');
+                return;
+            }
+
             try {
                 const userId = getCurrentUserId();
+                const requestBody = {
+                    ticker: ticker,
+                    quantity: quantity
+                };
+                
+                // Only include price if it was provided
+                if (price !== null) {
+                    requestBody.price = price;
+                }
+
                 const response = await fetch(`${API_BASE_URL}/holdings/${userId}/sell`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({
-                        ticker: ticker,
-                        quantity: quantity
-                    }),
+                    body: JSON.stringify(requestBody),
                 });
 
                 const result = await response.json();
                 if (response.ok) {
-                    alert(`卖出成功! ${result.message}`);
+                    const sellDetails = result.sell_price && result.sell_value ? 
+                        ` (价格: ¥${result.sell_price.toFixed(2)}, 总价值: ¥${result.sell_value.toFixed(2)})` : '';
+                    alert(`卖出成功! ${result.message}${sellDetails}`);
                     loadPortfolioData(); // Reload data
                 } else {
                     alert('卖出失败: ' + result.message);

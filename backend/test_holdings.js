@@ -2,6 +2,9 @@ const request = require('supertest');
 const express = require('express');
 const crypto = require('crypto');
 
+// Mock fetch globally before importing backend
+global.fetch = jest.fn();
+
 // Mock sqlite3 before importing backend
 jest.mock('sqlite3', () => {
     // Store mock data state - Reset for each test suite
@@ -627,6 +630,11 @@ describe('Holdings API Tests', () => {
     });
 
     describe('POST /api/holdings/:user_id/buy', () => {
+        // Reset fetch mock before each test
+        beforeEach(() => {
+            fetch.mockClear();
+        });
+
         test('should create new holding when buying new asset', async () => {
             const buyData = {
                 ticker: 'TSLA',
@@ -644,6 +652,7 @@ describe('Holdings API Tests', () => {
             expect(response.body.message).toBe('New holding created successfully');
             expect(response.body.quantity).toBe(20);
             expect(response.body.price).toBe(250.00);
+            expect(response.body.used_price).toBe(250.00);
         });
 
         test('should update existing holding when buying more of same asset', async () => {
@@ -674,9 +683,10 @@ describe('Holdings API Tests', () => {
             expect(response.body.message).toBe('Holdings updated successfully');
             expect(response.body.new_quantity).toBe(20); // 10 + 10
             expect(response.body.new_avg_price).toBe(175.00); // (10*150 + 10*200) / 20
+            expect(response.body.used_price).toBe(200.00);
         });
 
-        test('should require all fields', async () => {
+        test('should require ticker, type, name, and quantity only', async () => {
             const response = await request(backendApp)
                 .post('/api/holdings/1/buy')
                 .send({
@@ -685,7 +695,136 @@ describe('Holdings API Tests', () => {
                 })
                 .expect(400);
             
-            expect(response.body.message).toBe('All fields (ticker, type, name, price, quantity) are required');
+            expect(response.body.message).toBe('Ticker, type, name, and quantity are required');
+        });
+
+        test('should fetch current price when price is empty', async () => {
+            // Mock the fetch response for current price
+            fetch.mockResolvedValueOnce({
+                json: async () => ({ price: '300.50' })
+            });
+
+            const buyData = {
+                ticker: 'MSFT',
+                type: 'stock',
+                name: 'Microsoft Corp.',
+                quantity: 5
+                // price is omitted - should fetch current price
+            };
+
+            const response = await request(backendApp)
+                .post('/api/holdings/1/buy')
+                .send(buyData)
+                .expect(201);
+            
+            expect(response.body.message).toBe('New holding created successfully');
+            expect(response.body.used_price).toBe(300.50);
+            expect(fetch).toHaveBeenCalledWith(
+                expect.stringContaining('https://api.twelvedata.com/price?symbol=MSFT')
+            );
+        });
+
+        test('should fetch current price when price is null', async () => {
+            fetch.mockResolvedValueOnce({
+                json: async () => ({ price: '150.75' })
+            });
+
+            const buyData = {
+                ticker: 'NVDA',
+                type: 'stock',
+                name: 'NVIDIA Corp.',
+                price: null,
+                quantity: 3
+            };
+
+            const response = await request(backendApp)
+                .post('/api/holdings/1/buy')
+                .send(buyData)
+                .expect(201);
+            
+            expect(response.body.used_price).toBe(150.75);
+            expect(fetch).toHaveBeenCalled();
+        });
+
+        test('should fetch current price when price is empty string', async () => {
+            fetch.mockResolvedValueOnce({
+                json: async () => ({ price: '75.25' })
+            });
+
+            const buyData = {
+                ticker: 'AMD',
+                type: 'stock',
+                name: 'Advanced Micro Devices Inc.',
+                price: '',
+                quantity: 8
+            };
+
+            const response = await request(backendApp)
+                .post('/api/holdings/1/buy')
+                .send(buyData)
+                .expect(201);
+            
+            expect(response.body.used_price).toBe(75.25);
+        });
+
+        test('should fetch current price when price is 0', async () => {
+            fetch.mockResolvedValueOnce({
+                json: async () => ({ price: '45.80' })
+            });
+
+            const buyData = {
+                ticker: 'INTC',
+                type: 'stock',
+                name: 'Intel Corp.',
+                price: 0,
+                quantity: 12
+            };
+
+            const response = await request(backendApp)
+                .post('/api/holdings/1/buy')
+                .send(buyData)
+                .expect(201);
+            
+            expect(response.body.used_price).toBe(45.80);
+        });
+
+        test('should handle API error when fetching current price', async () => {
+            fetch.mockRejectedValueOnce(new Error('API Error'));
+
+            const buyData = {
+                ticker: 'FAIL',
+                type: 'stock',
+                name: 'Failing Stock',
+                quantity: 1
+                // price omitted - will try to fetch
+            };
+
+            const response = await request(backendApp)
+                .post('/api/holdings/1/buy')
+                .send(buyData)
+                .expect(500);
+            
+            expect(response.body.message).toBe('Unable to fetch current price');
+        });
+
+        test('should handle invalid API response when fetching current price', async () => {
+            fetch.mockResolvedValueOnce({
+                json: async () => ({ error: 'Invalid symbol' })
+            });
+
+            const buyData = {
+                ticker: 'INVALID',
+                type: 'stock',
+                name: 'Invalid Stock',
+                quantity: 1
+            };
+
+            const response = await request(backendApp)
+                .post('/api/holdings/1/buy')
+                .send(buyData)
+                .expect(500);
+            
+            expect(response.body.message).toBe('Unable to fetch current price');
         });
 
         test('should reject negative quantity', async () => {
@@ -722,29 +861,12 @@ describe('Holdings API Tests', () => {
             expect(response.body.message).toBe('Quantity must be positive');
         });
 
-        test('should reject negative price', async () => {
+        test('should reject negative price when provided', async () => {
             const buyData = {
                 ticker: 'MSFT',
                 type: 'stock',
                 name: 'Microsoft Corp.',
                 price: -300.00,
-                quantity: 5
-            };
-
-            const response = await request(backendApp)
-                .post('/api/holdings/1/buy')
-                .send(buyData)
-                .expect(400);
-            
-            expect(response.body.message).toBe('Price must be positive');
-        });
-
-        test('should reject zero price', async () => {
-            const buyData = {
-                ticker: 'MSFT',
-                type: 'stock',
-                name: 'Microsoft Corp.',
-                price: 0,
                 quantity: 5
             };
 
@@ -788,15 +910,22 @@ describe('Holdings API Tests', () => {
             
             expect(response.body.new_quantity).toBe(15);
             expect(Math.round(response.body.new_avg_price * 100) / 100).toBe(133.33);
+            expect(response.body.used_price).toBe(150.00);
         });
     });
 
     describe('POST /api/holdings/:user_id/sell', () => {
-        test('should partially sell holding', async () => {
-            // Sell 5 out of 10 AAPL shares
+        // Reset fetch mock before each test
+        beforeEach(() => {
+            fetch.mockClear();
+        });
+
+        test('should partially sell holding with specified price', async () => {
+            // Sell 5 out of 10 AAPL shares at $160
             const sellData = {
                 ticker: 'AAPL',
-                quantity: 5
+                quantity: 5,
+                price: 160.00
             };
 
             const response = await request(backendApp)
@@ -807,13 +936,44 @@ describe('Holdings API Tests', () => {
             expect(response.body.message).toBe('Holdings sold successfully');
             expect(response.body.sold_quantity).toBe(5);
             expect(response.body.remaining_quantity).toBe(5);
+            expect(response.body.sell_price).toBe(160.00);
+            expect(response.body.sell_value).toBe(800.00); // 5 * 160
+        });
+
+        test('should partially sell holding without price (fetch current)', async () => {
+            // Mock fetch for current price
+            fetch.mockResolvedValueOnce({
+                json: async () => ({ price: '155.50' })
+            });
+
+            // Sell 3 out of 10 AAPL shares at current price
+            const sellData = {
+                ticker: 'AAPL',
+                quantity: 3
+                // price omitted - should fetch current price
+            };
+
+            const response = await request(backendApp)
+                .post('/api/holdings/1/sell')
+                .send(sellData)
+                .expect(200);
+            
+            expect(response.body.message).toBe('Holdings sold successfully');
+            expect(response.body.sold_quantity).toBe(3);
+            expect(response.body.remaining_quantity).toBe(7);
+            expect(response.body.sell_price).toBe(155.50);
+            expect(response.body.sell_value).toBe(466.50); // 3 * 155.50
+            expect(fetch).toHaveBeenCalledWith(
+                expect.stringContaining('https://api.twelvedata.com/price?symbol=AAPL')
+            );
         });
 
         test('should completely sell holding when selling all shares', async () => {
-            // Sell all 5 BOND001 shares
+            // Sell all 5 BOND001 shares at $1050
             const sellData = {
                 ticker: 'BOND001',
-                quantity: 5
+                quantity: 5,
+                price: 1050.00
             };
 
             const response = await request(backendApp)
@@ -824,12 +984,90 @@ describe('Holdings API Tests', () => {
             expect(response.body.message).toBe('Holding sold completely and removed');
             expect(response.body.sold_quantity).toBe(5);
             expect(response.body.remaining_quantity).toBe(0);
+            expect(response.body.sell_price).toBe(1050.00);
+            expect(response.body.sell_value).toBe(5250.00); // 5 * 1050
+        });
+
+        test('should fetch current price when price is null', async () => {
+            fetch.mockResolvedValueOnce({
+                json: async () => ({ price: '148.75' })
+            });
+
+            const sellData = {
+                ticker: 'AAPL',
+                quantity: 2,
+                price: null
+            };
+
+            const response = await request(backendApp)
+                .post('/api/holdings/1/sell')
+                .send(sellData)
+                .expect(200);
+            
+            expect(response.body.sell_price).toBe(148.75);
+            expect(response.body.sell_value).toBe(297.50);
+        });
+
+        test('should fetch current price when price is empty string', async () => {
+            fetch.mockResolvedValueOnce({
+                json: async () => ({ price: '152.25' })
+            });
+
+            const sellData = {
+                ticker: 'AAPL',
+                quantity: 1,
+                price: ''
+            };
+
+            const response = await request(backendApp)
+                .post('/api/holdings/1/sell')
+                .send(sellData)
+                .expect(200);
+            
+            expect(response.body.sell_price).toBe(152.25);
+        });
+
+        test('should fetch current price when price is 0', async () => {
+            fetch.mockResolvedValueOnce({
+                json: async () => ({ price: '159.90' })
+            });
+
+            const sellData = {
+                ticker: 'AAPL',
+                quantity: 1,
+                price: 0
+            };
+
+            const response = await request(backendApp)
+                .post('/api/holdings/1/sell')
+                .send(sellData)
+                .expect(200);
+            
+            expect(response.body.sell_price).toBe(159.90);
+        });
+
+        test('should handle API error when fetching current price for sell', async () => {
+            fetch.mockRejectedValueOnce(new Error('API Error'));
+
+            const sellData = {
+                ticker: 'AAPL',
+                quantity: 1
+                // price omitted - will try to fetch
+            };
+
+            const response = await request(backendApp)
+                .post('/api/holdings/1/sell')
+                .send(sellData)
+                .expect(500);
+            
+            expect(response.body.message).toBe('Unable to fetch current price');
         });
 
         test('should reject selling more than available', async () => {
             const sellData = {
                 ticker: 'AAPL',
-                quantity: 50 // More than the 10 available
+                quantity: 50, // More than the 10 available
+                price: 150.00
             };
 
             const response = await request(backendApp)
@@ -843,7 +1081,8 @@ describe('Holdings API Tests', () => {
         test('should return 404 for non-existent holding', async () => {
             const sellData = {
                 ticker: 'NONEXISTENT',
-                quantity: 1
+                quantity: 1,
+                price: 100.00
             };
 
             const response = await request(backendApp)
@@ -868,7 +1107,8 @@ describe('Holdings API Tests', () => {
         test('should reject negative quantity', async () => {
             const sellData = {
                 ticker: 'AAPL',
-                quantity: -5
+                quantity: -5,
+                price: 150.00
             };
 
             const response = await request(backendApp)
@@ -882,7 +1122,8 @@ describe('Holdings API Tests', () => {
         test('should reject zero quantity', async () => {
             const sellData = {
                 ticker: 'AAPL',
-                quantity: 0
+                quantity: 0,
+                price: 150.00
             };
 
             const response = await request(backendApp)
@@ -892,9 +1133,28 @@ describe('Holdings API Tests', () => {
             
             expect(response.body.message).toBe('Quantity must be positive');
         });
+
+        test('should reject negative price when provided', async () => {
+            const sellData = {
+                ticker: 'AAPL',
+                quantity: 1,
+                price: -150.00
+            };
+
+            const response = await request(backendApp)
+                .post('/api/holdings/1/sell')
+                .send(sellData)
+                .expect(400);
+            
+            expect(response.body.message).toBe('Price must be positive');
+        });
     });
 
     describe('Buy/Sell Integration Tests', () => {
+        beforeEach(() => {
+            fetch.mockClear();
+        });
+
         test('should handle complete buy-sell cycle', async () => {
             // Buy a new asset
             const buyData = {
@@ -911,11 +1171,13 @@ describe('Holdings API Tests', () => {
                 .expect(201);
             
             expect(buyResponse.body.message).toBe('New holding created successfully');
+            expect(buyResponse.body.used_price).toBe(120.00);
 
             // Sell part of it
             const sellData = {
                 ticker: 'AMZN',
-                quantity: 8
+                quantity: 8,
+                price: 125.00
             };
 
             const sellResponse = await request(backendApp)
@@ -924,11 +1186,14 @@ describe('Holdings API Tests', () => {
                 .expect(200);
             
             expect(sellResponse.body.remaining_quantity).toBe(7);
+            expect(sellResponse.body.sell_price).toBe(125.00);
+            expect(sellResponse.body.sell_value).toBe(1000.00); // 8 * 125
 
             // Sell the rest
             const sellAllData = {
                 ticker: 'AMZN',
-                quantity: 7
+                quantity: 7,
+                price: 130.00
             };
 
             const sellAllResponse = await request(backendApp)
@@ -937,6 +1202,8 @@ describe('Holdings API Tests', () => {
                 .expect(200);
             
             expect(sellAllResponse.body.message).toBe('Holding sold completely and removed');
+            expect(sellAllResponse.body.sell_price).toBe(130.00);
+            expect(sellAllResponse.body.sell_value).toBe(910.00); // 7 * 130
         });
 
         test('should handle multiple buys then partial sell', async () => {
@@ -969,11 +1236,13 @@ describe('Holdings API Tests', () => {
                 .expect(200);
             
             expect(buyResponse.body.new_quantity).toBe(15);
+            expect(buyResponse.body.used_price).toBe(200.00);
 
             // Sell 7 shares
             const sellData = {
                 ticker: 'GOOGL',
-                quantity: 7
+                quantity: 7,
+                price: 180.00
             };
 
             const sellResponse = await request(backendApp)
@@ -982,6 +1251,94 @@ describe('Holdings API Tests', () => {
                 .expect(200);
             
             expect(sellResponse.body.remaining_quantity).toBe(8);
+            expect(sellResponse.body.sell_price).toBe(180.00);
+            expect(sellResponse.body.sell_value).toBe(1260.00); // 7 * 180
+        });
+
+        test('should handle buy with fetched price then sell with specified price', async () => {
+            // Mock fetch for buy operation
+            fetch.mockResolvedValueOnce({
+                json: async () => ({ price: '95.25' })
+            });
+
+            // Buy with fetched current price
+            const buyData = {
+                ticker: 'META',
+                type: 'stock',
+                name: 'Meta Platforms Inc.',
+                quantity: 20
+                // price omitted - will fetch current
+            };
+
+            const buyResponse = await request(backendApp)
+                .post('/api/holdings/1/buy')
+                .send(buyData)
+                .expect(201);
+            
+            expect(buyResponse.body.used_price).toBe(95.25);
+            expect(fetch).toHaveBeenCalledWith(
+                expect.stringContaining('https://api.twelvedata.com/price?symbol=META')
+            );
+
+            // Sell with specified price
+            const sellData = {
+                ticker: 'META',
+                quantity: 8,
+                price: 98.50
+            };
+
+            const sellResponse = await request(backendApp)
+                .post('/api/holdings/1/sell')
+                .send(sellData)
+                .expect(200);
+            
+            expect(sellResponse.body.remaining_quantity).toBe(12);
+            expect(sellResponse.body.sell_price).toBe(98.50);
+            expect(sellResponse.body.sell_value).toBe(788.00); // 8 * 98.50
+        });
+
+        test('should handle buy and sell both with fetched prices', async () => {
+            // Mock fetch for buy operation
+            fetch.mockResolvedValueOnce({
+                json: async () => ({ price: '75.80' })
+            });
+
+            // Buy with fetched current price
+            const buyData = {
+                ticker: 'SNAP',
+                type: 'stock',
+                name: 'Snap Inc.',
+                quantity: 25
+            };
+
+            const buyResponse = await request(backendApp)
+                .post('/api/holdings/1/buy')
+                .send(buyData)
+                .expect(201);
+            
+            expect(buyResponse.body.used_price).toBe(75.80);
+
+            // Mock fetch for sell operation
+            fetch.mockResolvedValueOnce({
+                json: async () => ({ price: '78.25' })
+            });
+
+            // Sell with fetched current price
+            const sellData = {
+                ticker: 'SNAP',
+                quantity: 10
+                // price omitted - will fetch current
+            };
+
+            const sellResponse = await request(backendApp)
+                .post('/api/holdings/1/sell')
+                .send(sellData)
+                .expect(200);
+            
+            expect(sellResponse.body.remaining_quantity).toBe(15);
+            expect(sellResponse.body.sell_price).toBe(78.25);
+            expect(sellResponse.body.sell_value).toBe(782.50); // 10 * 78.25
+            expect(fetch).toHaveBeenCalledTimes(2); // Once for buy, once for sell
         });
     });
 });

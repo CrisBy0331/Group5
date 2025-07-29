@@ -188,22 +188,63 @@ app.delete('/api/holdings/:user_id/:record_id', (req, res) => {
     });
 });
 
-app.get('/api/stocks/:ticker', (req, res) => {
+app.get('/api/stock/price/:ticker', (req, res) => {
     const ticker = req.params.ticker;
-    
+    const url = `https://api.twelvedata.com/price?symbol=${ticker}&apikey=${process.env.TWELVE_DATA_API_KEY}`;
+    fetch(url).then(response => response.json()).then(data => {
+        res.json(data);
+    }).catch(error => {
+        res.status(500).json({ message: 'Error fetching stock data', error: error.message });
+    });
 });
 
+app.get('api/stock/quote/:ticker', (req, res) => {
+    const ticker = req.params.ticker;
+    const url = `https://api.twelvedata.com/quote?symbol=${ticker}&apikey=${process.env.TWELVE_DATA_API_KEY}`;
+    fetch(url).then(response => response.json()).then(data => {
+        res.json(data);
+    }).catch(error => {
+        res.status(500).json({ message: 'Error fetching stock data', error: error.message });
+    });
+});
+
+// Helper function to fetch current stock price
+async function getCurrentPrice(ticker) {
+    try {
+        const url = `https://api.twelvedata.com/price?symbol=${ticker}&apikey=${process.env.TWELVE_DATA_API_KEY}`;
+        const response = await fetch(url);
+        const data = await response.json();
+        
+        if (data.price) {
+            return parseFloat(data.price);
+        } else {
+            throw new Error('Price not available');
+        }
+    } catch (error) {
+        throw new Error(`Failed to fetch current price: ${error.message}`);
+    }
+}
+
 // Buy holdings - increase quantity or create new holding
-app.post('/api/holdings/:user_id/buy', (req, res) => {
+app.post('/api/holdings/:user_id/buy', async (req, res) => {
     const user_id = req.params.user_id;
-    const { ticker, type, name, price, quantity } = req.body;
+    let { ticker, type, name, price, quantity } = req.body;
     
-    if (!ticker || !type || !name || price === undefined || price === null || quantity === undefined || quantity === null) {
-        return res.status(400).json({ message: 'All fields (ticker, type, name, price, quantity) are required' });
+    if (!ticker || !type || !name || quantity === undefined || quantity === null) {
+        return res.status(400).json({ message: 'Ticker, type, name, and quantity are required' });
     }
     
     if (quantity <= 0) {
         return res.status(400).json({ message: 'Quantity must be positive' });
+    }
+    
+    // If price is empty, fetch current price
+    if (price === undefined || price === null || price === '' || price === 0) {
+        try {
+            price = await getCurrentPrice(ticker);
+        } catch (error) {
+            return res.status(500).json({ message: 'Unable to fetch current price', error: error.message });
+        }
     }
     
     if (price <= 0) {
@@ -231,7 +272,8 @@ app.post('/api/holdings/:user_id/buy', (req, res) => {
                         message: 'Holdings updated successfully', 
                         record_id: row.record_id,
                         new_quantity: newQuantity,
-                        new_avg_price: newAvgPrice
+                        new_avg_price: newAvgPrice,
+                        used_price: price
                     });
                 }
             });
@@ -246,7 +288,8 @@ app.post('/api/holdings/:user_id/buy', (req, res) => {
                         message: 'New holding created successfully', 
                         record_id: this.lastID,
                         quantity: quantity,
-                        price: price
+                        price: price,
+                        used_price: price
                     });
                 }
             });
@@ -255,9 +298,9 @@ app.post('/api/holdings/:user_id/buy', (req, res) => {
 });
 
 // Sell holdings - decrease quantity or remove holding
-app.post('/api/holdings/:user_id/sell', (req, res) => {
+app.post('/api/holdings/:user_id/sell', async (req, res) => {
     const user_id = req.params.user_id;
-    const { ticker, quantity } = req.body;
+    let { ticker, quantity, price } = req.body;
     
     if (!ticker || quantity === undefined || quantity === null) {
         return res.status(400).json({ message: 'Ticker and quantity are required' });
@@ -265,6 +308,19 @@ app.post('/api/holdings/:user_id/sell', (req, res) => {
     
     if (quantity <= 0) {
         return res.status(400).json({ message: 'Quantity must be positive' });
+    }
+    
+    // If price is empty, fetch current price
+    if (price === undefined || price === null || price === '' || price === 0) {
+        try {
+            price = await getCurrentPrice(ticker);
+        } catch (error) {
+            return res.status(500).json({ message: 'Unable to fetch current price', error: error.message });
+        }
+    }
+    
+    if (price <= 0) {
+        return res.status(400).json({ message: 'Price must be positive' });
     }
     
     // Find existing holding
@@ -282,6 +338,7 @@ app.post('/api/holdings/:user_id/sell', (req, res) => {
         }
         
         const newQuantity = row.quantity - quantity;
+        const sellValue = quantity * price;
         
         if (newQuantity === 0) {
             // Remove holding completely
@@ -292,7 +349,9 @@ app.post('/api/holdings/:user_id/sell', (req, res) => {
                     res.status(200).json({ 
                         message: 'Holding sold completely and removed', 
                         sold_quantity: quantity,
-                        remaining_quantity: 0
+                        remaining_quantity: 0,
+                        sell_price: price,
+                        sell_value: sellValue
                     });
                 }
             });
@@ -307,7 +366,9 @@ app.post('/api/holdings/:user_id/sell', (req, res) => {
                         message: 'Holdings sold successfully', 
                         record_id: row.record_id,
                         sold_quantity: quantity,
-                        remaining_quantity: newQuantity
+                        remaining_quantity: newQuantity,
+                        sell_price: price,
+                        sell_value: sellValue
                     });
                 }
             });
