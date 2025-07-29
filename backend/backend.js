@@ -37,6 +37,14 @@ const app = express();
 
 app.use(express.json());
 
+// Add CORS middleware
+app.use((req, res, next) => {
+    res.header('Access-Control-Allow-Origin', '*');
+    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
+    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    next();
+});
+
 app.get('/', (req, res) => {
     res.send('Hello World');
 });
@@ -175,6 +183,133 @@ app.delete('/api/holdings/:user_id/:record_id', (req, res) => {
             res.status(200).json({ message: 'Holding not found or already deleted' });
         } else {
             res.status(200).json({ message: 'Holding deleted successfully' });
+        }
+    });
+});
+
+app.get('/api/stocks/:ticker', (req, res) => {
+    const ticker = req.params.ticker;
+    
+});
+
+// Buy holdings - increase quantity or create new holding
+app.post('/api/holdings/:user_id/buy', (req, res) => {
+    const user_id = req.params.user_id;
+    const { ticker, type, name, price, quantity } = req.body;
+    
+    if (!ticker || !type || !name || price === undefined || price === null || quantity === undefined || quantity === null) {
+        return res.status(400).json({ message: 'All fields (ticker, type, name, price, quantity) are required' });
+    }
+    
+    if (quantity <= 0) {
+        return res.status(400).json({ message: 'Quantity must be positive' });
+    }
+    
+    if (price <= 0) {
+        return res.status(400).json({ message: 'Price must be positive' });
+    }
+    
+    // Check if holding already exists
+    db.get('SELECT * FROM holding WHERE user_id = ? AND ticker = ?', [user_id, ticker], (err, row) => {
+        if (err) {
+            return res.status(500).json({ message: 'Database error', error: err.message });
+        }
+        
+        if (row) {
+            // Update existing holding - calculate new average price
+            const totalValue = (row.quantity * row.buyin_price) + (quantity * price);
+            const newQuantity = row.quantity + quantity;
+            const newAvgPrice = totalValue / newQuantity;
+            
+            db.run('UPDATE holding SET quantity = ?, buyin_price = ?, updated_at = CURRENT_TIMESTAMP WHERE user_id = ? AND record_id = ?', 
+                [newQuantity, newAvgPrice, user_id, row.record_id], function(updateErr) {
+                if (updateErr) {
+                    res.status(500).json({ message: 'Database error', error: updateErr.message });
+                } else {
+                    res.status(200).json({ 
+                        message: 'Holdings updated successfully', 
+                        record_id: row.record_id,
+                        new_quantity: newQuantity,
+                        new_avg_price: newAvgPrice
+                    });
+                }
+            });
+        } else {
+            // Create new holding
+            db.run('INSERT INTO holding (user_id, type, ticker, name, buyin_price, quantity, created_at) VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)', 
+                [user_id, type, ticker, name, price, quantity], function(insertErr) {
+                if (insertErr) {
+                    res.status(500).json({ message: 'Database error', error: insertErr.message });
+                } else {
+                    res.status(201).json({ 
+                        message: 'New holding created successfully', 
+                        record_id: this.lastID,
+                        quantity: quantity,
+                        price: price
+                    });
+                }
+            });
+        }
+    });
+});
+
+// Sell holdings - decrease quantity or remove holding
+app.post('/api/holdings/:user_id/sell', (req, res) => {
+    const user_id = req.params.user_id;
+    const { ticker, quantity } = req.body;
+    
+    if (!ticker || quantity === undefined || quantity === null) {
+        return res.status(400).json({ message: 'Ticker and quantity are required' });
+    }
+    
+    if (quantity <= 0) {
+        return res.status(400).json({ message: 'Quantity must be positive' });
+    }
+    
+    // Find existing holding
+    db.get('SELECT * FROM holding WHERE user_id = ? AND ticker = ?', [user_id, ticker], (err, row) => {
+        if (err) {
+            return res.status(500).json({ message: 'Database error', error: err.message });
+        }
+        
+        if (!row) {
+            return res.status(404).json({ message: 'Holding not found' });
+        }
+        
+        if (row.quantity < quantity) {
+            return res.status(400).json({ message: 'Insufficient quantity to sell' });
+        }
+        
+        const newQuantity = row.quantity - quantity;
+        
+        if (newQuantity === 0) {
+            // Remove holding completely
+            db.run('DELETE FROM holding WHERE user_id = ? AND record_id = ?', [user_id, row.record_id], function(deleteErr) {
+                if (deleteErr) {
+                    res.status(500).json({ message: 'Database error', error: deleteErr.message });
+                } else {
+                    res.status(200).json({ 
+                        message: 'Holding sold completely and removed', 
+                        sold_quantity: quantity,
+                        remaining_quantity: 0
+                    });
+                }
+            });
+        } else {
+            // Update quantity
+            db.run('UPDATE holding SET quantity = ?, updated_at = CURRENT_TIMESTAMP WHERE user_id = ? AND record_id = ?', 
+                [newQuantity, user_id, row.record_id], function(updateErr) {
+                if (updateErr) {
+                    res.status(500).json({ message: 'Database error', error: updateErr.message });
+                } else {
+                    res.status(200).json({ 
+                        message: 'Holdings sold successfully', 
+                        record_id: row.record_id,
+                        sold_quantity: quantity,
+                        remaining_quantity: newQuantity
+                    });
+                }
+            });
         }
     });
 });

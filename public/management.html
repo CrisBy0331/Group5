@@ -6,58 +6,6 @@
     <title>持仓管理</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <script>
-        // 检查用户登录状态
-        function checkLoginStatus() {
-            const isLoggedIn = localStorage.getItem('isLoggedIn');
-            const userToken = localStorage.getItem('userToken');
-            
-            if (!isLoggedIn || !userToken) {
-                window.location.href = 'log_in.html';
-                return false;
-            }
-            updateUserArea();
-            return true;
-        }
-
-        // 更新用户区域显示
-        function updateUserArea() {
-            const userAccount = localStorage.getItem('userAccount');
-            const userArea = document.getElementById('userArea');
-            
-            if (userAccount) {
-                userArea.innerHTML = `
-                    <div class="flex items-center space-x-3">
-                        <span class="text-gray-700 font-medium">${userAccount}</span>
-                        <button onclick="logout()" 
-                            class="text-red-500 hover:text-red-600 text-sm font-medium bg-transparent px-3 py-1 rounded border border-red-300 hover:border-red-400 transition">
-                            Logout
-                        </button>
-                    </div>
-                `;
-            } else {
-                userArea.innerHTML = `
-                    <a href="log_in.html" class="text-blue-500 hover:text-blue-600 text-lg font-bold bg-transparent px-4 py-2 rounded transition">
-                        Login
-                    </a>
-                `;
-            }
-        }
-
-        // 登出功能
-        function logout() {
-            localStorage.removeItem('isLoggedIn');
-            localStorage.removeItem('userToken');
-            localStorage.removeItem('userAccount');
-            window.location.href = 'log_in.html';
-        }
-
-        // 页面加载时检查登录状态
-        document.addEventListener('DOMContentLoaded', function() {
-            checkLoginStatus();
-        });
-    </script>
-
 </head>
 <body class="bg-gradient-to-br from-blue-50 via-white to-blue-100 text-gray-800 min-h-screen">
     <!-- 顶部导航 -->
@@ -77,11 +25,9 @@
                 Future Assets
             </span>
         </a>
-        <!-- Right: User area -->
+        <!-- Right: Test User Info -->
         <div class="flex items-center space-x-4">
-            <div id="userArea">
-                <!-- 这里会被JavaScript动态更新 -->
-            </div>
+            <div class="text-gray-700 font-medium">Test User (ID: 2)</div>
         </div>
     </header>
 
@@ -122,16 +68,16 @@
                     <i class="fas fa-chart-line text-blue-500 mr-3"></i>
                     持仓管理
                 </h3>
-                <p class="text-gray-600">简洁高效的持仓管理系统</p>
+                <p class="text-gray-600">简洁高效的持仓管理系统 - 测试模式</p>
             </div>
 
             <!-- 持仓列表 -->
             <div class="bg-white rounded-xl shadow-lg p-6">
                 <div class="flex justify-between items-center mb-6">
                     <h3 class="text-xl font-bold text-gray-800">持仓列表</h3>
-                    <button class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg font-medium transition duration-200 flex items-center space-x-2" onclick="addPortfolio()">
+                    <button class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg font-medium transition duration-200 flex items-center space-x-2" onclick="buyAsset()">
                         <i class="fas fa-plus"></i>
-                        <span>添加持仓</span>
+                        <span>买入资产</span>
                     </button>
                 </div>
 
@@ -152,8 +98,9 @@
                             <tr class="border-b border-gray-200">
                                 <th class="text-left py-3 px-4 font-semibold text-gray-700 text-sm">代码</th>
                                 <th class="text-left py-3 px-4 font-semibold text-gray-700 text-sm">名称</th>
+                                <th class="text-left py-3 px-4 font-semibold text-gray-700 text-sm">类型</th>
                                 <th class="text-left py-3 px-4 font-semibold text-gray-700 text-sm">持有量</th>
-                                <th class="text-left py-3 px-4 font-semibold text-gray-700 text-sm">买入价</th>
+                                <th class="text-left py-3 px-4 font-semibold text-gray-700 text-sm">成本价</th>
                                 <th class="text-left py-3 px-4 font-semibold text-gray-700 text-sm">操作</th>
                             </tr>
                         </thead>
@@ -167,49 +114,41 @@
     </div>
 
     <script>
-        // 模拟持仓数据
-        let portfolioData = [
-            {
-                id: 1,
-                code: '000001',
-                name: '平安银行',
-                quantity: 1000,
-                costPrice: 15.50
-            },
-            {
-                id: 2,
-                code: '000002',
-                name: '万科A',
-                quantity: 500,
-                costPrice: 18.20
-            },
-            {
-                id: 3,
-                code: '600036',
-                name: '招商银行',
-                quantity: 800,
-                costPrice: 45.30
-            },
-            {
-                id: 4,
-                code: '000858',
-                name: '五粮液',
-                quantity: 200,
-                costPrice: 180.00
-            },
-            {
-                id: 5,
-                code: '002415',
-                name: '海康威视',
-                quantity: 300,
-                costPrice: 35.60
-            }
-        ];
+        // Portfolio data will be loaded from backend
+        let portfolioData = [];
+        const API_BASE_URL = 'http://localhost:3000/api';
+        
+        // Use test user ID 2 (which has the generated test data)
+        function getCurrentUserId() {
+            return '2'; // Fixed to test user with data
+        }
 
         // 初始化页面
         document.addEventListener('DOMContentLoaded', function() {
-            renderPortfolioTable();
+            loadPortfolioData();
         });
+
+        // Load portfolio data from backend
+        async function loadPortfolioData() {
+            try {
+                const userId = getCurrentUserId();
+                console.log('Loading portfolio data for user:', userId);
+                const response = await fetch(`${API_BASE_URL}/holdings/${userId}`);
+                if (response.ok) {
+                    portfolioData = await response.json();
+                    console.log('Portfolio data loaded:', portfolioData);
+                    renderPortfolioTable();
+                } else {
+                    console.error('Failed to load portfolio data, status:', response.status);
+                    portfolioData = [];
+                    renderPortfolioTable();
+                }
+            } catch (error) {
+                console.error('Error loading portfolio data:', error);
+                portfolioData = [];
+                renderPortfolioTable();
+            }
+        }
 
         // 渲染持仓表格
         function renderPortfolioTable() {
@@ -217,7 +156,7 @@
             tbody.innerHTML = '';
 
             if (portfolioData.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="5" class="text-center py-8 text-gray-500 italic">暂无持仓数据</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center py-8 text-gray-500 italic">暂无持仓数据</td></tr>';
                 return;
             }
 
@@ -225,17 +164,18 @@
                 const row = document.createElement('tr');
                 row.className = 'border-b border-gray-100 hover:bg-gray-50 transition-colors duration-200';
                 row.innerHTML = `
-                    <td class="py-3 px-4 text-sm text-gray-800">${item.code}</td>
+                    <td class="py-3 px-4 text-sm text-gray-800">${item.ticker}</td>
                     <td class="py-3 px-4 text-sm text-gray-800 font-medium">${item.name}</td>
+                    <td class="py-3 px-4 text-sm text-gray-800">${item.type}</td>
                     <td class="py-3 px-4 text-sm text-gray-800">${item.quantity.toLocaleString()}</td>
-                    <td class="py-3 px-4 text-sm text-gray-800">¥${item.costPrice.toFixed(2)}</td>
+                    <td class="py-3 px-4 text-sm text-gray-800">¥${item.buyin_price.toFixed(2)}</td>
                     <td class="py-3 px-4">
                         <div class="flex space-x-2">
-                            <button class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-xs font-medium transition duration-200" onclick="editPortfolio(${item.id})">
-                                <i class="fas fa-edit mr-1"></i>编辑
+                            <button class="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded text-xs font-medium transition duration-200" onclick="buyMore('${item.ticker}', '${item.type}', '${item.name}')">
+                                <i class="fas fa-plus mr-1"></i>买入
                             </button>
-                            <button class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-xs font-medium transition duration-200" onclick="deletePortfolio(${item.id})">
-                                <i class="fas fa-trash mr-1"></i>删除
+                            <button class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-xs font-medium transition duration-200" onclick="sellAsset('${item.ticker}', ${item.quantity})">
+                                <i class="fas fa-minus mr-1"></i>卖出
                             </button>
                         </div>
                     </td>
@@ -244,62 +184,140 @@
             });
         }
 
-        // 添加持仓
-        function addPortfolio() {
-            const code = prompt('请输入股票代码：');
-            if (!code) return;
+        // 买入新资产
+        async function buyAsset() {
+            const ticker = prompt('请输入资产代码：');
+            if (!ticker) return;
             
-            const name = prompt('请输入股票名称：');
+            const name = prompt('请输入资产名称：');
             if (!name) return;
             
-            const quantity = parseInt(prompt('请输入持有量：'));
-            if (!quantity || quantity <= 0) return;
+            const type = prompt('请输入资产类型 (stock/bond/fund/gold/currency)：', 'stock');
+            if (!type || !['stock', 'bond', 'fund', 'gold', 'currency'].includes(type)) {
+                alert('资产类型必须是: stock, bond, fund, gold, 或 currency');
+                return;
+            }
             
-            const costPrice = parseFloat(prompt('请输入买入价：'));
-            if (!costPrice || costPrice <= 0) return;
+            const quantity = parseInt(prompt('请输入买入数量：'));
+            if (!quantity || quantity <= 0) {
+                alert('数量必须是正数');
+                return;
+            }
             
-            const newId = Math.max(...portfolioData.map(item => item.id)) + 1;
-            portfolioData.push({
-                id: newId,
-                code: code,
-                name: name,
-                quantity: quantity,
-                costPrice: costPrice
-            });
+            const price = parseFloat(prompt('请输入买入价格：'));
+            if (!price || price <= 0) {
+                alert('价格必须是正数');
+                return;
+            }
             
-            renderPortfolioTable();
+            try {
+                const userId = getCurrentUserId();
+                const response = await fetch(`${API_BASE_URL}/holdings/${userId}/buy`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        ticker: ticker,
+                        type: type,
+                        name: name,
+                        price: price,
+                        quantity: quantity
+                    }),
+                });
+                
+                const result = await response.json();
+                if (response.ok) {
+                    alert(result.message);
+                    loadPortfolioData(); // Reload data
+                } else {
+                    alert('买入失败: ' + result.message);
+                }
+            } catch (error) {
+                console.error('Error buying asset:', error);
+                alert('买入时发生错误');
+            }
         }
 
-        // 编辑持仓
-        function editPortfolio(id) {
-            const item = portfolioData.find(item => item.id === id);
-            if (!item) return;
+        // 买入更多现有资产
+        async function buyMore(ticker, type, name) {
+            const quantity = parseInt(prompt('请输入买入数量：'));
+            if (!quantity || quantity <= 0) {
+                alert('数量必须是正数');
+                return;
+            }
             
-            const code = prompt('请输入股票代码：', item.code);
-            if (!code) return;
+            const price = parseFloat(prompt('请输入买入价格：'));
+            if (!price || price <= 0) {
+                alert('价格必须是正数');
+                return;
+            }
             
-            const name = prompt('请输入股票名称：', item.name);
-            if (!name) return;
-            
-            const quantity = parseInt(prompt('请输入持有量：', item.quantity));
-            if (!quantity || quantity <= 0) return;
-            
-            const costPrice = parseFloat(prompt('请输入买入价：', item.costPrice));
-            if (!costPrice || costPrice <= 0) return;
-            
-            item.code = code;
-            item.name = name;
-            item.quantity = quantity;
-            item.costPrice = costPrice;
-            
-            renderPortfolioTable();
+            try {
+                const userId = getCurrentUserId();
+                const response = await fetch(`${API_BASE_URL}/holdings/${userId}/buy`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        ticker: ticker,
+                        type: type,
+                        name: name,
+                        price: price,
+                        quantity: quantity
+                    }),
+                });
+                
+                const result = await response.json();
+                if (response.ok) {
+                    alert(`买入成功! ${result.message}`);
+                    loadPortfolioData(); // Reload data
+                } else {
+                    alert('买入失败: ' + result.message);
+                }
+            } catch (error) {
+                console.error('Error buying more:', error);
+                alert('买入时发生错误');
+            }
         }
 
-        // 删除持仓
-        function deletePortfolio(id) {
-            if (confirm('确定要删除这个持仓吗？')) {
-                portfolioData = portfolioData.filter(item => item.id !== id);
-                renderPortfolioTable();
+        // 卖出资产
+        async function sellAsset(ticker, maxQuantity) {
+            const quantity = parseInt(prompt(`请输入卖出数量（最大${maxQuantity}）：`));
+            if (!quantity || quantity <= 0) {
+                alert('数量必须是正数');
+                return;
+            }
+            
+            if (quantity > maxQuantity) {
+                alert('卖出数量不能超过持有数量');
+                return;
+            }
+            
+            try {
+                const userId = getCurrentUserId();
+                const response = await fetch(`${API_BASE_URL}/holdings/${userId}/sell`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        ticker: ticker,
+                        quantity: quantity
+                    }),
+                });
+                
+                const result = await response.json();
+                if (response.ok) {
+                    alert(`卖出成功! ${result.message}`);
+                    loadPortfolioData(); // Reload data
+                } else {
+                    alert('卖出失败: ' + result.message);
+                }
+            } catch (error) {
+                console.error('Error selling asset:', error);
+                alert('卖出时发生错误');
             }
         }
 
@@ -310,9 +328,9 @@
             const rows = tbody.getElementsByTagName('tr');
 
             for (let row of rows) {
-                const code = row.cells[0]?.textContent.toLowerCase() || '';
+                const ticker = row.cells[0]?.textContent.toLowerCase() || '';
                 const name = row.cells[1]?.textContent.toLowerCase() || '';
-                if (code.includes(searchTerm) || name.includes(searchTerm)) {
+                if (ticker.includes(searchTerm) || name.includes(searchTerm)) {
                     row.style.display = '';
                 } else {
                     row.style.display = 'none';
