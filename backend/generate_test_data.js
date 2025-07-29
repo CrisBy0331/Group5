@@ -40,6 +40,7 @@ db.serialize(() => {
             name TEXT NOT NULL,
             buyin_price REAL NOT NULL,
             quantity REAL NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (user_id) REFERENCES users(user_id)
         )
@@ -65,7 +66,7 @@ db.serialize(() => {
         
         holdingsData.forEach((holding, index) => {
             db.run(
-                'INSERT INTO holding (user_id, type, ticker, name, buyin_price, quantity) VALUES (?, ?, ?, ?, ?, ?)',
+                'INSERT INTO holding (user_id, type, ticker, name, buyin_price, quantity, created_at) VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)',
                 [userId, holding.type, holding.ticker, holding.name, holding.buyin_price, holding.quantity],
                 function(err) {
                     if (err) {

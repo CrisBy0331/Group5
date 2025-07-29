@@ -4,6 +4,32 @@ const crypto = require('crypto');
 
 // Mock sqlite3 before importing backend
 jest.mock('sqlite3', () => {
+    // Store mock data state
+    let mockHoldings = [
+        { 
+            record_id: 1, 
+            user_id: 1, 
+            type: 'stock', 
+            ticker: 'AAPL', 
+            name: 'Apple Inc.', 
+            buyin_price: 150.00, 
+            quantity: 10,
+            created_at: '2024-01-01 10:00:00',
+            updated_at: '2024-01-01 10:00:00'
+        },
+        { 
+            record_id: 2, 
+            user_id: 1, 
+            type: 'bond', 
+            ticker: 'BOND001', 
+            name: 'Treasury Bond', 
+            buyin_price: 1000.00, 
+            quantity: 5,
+            created_at: '2024-01-01 11:00:00',
+            updated_at: '2024-01-01 11:00:00'
+        }
+    ];
+
     const mockDatabase = jest.fn().mockImplementation(() => ({
         serialize: jest.fn().mockImplementation((callback) => {
             callback();
@@ -15,35 +41,69 @@ jest.mock('sqlite3', () => {
             }
             
             if (query.includes('INSERT INTO holding')) {
+                // Add new holding to mock data
+                const newHolding = {
+                    record_id: mockHoldings.length + 1,
+                    user_id: parseInt(params[0]),
+                    type: params[1],
+                    ticker: params[2],
+                    name: params[3],
+                    buyin_price: parseFloat(params[4]),
+                    quantity: parseFloat(params[5]),
+                    created_at: new Date().toISOString().replace('T', ' ').substring(0, 19),
+                    updated_at: new Date().toISOString().replace('T', ' ').substring(0, 19)
+                };
+                mockHoldings.push(newHolding);
+                
                 if (callback) {
-                    const result = { lastID: 1, changes: 1 };
+                    const result = { lastID: newHolding.record_id, changes: 1 };
                     callback.call(result, null);
                 }
             } else if (query.includes('UPDATE holding')) {
-                // Check if the record_id parameter is '999' (non-existent holding)
-                const record_id = params[6]; // record_id is the 7th parameter in UPDATE holding SET type = ?, ticker = ?, name = ?, buyin_price = ?, quantity = ? WHERE user_id = ? AND record_id = ?
-                if (record_id === '999') {
+                // Update existing holding in mock data
+                const record_id = parseInt(params[6]);
+                const user_id = parseInt(params[5]);
+                const holdingIndex = mockHoldings.findIndex(h => h.record_id === record_id && h.user_id === user_id);
+                
+                if (holdingIndex !== -1) {
+                    // Update the holding but preserve created_at
+                    const originalCreatedAt = mockHoldings[holdingIndex].created_at;
+                    mockHoldings[holdingIndex] = {
+                        ...mockHoldings[holdingIndex],
+                        type: params[0],
+                        ticker: params[1],
+                        name: params[2],
+                        buyin_price: parseFloat(params[3]),
+                        quantity: parseFloat(params[4]),
+                        created_at: originalCreatedAt, // Preserve original created_at
+                        updated_at: new Date().toISOString().replace('T', ' ').substring(0, 19)
+                    };
+                    
                     if (callback) {
-                        const result = { changes: 0 };
+                        const result = { changes: 1 };
                         callback.call(result, null);
                     }
                 } else {
                     if (callback) {
-                        const result = { changes: 1 };
+                        const result = { changes: 0 };
                         callback.call(result, null);
                     }
                 }
             } else if (query.includes('DELETE FROM holding')) {
-                // Check if the record_id parameter is '999' (non-existent holding)
-                const record_id = params[1]; // record_id is the 2nd parameter in DELETE FROM holding WHERE user_id = ? AND record_id = ?
-                if (record_id === '999') {
+                // Remove holding from mock data
+                const record_id = parseInt(params[1]);
+                const user_id = parseInt(params[0]);
+                const holdingIndex = mockHoldings.findIndex(h => h.record_id === record_id && h.user_id === user_id);
+                
+                if (holdingIndex !== -1) {
+                    mockHoldings.splice(holdingIndex, 1);
                     if (callback) {
-                        const result = { changes: 0 };
+                        const result = { changes: 1 };
                         callback.call(result, null);
                     }
                 } else {
                     if (callback) {
-                        const result = { changes: 1 };
+                        const result = { changes: 0 };
                         callback.call(result, null);
                     }
                 }
@@ -80,32 +140,12 @@ jest.mock('sqlite3', () => {
             }
             
             if (query.includes('holding')) {
-                const user_id = params[0];
-                if (user_id === '999') {
+                const user_id = parseInt(params[0]);
+                if (user_id === 999) {
                     if (callback) callback(null, []);
                 } else {
-                    if (callback) callback(null, [
-                        { 
-                            record_id: 1, 
-                            user_id: parseInt(user_id), 
-                            type: 'stock', 
-                            ticker: 'AAPL', 
-                            name: 'Apple Inc.', 
-                            buyin_price: 150.00, 
-                            quantity: 10,
-                            updated_at: '2024-01-01 10:00:00'
-                        },
-                        { 
-                            record_id: 2, 
-                            user_id: parseInt(user_id), 
-                            type: 'bond', 
-                            ticker: 'BOND001', 
-                            name: 'Treasury Bond', 
-                            buyin_price: 1000.00, 
-                            quantity: 5,
-                            updated_at: '2024-01-01 11:00:00'
-                        }
-                    ]);
+                    const userHoldings = mockHoldings.filter(h => h.user_id === user_id);
+                    if (callback) callback(null, userHoldings);
                 }
             } else if (query.includes('users')) {
                 if (callback) callback(null, [
@@ -172,7 +212,32 @@ describe('Holdings API Tests', () => {
                 .expect(201);
             
             expect(response.body.message).toBe('Holding added successfully');
-            expect(response.body.record_id).toBe(1);
+            expect(response.body.record_id).toBe(3); // 3 because we already have 2 holdings (record_id 1 and 2)
+        });
+
+        test('should set created_at when creating new holding', async () => {
+            const holdingData = {
+                type: 'fund',
+                ticker: 'VTI',
+                name: 'Vanguard Total Stock Market ETF',
+                buyin_price: 250.00,
+                quantity: 20
+            };
+
+            await request(backendApp)
+                .post('/api/holdings/1')
+                .send(holdingData)
+                .expect(201);
+            
+            // Get the created holding and verify it has created_at
+            const response = await request(backendApp)
+                .get('/api/holdings/1')
+                .expect(200);
+            
+            const newHolding = response.body.find(h => h.ticker === 'VTI');
+            expect(newHolding).toBeDefined();
+            expect(newHolding.created_at).toBeDefined();
+            expect(newHolding.created_at).toMatch(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/); // Timestamp format
         });
 
         test('should handle missing type', async () => {
@@ -369,6 +434,39 @@ describe('Holdings API Tests', () => {
                 .expect(400);
             
             expect(response.body.message).toBe('All fields are required');
+        });
+
+        test('should preserve created_at when updating holding', async () => {
+            // First, get the original holding to check its created_at
+            const originalResponse = await request(backendApp)
+                .get('/api/holdings/1')
+                .expect(200);
+            
+            const originalHolding = originalResponse.body.find(h => h.record_id === 1);
+            const originalCreatedAt = originalHolding.created_at;
+            
+            // Update the holding
+            const updateData = {
+                type: 'stock',
+                ticker: 'GOOGL',
+                name: 'Alphabet Inc.',
+                buyin_price: 2800.00,
+                quantity: 5
+            };
+
+            await request(backendApp)
+                .put('/api/holdings/1/1')
+                .send(updateData)
+                .expect(200);
+            
+            // Get the updated holding and verify created_at is unchanged
+            const updatedResponse = await request(backendApp)
+                .get('/api/holdings/1')
+                .expect(200);
+            
+            const updatedHolding = updatedResponse.body.find(h => h.record_id === 1);
+            expect(updatedHolding.created_at).toBe(originalCreatedAt);
+            expect(updatedHolding.ticker).toBe('GOOGL'); // Verify other fields were updated
         });
     });
 
