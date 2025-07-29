@@ -18,7 +18,7 @@ jest.mock('sqlite3', () => {
                 if (callback) callback(null, { lastID: 1, changes: 1 });
             } else if (query.includes('UPDATE users')) {
                 // Check if the user_id parameter is '999' (non-existent user)
-                const user_id = params[2]; // user_id is the 3rd parameter (index 2) in UPDATE users SET username = ?, password = ? WHERE user_id = ?
+                const user_id = params[3]; // user_id is the 4th parameter (index 3) in UPDATE users SET username = ?, password = ?, avatar = ? WHERE user_id = ?
                 if (user_id === '999') {
                     if (callback) {
                         const result = { changes: 0 };
@@ -61,11 +61,11 @@ jest.mock('sqlite3', () => {
                 if (user_id === '999') {
                     if (callback) callback(null, null);
                 } else {
-                    if (callback) callback(null, { user_id: parseInt(user_id), username: 'testuser', password: 'hash' });
+                    if (callback) callback(null, { user_id: parseInt(user_id), username: 'testuser', password: 'hash', avatar: 'test-avatar.jpg' });
                 }
             } else if (query.includes('WHERE username = ?')) {
                 const username = params[0];
-                if (callback) callback(null, { user_id: 1, username, password: 'hash' });
+                if (callback) callback(null, { user_id: 1, username, password: 'hash', avatar: 'test-avatar.jpg' });
             } else {
                 if (callback) callback(null, null);
             }
@@ -77,8 +77,8 @@ jest.mock('sqlite3', () => {
             }
             
             if (callback) callback(null, [
-                { user_id: 1, username: 'user1', password: 'hash1' },
-                { user_id: 2, username: 'user2', password: 'hash2' }
+                { user_id: 1, username: 'user1', password: 'hash1', avatar: 'user1-avatar.jpg' },
+                { user_id: 2, username: 'user2', password: 'hash2', avatar: 'user2-avatar.jpg' }
             ]);
         }),
         close: jest.fn().mockImplementation((callback) => {
@@ -144,6 +144,21 @@ describe('Users API Tests', () => {
             expect(response.body.message).toBe('User created successfully');
         });
 
+        test('should create a new user with avatar', async () => {
+            const userData = {
+                username: 'newuser',
+                password: 'newpassword',
+                avatar: 'newuser-avatar.jpg'
+            };
+
+            const response = await request(backendApp)
+                .post('/api/users/1')
+                .send(userData)
+                .expect(201);
+            
+            expect(response.body.message).toBe('User created successfully');
+        });
+
         test('should handle missing username', async () => {
             const userData = {
                 password: 'newpassword'
@@ -176,6 +191,21 @@ describe('Users API Tests', () => {
             const updateData = {
                 username: 'updateduser',
                 password: 'newpassword'
+            };
+
+            const response = await request(backendApp)
+                .put('/api/users/1')
+                .send(updateData)
+                .expect(200);
+            
+            expect(response.body.message).toBe('User updated successfully');
+        });
+
+        test('should update existing user with avatar', async () => {
+            const updateData = {
+                username: 'updateduser',
+                password: 'newpassword',
+                avatar: 'updated-avatar.jpg'
             };
 
             const response = await request(backendApp)

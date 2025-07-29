@@ -197,7 +197,7 @@ jest.mock('sqlite3', () => {
                 if (user_id === '999') {
                     if (callback) callback(null, null);
                 } else {
-                    if (callback) callback(null, { user_id: parseInt(user_id), username: 'testuser', password: 'hash' });
+                    if (callback) callback(null, { user_id: parseInt(user_id), username: 'testuser', password: 'hash', avatar: 'test-avatar.jpg' });
                 }
             } else {
                 if (callback) callback(null, null);
@@ -219,8 +219,8 @@ jest.mock('sqlite3', () => {
                 }
             } else if (query.includes('users')) {
                 if (callback) callback(null, [
-                    { user_id: 1, username: 'user1', password: 'hash1' },
-                    { user_id: 2, username: 'user2', password: 'hash2' }
+                    { user_id: 1, username: 'user1', password: 'hash1', avatar: 'user1-avatar.jpg' },
+                    { user_id: 2, username: 'user2', password: 'hash2', avatar: 'user2-avatar.jpg' }
                 ]);
             } else {
                 if (callback) callback(null, []);

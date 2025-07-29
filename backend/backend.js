@@ -13,6 +13,7 @@ db.serialize(() => {
             user_id INTEGER PRIMARY KEY AUTOINCREMENT,
             username TEXT NOT NULL,
             password TEXT NOT NULL,
+            avatar TEXT,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     `);
@@ -74,14 +75,14 @@ app.get('/api/users/:user_id', (req, res) => {
 
 app.post('/api/users/:user_id', (req, res) => {
     const user_id = req.params.user_id;
-    const { username, password } = req.body;
+    const { username, password, avatar } = req.body;
     
     if (!username || !password) {
         return res.status(400).json({ message: 'Username and password are required' });
     }
     
     const hash = crypto.createHash('sha256').update(password).digest('hex');
-    db.run('INSERT INTO users (username, password) VALUES (?, ?)', [username, hash], function(err) {
+    db.run('INSERT INTO users (username, password, avatar) VALUES (?, ?, ?)', [username, hash, avatar || null], function(err) {
         if (err) {
             res.status(500).json({ message: 'Database error', error: err.message });
         } else {
@@ -92,14 +93,14 @@ app.post('/api/users/:user_id', (req, res) => {
 
 app.put('/api/users/:user_id', (req, res) => {
     const user_id = req.params.user_id;
-    const { username, password } = req.body;
+    const { username, password, avatar } = req.body;
     
     if (!username || !password) {
         return res.status(400).json({ message: 'Username and password are required' });
     }
     
     const hash = crypto.createHash('sha256').update(password).digest('hex');
-    db.run('UPDATE users SET username = ?, password = ? WHERE user_id = ?', [username, hash, user_id], function(err) {
+    db.run('UPDATE users SET username = ?, password = ?, avatar = ? WHERE user_id = ?', [username, hash, avatar || null, user_id], function(err) {
         if (err) {
             res.status(500).json({ message: 'Database error', error: err.message });
         } else if (this.changes === 0) {
