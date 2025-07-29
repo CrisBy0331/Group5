@@ -53,14 +53,14 @@
     <!-- Left: Logo and platform name -->
     <a href="index.html" class="flex items-center space-x-4 group cursor-pointer select-none">
       <!-- Logo icon -->
-      <svg class="w-9 h-9 text-blue-400 group-hover:text-blue-600 transition" fill="none" stroke="currentColor"
+      <svg class="w-9 h-9 text-blue-500 group-hover:text-blue-600 transition" fill="none" stroke="currentColor"
         stroke-width="2" viewBox="0 0 32 32">
         <circle cx="16" cy="16" r="13" stroke="currentColor" stroke-width="2" fill="#e0f2fe" />
         <path d="M10 20c2-4 10-4 12 0" stroke="#38bdf8" stroke-width="2" fill="none" />
         <path d="M16 10v8" stroke="#2563eb" stroke-width="2" stroke-linecap="round" />
         <circle cx="16" cy="10" r="2" fill="#2563eb" />
       </svg>
-      <span class="text-2xl font-extrabold text-blue-400 group-hover:text-blue-600 tracking-wide transition leading-none"
+      <span class="text-2xl font-extrabold text-blue-500 group-hover:text-blue-600 tracking-wide transition leading-none"
         style="letter-spacing: 1px;">
         Future Assets
       </span>
@@ -69,7 +69,7 @@
     <div class="flex items-center space-x-4">
       <div id="userArea">
         <button id="loginBtn"
-          class="text-blue-400 group-hover:text-blue-600 text-lg font-bold bg-transparent px-4 py-2 rounded transition"
+          class="text-blue-500 group-hover:text-blue-600 text-lg font-bold bg-transparent px-4 py-2 rounded transition"
           onclick="login()">
           Login
         </button>
@@ -77,15 +77,6 @@
     </div>
   </header>
 
-  <!-- 移动端导航栏 -->
-  <nav id="mobileNav" class="md:hidden bg-white shadow p-6 fixed top-16 left-0 w-full z-40 hidden">
-    <a href="javascript:void(0)" onclick="scrollToSection('dashboard')"
-      class="block text-blue-600 font-semibold hover:underline mb-2" data-i18n="dashboard">Dashboard</a>
-    <a href="javascript:void(0)" onclick="scrollToSection('allocation')"
-      class="block text-gray-700 hover:text-blue-600 mb-2" data-i18n="allocation">Asset Allocation</a>
-    <a href="javascript:void(0)" onclick="scrollToSection('positions')"
-      class="block text-gray-700 hover:text-blue-600" data-i18n="positions">Positions Overview</a>
-  </nav>
 
   <!-- 页面布局 -->
   <div class="flex">
@@ -96,17 +87,17 @@
       </button>
       <nav class="space-y-4 flex flex-col items-center w-full mt-20">
         <a href="javascript:void(0)" onclick="scrollToSection('dashboard')"
-          class="flex flex-col items-center justify-center px-2 py-2 rounded hover:bg-blue-50 transition text-blue-600 font-semibold sidebar-link" data-i18n="dashboard">
+          class="flex flex-col items-center justify-center px-2 py-2 rounded hover:bg-blue-50 transition text-blue-500 font-semibold sidebar-link" data-i18n="dashboard">
             <svg class="w-6 h-6 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8v-10h-8v10zm0-18v6h8V3h-8z"/></svg>
             <span class="sidebar-text mt-1 text-center">Dashboard</span>
         </a>
         <a href="javascript:void(0)" onclick="scrollToSection('allocation')"
-          class="flex flex-col items-center justify-center px-2 py-2 rounded hover:bg-blue-50 transition text-gray-700 hover:text-blue-600 sidebar-link" data-i18n="allocation">
+          class="flex flex-col items-center justify-center px-2 py-2 rounded hover:bg-blue-50 transition text-gray-700 hover:text-blue-500 sidebar-link" data-i18n="allocation">
             <svg class="w-6 h-6 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 2v10l6 6"/></svg>
             <span class="sidebar-text mt-1 text-center">Asset Allocation</span>
         </a>
         <a href="javascript:void(0)" onclick="scrollToSection('positions')"
-          class="flex flex-col items-center justify-center px-2 py-2 rounded hover:bg-blue-50 transition text-gray-700 hover:text-blue-600 sidebar-link" data-i18n="positions">
+          class="flex flex-col items-center justify-center px-2 py-2 rounded hover:bg-blue-50 transition text-gray-700 hover:text-blue-500 sidebar-link" data-i18n="positions">
             <svg class="w-6 h-6 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M16 3v4M8 3v4"/></svg>
             <span class="sidebar-text mt-1 text-center">Positions Overview</span>
         </a>
@@ -304,7 +295,7 @@
         <!-- 持仓列表 -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="positionsList">
           <!-- 持仓项1 -->
-          <div class="bg-white rounded-xl shadow-md overflow-hidden transition-all duration-300 hover:shadow-xl flex flex-col">
+          <div class="bg-white rounded-xl shadow-md overflow-hidden transition-all duration-300 hover:shadow-xl transform hover:-translate-y-1 flex flex-col">
             <div class="p-4 flex flex-col gap-2">
               <div class="flex justify-between items-center mb-2">
                 <div>
@@ -339,7 +330,7 @@
             </div>
           </div>
           <!-- 持仓项2 -->
-          <div class="bg-white rounded-xl shadow-md overflow-hidden transition-all duration-300 hover:shadow-xl flex flex-col">
+          <div class="bg-white rounded-xl shadow-md overflow-hidden transition-all duration-300 hover:shadow-xl transform hover:-translate-y-1 flex flex-col">
             <div class="p-4 flex flex-col gap-2">
               <div class="flex justify-between items-center mb-2">
                 <div>
@@ -374,7 +365,7 @@
             </div>
           </div>
           <!-- 持仓项3 -->
-          <div class="bg-white rounded-xl shadow-md overflow-hidden transition-all duration-300 hover:shadow-xl flex flex-col">
+          <div class="bg-white rounded-xl shadow-md overflow-hidden transition-all duration-300 hover:shadow-xl transform hover:-translate-y-1 flex flex-col">
             <div class="p-4 flex flex-col gap-2">
               <div class="flex justify-between items-center mb-2">
                 <div>
@@ -409,7 +400,7 @@
             </div>
           </div>
           <!-- 持仓项4 -->
-          <div class="bg-white rounded-xl shadow-md overflow-hidden transition-all duration-300 hover:shadow-xl flex flex-col">
+          <div class="bg-white rounded-xl shadow-md overflow-hidden transition-all duration-300 hover:shadow-xl transform hover:-translate-y-1 flex flex-col">
             <div class="p-4 flex flex-col gap-2">
               <div class="flex justify-between items-center mb-2">
                 <div>
@@ -444,7 +435,7 @@
             </div>
           </div>
           <!-- 持仓项5 -->
-          <div class="bg-white rounded-xl shadow-md overflow-hidden transition-all duration-300 hover:shadow-xl flex flex-col">
+          <div class="bg-white rounded-xl shadow-md overflow-hidden transition-all duration-300 hover:shadow-xl transform hover:-translate-y-1 flex flex-col">
             <div class="p-4 flex flex-col gap-2">
               <div class="flex justify-between items-center mb-2">
                 <div>
