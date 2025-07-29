@@ -264,212 +264,176 @@
         <!-- 持仓列表 -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="positionsList">
           <!-- 持仓项1 -->
-          <div class="bg-white rounded-xl shadow-md overflow-hidden transition-all duration-300 hover:shadow-xl flex flex-col h-full">
-            <div class="p-3 flex-1 flex flex-col">
-              <div class="flex justify-between items-center mb-1">
-                <div class="flex items-center gap-2">
+          <div class="bg-white rounded-xl shadow-md overflow-hidden transition-all duration-300 hover:shadow-xl flex flex-col">
+            <div class="p-4 flex flex-col gap-2">
+              <div class="flex justify-between items-center mb-2">
+                <div>
                   <h3 class="font-bold text-lg" data-i18n="apple">Apple Inc.</h3>
                   <span class="text-gray-400 text-xs font-mono">AAPL</span>
                 </div>
                 <div class="bg-green-100 text-green-600 px-2 py-1 rounded text-xs font-medium">+2.45%</div>
               </div>
-
-              <div class="grid grid-cols-3 gap-x-4 mb-2">
+              <div class="grid grid-cols-3 gap-x-2 mb-2">
                 <div>
-                  <div class="text-gray-500 text-xs" data-i18n="holdingAmount">Holding Amount</div>
+                  <div class="text-gray-500 text-xs" data-i18n="holdingAmount">Holding</div>
                   <div class="font-bold text-base">120</div>
-                  <div class="text-gray-500 text-xs mt-2">Holding Days</div>
-                  <div class="font-bold text-base">365</div>
                 </div>
                 <div>
-                  <div class="text-gray-500 text-xs" data-i18n="currentPrice">Current Price</div>
+                  <div class="text-gray-500 text-xs" data-i18n="currentPrice">Price</div>
                   <div class="font-bold text-base">￥1,420.50</div>
-                  <div class="text-gray-500 text-xs mt-2">Asset Type</div>
-                  <div class="font-bold text-base">Stock</div>
                 </div>
                 <div>
-                  <div class="text-gray-500 text-xs" data-i18n="marketValue">Market Value</div>
+                  <div class="text-gray-500 text-xs" data-i18n="marketValue">Value</div>
                   <div class="font-bold text-base">￥170,460</div>
-                  <div class="text-gray-500 text-xs mt-2">Sector</div>
-                  <div class="font-bold text-base">Tech</div>
                 </div>
               </div>
-
-              <!-- 如需小图可用更小高度，否则可直接移除canvas -->
-              <!-- <div class="h-10">
-                <canvas class="stock-chart" data-ticker="AAPL"></canvas>
-              </div> -->
+              <div class="flex justify-between items-center text-xs text-gray-500 mt-2">
+                <span data-i18n="sector">Sector: Tech</span>
+                <span data-i18n="days">Days: 365</span>
+                <span data-i18n="type">Type: Stock</span>
+              </div>
             </div>
-
-            <div class="bg-gray-50 px-3 py-2 flex justify-between items-center mt-0">
+            <div class="bg-gray-50 px-4 py-2 flex justify-between items-center">
               <div class="text-gray-500 text-sm" data-i18n="proportion">Proportion 13.7%</div>
               <button class="text-blue-500 text-sm hover:underline" data-i18n="viewDetail">View Details</button>
             </div>
           </div>
-
           <!-- 持仓项2 -->
-          <div class="bg-white rounded-xl shadow-md overflow-hidden transition-all duration-300 hover:shadow-xl flex flex-col h-full">
-            <div class="p-3 flex-1 flex flex-col">
-              <div class="flex justify-between items-center mb-1">
-                <div class="flex items-center gap-2">
+          <div class="bg-white rounded-xl shadow-md overflow-hidden transition-all duration-300 hover:shadow-xl flex flex-col">
+            <div class="p-4 flex flex-col gap-2">
+              <div class="flex justify-between items-center mb-2">
+                <div>
                   <h3 class="font-bold text-lg" data-i18n="microsoft">Microsoft</h3>
                   <span class="text-gray-400 text-xs font-mono">MSFT</span>
                 </div>
                 <div class="bg-red-100 text-red-600 px-2 py-1 rounded text-xs font-medium">-1.23%</div>
               </div>
-              <div class="grid grid-cols-3 gap-x-4 mb-2">
+              <div class="grid grid-cols-3 gap-x-2 mb-2">
                 <div>
-                  <div class="text-gray-500 text-xs" data-i18n="holdingAmount">Holding Amount</div>
+                  <div class="text-gray-500 text-xs" data-i18n="holdingAmount">Holding</div>
                   <div class="font-bold text-base">85</div>
-                  <div class="text-gray-500 text-xs mt-2">Holding Days</div>
-                  <div class="font-bold text-base">210</div>
                 </div>
                 <div>
-                  <div class="text-gray-500 text-xs" data-i18n="currentPrice">Current Price</div>
+                  <div class="text-gray-500 text-xs" data-i18n="currentPrice">Price</div>
                   <div class="font-bold text-base">￥2,340.00</div>
-                  <div class="text-gray-500 text-xs mt-2">Asset Type</div>
-                  <div class="font-bold text-base">Stock</div>
                 </div>
                 <div>
-                  <div class="text-gray-500 text-xs" data-i18n="marketValue">Market Value</div>
+                  <div class="text-gray-500 text-xs" data-i18n="marketValue">Value</div>
                   <div class="font-bold text-base">￥198,900</div>
-                  <div class="text-gray-500 text-xs mt-2">Sector</div>
-                  <div class="font-bold text-base">Software</div>
                 </div>
               </div>
-
-              <div class="h-20">
-                <canvas class="stock-chart" data-ticker="MSFT"></canvas>
+              <div class="flex justify-between items-center text-xs text-gray-500 mt-2">
+                <span data-i18n="sector">Sector: Software</span>
+                <span data-i18n="days">Days: 210</span>
+                <span data-i18n="type">Type: Stock</span>
               </div>
             </div>
-
-            <div class="bg-gray-50 px-3 py-2 flex justify-between items-center mt-0">
+            <div class="bg-gray-50 px-4 py-2 flex justify-between items-center">
               <div class="text-gray-500 text-sm" data-i18n="proportion">Proportion 15.9%</div>
               <button class="text-blue-500 text-sm hover:underline" data-i18n="viewDetail">View Details</button>
             </div>
           </div>
-
           <!-- 持仓项3 -->
-          <div class="bg-white rounded-xl shadow-md overflow-hidden transition-all duration-300 hover:shadow-xl flex flex-col h-full">
-            <div class="p-3 flex-1 flex flex-col">
-              <div class="flex justify-between items-center mb-1">
-                <div class="flex items-center gap-2">
+          <div class="bg-white rounded-xl shadow-md overflow-hidden transition-all duration-300 hover:shadow-xl flex flex-col">
+            <div class="p-4 flex flex-col gap-2">
+              <div class="flex justify-between items-center mb-2">
+                <div>
                   <h3 class="font-bold text-lg" data-i18n="tesla">Tesla</h3>
                   <span class="text-gray-400 text-xs font-mono">TSLA</span>
                 </div>
                 <div class="bg-green-100 text-green-600 px-2 py-1 rounded text-xs font-medium">+3.12%</div>
               </div>
-              <div class="grid grid-cols-3 gap-x-4 mb-2">
+              <div class="grid grid-cols-3 gap-x-2 mb-2">
                 <div>
-                  <div class="text-gray-500 text-xs" data-i18n="holdingAmount">Holding Amount</div>
+                  <div class="text-gray-500 text-xs" data-i18n="holdingAmount">Holding</div>
                   <div class="font-bold text-base">50</div>
-                  <div class="text-gray-500 text-xs mt-2">Holding Days</div>
-                  <div class="font-bold text-base">90</div>
                 </div>
                 <div>
-                  <div class="text-gray-500 text-xs" data-i18n="currentPrice">Current Price</div>
+                  <div class="text-gray-500 text-xs" data-i18n="currentPrice">Price</div>
                   <div class="font-bold text-base">￥785.30</div>
-                  <div class="text-gray-500 text-xs mt-2">Asset Type</div>
-                  <div class="font-bold text-base">Stock</div>
                 </div>
                 <div>
-                  <div class="text-gray-500 text-xs" data-i18n="marketValue">Market Value</div>
+                  <div class="text-gray-500 text-xs" data-i18n="marketValue">Value</div>
                   <div class="font-bold text-base">￥39,265</div>
-                  <div class="text-gray-500 text-xs mt-2">Sector</div>
-                  <div class="font-bold text-base">Automotive</div>
                 </div>
               </div>
-
-              <div class="h-20">
-                <canvas class="stock-chart" data-ticker="TSLA"></canvas>
+              <div class="flex justify-between items-center text-xs text-gray-500 mt-2">
+                <span data-i18n="sector">Sector: Automotive</span>
+                <span data-i18n="days">Days: 90</span>
+                <span data-i18n="type">Type: Stock</span>
               </div>
             </div>
-
-            <div class="bg-gray-50 px-3 py-2 flex justify-between items-center mt-0">
+            <div class="bg-gray-50 px-4 py-2 flex justify-between items-center">
               <div class="text-gray-500 text-sm" data-i18n="proportion">Proportion 3.2%</div>
               <button class="text-blue-500 text-sm hover:underline" data-i18n="viewDetail">View Details</button>
             </div>
           </div>
-
           <!-- 持仓项4 -->
-          <div class="bg-white rounded-xl shadow-md overflow-hidden transition-all duration-300 hover:shadow-xl flex flex-col h-full">
-            <div class="p-3 flex-1 flex flex-col">
-              <div class="flex justify-between items-center mb-1">
-                <div class="flex items-center gap-2">
+          <div class="bg-white rounded-xl shadow-md overflow-hidden transition-all duration-300 hover:shadow-xl flex flex-col">
+            <div class="p-4 flex flex-col gap-2">
+              <div class="flex justify-between items-center mb-2">
+                <div>
                   <h3 class="font-bold text-lg" data-i18n="amazon">Amazon</h3>
                   <span class="text-gray-400 text-xs font-mono">AMZN</span>
                 </div>
                 <div class="bg-green-100 text-green-600 px-2 py-1 rounded text-xs font-medium">+0.87%</div>
               </div>
-              <div class="grid grid-cols-3 gap-x-4 mb-2">
+              <div class="grid grid-cols-3 gap-x-2 mb-2">
                 <div>
-                  <div class="text-gray-500 text-xs" data-i18n="holdingAmount">Holding Amount</div>
+                  <div class="text-gray-500 text-xs" data-i18n="holdingAmount">Holding</div>
                   <div class="font-bold text-base">35</div>
-                  <div class="text-gray-500 text-xs mt-2">Holding Days</div>
-                  <div class="font-bold text-base">180</div>
                 </div>
                 <div>
-                  <div class="text-gray-500 text-xs" data-i18n="currentPrice">Current Price</div>
+                  <div class="text-gray-500 text-xs" data-i18n="currentPrice">Price</div>
                   <div class="font-bold text-base">￥1,876.20</div>
-                  <div class="text-gray-500 text-xs mt-2">Asset Type</div>
-                  <div class="font-bold text-base">Stock</div>
                 </div>
                 <div>
-                  <div class="text-gray-500 text-xs" data-i18n="marketValue">Market Value</div>
+                  <div class="text-gray-500 text-xs" data-i18n="marketValue">Value</div>
                   <div class="font-bold text-base">￥65,667</div>
-                  <div class="text-gray-500 text-xs mt-2">Sector</div>
-                  <div class="font-bold text-base">E-Commerce</div>
                 </div>
               </div>
-
-              <div class="h-20">
-                <canvas class="stock-chart" data-ticker="AMZN"></canvas>
+              <div class="flex justify-between items-center text-xs text-gray-500 mt-2">
+                <span data-i18n="sector">Sector: E-Commerce</span>
+                <span data-i18n="days">Days: 180</span>
+                <span data-i18n="type">Type: Stock</span>
               </div>
             </div>
-
-            <div class="bg-gray-50 px-3 py-2 flex justify-between items-center mt-0">
+            <div class="bg-gray-50 px-4 py-2 flex justify-between items-center">
               <div class="text-gray-500 text-sm" data-i18n="proportion">Proportion 5.3%</div>
               <button class="text-blue-500 text-sm hover:underline" data-i18n="viewDetail">View Details</button>
             </div>
           </div>
-
           <!-- 持仓项5 -->
-          <div class="bg-white rounded-xl shadow-md overflow-hidden transition-all duration-300 hover:shadow-xl flex flex-col h-full">
-            <div class="p-3 flex-1 flex flex-col">
-              <div class="flex justify-between items-center mb-1">
-                <div class="flex items-center gap-2">
+          <div class="bg-white rounded-xl shadow-md overflow-hidden transition-all duration-300 hover:shadow-xl flex flex-col">
+            <div class="p-4 flex flex-col gap-2">
+              <div class="flex justify-between items-center mb-2">
+                <div>
                   <h3 class="font-bold text-lg" data-i18n="alibaba">Alibaba</h3>
                   <span class="text-gray-400 text-xs font-mono">BABA</span>
                 </div>
                 <div class="bg-red-100 text-red-600 px-2 py-1 rounded text-xs font-medium">-2.35%</div>
               </div>
-              <div class="grid grid-cols-3 gap-x-4 mb-2">
+              <div class="grid grid-cols-3 gap-x-2 mb-2">
                 <div>
-                  <div class="text-gray-500 text-xs" data-i18n="holdingAmount">Holding Amount</div>
+                  <div class="text-gray-500 text-xs" data-i18n="holdingAmount">Holding</div>
                   <div class="font-bold text-base">100</div>
-                  <div class="text-gray-500 text-xs mt-2">Holding Days</div>
-                  <div class="font-bold text-base">60</div>
                 </div>
                 <div>
-                  <div class="text-gray-500 text-xs" data-i18n="currentPrice">Current Price</div>
+                  <div class="text-gray-500 text-xs" data-i18n="currentPrice">Price</div>
                   <div class="font-bold text-base">￥89.65</div>
-                  <div class="text-gray-500 text-xs mt-2">Asset Type</div>
-                  <div class="font-bold text-base">Stock</div>
                 </div>
                 <div>
-                  <div class="text-gray-500 text-xs" data-i18n="marketValue">Market Value</div>
+                  <div class="text-gray-500 text-xs" data-i18n="marketValue">Value</div>
                   <div class="font-bold text-base">￥8,965</div>
-                  <div class="text-gray-500 text-xs mt-2">Sector</div>
-                  <div class="font-bold text-base">E-Commerce</div>
                 </div>
               </div>
-
-              <div class="h-20">
-                <canvas class="stock-chart" data-ticker="BABA"></canvas>
+              <div class="flex justify-between items-center text-xs text-gray-500 mt-2">
+                <span data-i18n="sector">Sector: E-Commerce</span>
+                <span data-i18n="days">Days: 60</span>
+                <span data-i18n="type">Type: Stock</span>
               </div>
             </div>
-
-            <div class="bg-gray-50 px-3 py-2 flex justify-between items-center mt-0">
+            <div class="bg-gray-50 px-4 py-2 flex justify-between items-center">
               <div class="text-gray-500 text-sm" data-i18n="proportion">Proportion 0.7%</div>
               <button class="text-blue-500 text-sm hover:underline" data-i18n="viewDetail">View Details</button>
             </div>
