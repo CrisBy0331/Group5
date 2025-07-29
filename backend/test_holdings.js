@@ -526,7 +526,7 @@ describe('Holdings API Tests', () => {
 
     describe('Type Validation', () => {
         test('should accept valid holding types', async () => {
-            const validTypes = ['stock', 'bond', 'fund', 'gold', 'cash'];
+            const validTypes = ['stock', 'bond', 'fund', 'gold', 'currency'];
             
             for (const type of validTypes) {
                 const holdingData = {

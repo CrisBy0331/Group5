@@ -17,7 +17,7 @@ const holdingsData = [
     { type: 'bond', ticker: 'BOND001', name: 'US Treasury Bond 10Y', buyin_price: 1000.00, quantity: 3 },
     { type: 'bond', ticker: 'BOND002', name: 'Corporate Bond Fund', buyin_price: 950.50, quantity: 7 },
     { type: 'gold', ticker: 'GLD', name: 'SPDR Gold Shares', buyin_price: 185.75, quantity: 20 },
-    { type: 'cash', ticker: 'CASH', name: 'Cash Reserve', buyin_price: 1.00, quantity: 5000 }
+    { type: 'currency', ticker: 'USD', name: 'Cash Reserve', buyin_price: 1.00, quantity: 5000 }
 ];
 
 db.serialize(() => {
@@ -35,7 +35,7 @@ db.serialize(() => {
         CREATE TABLE IF NOT EXISTS holding (
             user_id INTEGER NOT NULL,
             record_id INTEGER PRIMARY KEY AUTOINCREMENT,
-            type TEXT CHECK(type IN ('stock', 'bond', 'fund', 'gold', 'cash')) NOT NULL,
+            type TEXT CHECK(type IN ('stock', 'bond', 'fund', 'gold', 'currency')) NOT NULL,
             ticker TEXT NOT NULL,
             name TEXT NOT NULL,
             buyin_price REAL NOT NULL,

@@ -21,7 +21,7 @@ db.serialize(() => {
         CREATE TABLE IF NOT EXISTS holding (
             user_id INTEGER NOT NULL,
             record_id INTEGER PRIMARY KEY AUTOINCREMENT,
-            type TEXT CHECK(type IN ('stock', 'bond', 'fund', 'gold', 'cash')) NOT NULL,
+            type TEXT CHECK(type IN ('stock', 'bond', 'fund', 'gold', 'currency')) NOT NULL,
             ticker TEXT NOT NULL,
             name TEXT NOT NULL,
             buyin_price REAL NOT NULL,
