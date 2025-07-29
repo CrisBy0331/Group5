@@ -2,7 +2,8 @@
   "name": "group5",
   "version": "1.0.0",
   "description": "This is a training project, created on 24/07/2025.",
-  "main": "index.js",
+  "main": "detail_s.js",
+  "types": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -13,7 +14,7 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "type": "commonjs",
+  "type": "module",
   "bugs": {
     "url": "https://github.com/CrisBy0331/Group5/issues"
   },
@@ -26,6 +27,8 @@
     "dotenv": "^17.2.1",
     "express": "^5.1.0",
     "mysql2": "^3.14.2",
-    "sqlite": "^5.1.1"
+    "nodemon": "^3.1.10",
+    "sqlite": "^5.1.1",
+    "sqlite3": "^5.1.7"
   }
 }
