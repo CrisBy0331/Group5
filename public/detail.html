@@ -1,38 +1,116 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>投资产品持仓详情</title>
-    <link rel="stylesheet" href="css/detail.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Position Details</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-</head>
-<body>
-    <div class="lang-switch">
-        <button onclick="switchLang('zh')">中文</button>
-        <button onclick="switchLang('en')">English</button>
-    </div>
-    <div class="portfolio-container">
-        <h1 id="page-title"></h1>
-        <div class="portfolio-summary" id="portfolio-summary"></div>
-        <div class="portfolio-filter">
-            <label for="type-filter" id="type-filter-label"></label>
-            <select id="type-filter"></select>
-            <label for="sort-field" id="sort-field-label" style="margin-left:24px;"></label>
-            <select id="sort-field"></select>
-            <label for="sort-order" id="sort-order-label" style="margin-left:16px;"></label>
-            <select id="sort-order">
-                <option value="desc"></option>
-                <option value="asc"></option>
-            </select>
-        </div>
-        <div id="holdings-list"></div>
-    </div>
     <script>
-        function switchLang(lang) {
-            // 始终跳转到 detail.html，并带上 lang 参数
-            window.location.href = 'detail.html?lang=' + lang;
+        // 检查用户登录状态
+        function checkLoginStatus() {
+            const isLoggedIn = localStorage.getItem('isLoggedIn');
+            const userToken = localStorage.getItem('userToken');
+            if (!isLoggedIn || !userToken) {
+                window.location.href = 'log_in.html';
+                return false;
+            }
+            updateUserArea();
+            return true;
         }
+        // 更新用户区域显示
+        function updateUserArea() {
+            const userAccount = localStorage.getItem('userAccount');
+            const userArea = document.getElementById('userArea');
+            if (userAccount) {
+                userArea.innerHTML = `
+                    <div class="flex items-center space-x-3">
+                        <span class="text-gray-700 font-medium">${userAccount}</span>
+                        <button onclick="logout()" class="text-red-500 hover:text-red-600 text-sm font-medium bg-transparent px-3 py-1 rounded border border-red-300 hover:border-red-400 transition">Logout</button>
+                    </div>
+                `;
+            } else {
+                userArea.innerHTML = `
+                    <a href="log_in.html" class="text-blue-500 hover:text-blue-600 text-lg font-bold bg-transparent px-4 py-2 rounded transition">Login</a>
+                `;
+            }
+        }
+        // 登出功能
+        function logout() {
+            localStorage.removeItem('isLoggedIn');
+            localStorage.removeItem('userToken');
+            localStorage.removeItem('userAccount');
+            window.location.href = 'log_in.html';
+        }
+        // 侧边栏切换功能
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const mainContent = document.getElementById('mainContent');
+            const toggleIcon = document.getElementById('sidebarToggleIcon');
+            if (sidebar.classList.contains('w-48')) {
+                sidebar.classList.remove('w-48');
+                sidebar.classList.add('w-16');
+                mainContent.classList.remove('md:ml-48');
+                mainContent.classList.add('md:ml-16');
+                toggleIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7" />';
+            } else {
+                sidebar.classList.remove('w-16');
+                sidebar.classList.add('w-48');
+                mainContent.classList.remove('md:ml-16');
+                mainContent.classList.add('md:ml-48');
+                toggleIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 12H5" />';
+            }
+        }
+        document.addEventListener('DOMContentLoaded', function() {
+            checkLoginStatus();
+        });
     </script>
+</head>
+<body class="bg-gradient-to-br from-blue-50 via-white to-blue-100 text-gray-800 min-h-screen">
+    <!-- 顶部导航 -->
+    <header class="bg-white shadow h-16 px-6 flex justify-between items-center sticky top-0 z-50">
+        <a href="index.html" class="flex items-center space-x-4 group cursor-pointer select-none">
+            <svg class="w-9 h-9 text-blue-400 group-hover:text-blue-600 transition" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 32 32">
+                <circle cx="16" cy="16" r="13" stroke="currentColor" stroke-width="2" fill="#e0f2fe" />
+                <path d="M10 20c2-4 10-4 12 0" stroke="#38bdf8" stroke-width="2" fill="none" />
+                <path d="M16 10v8" stroke="#2563eb" stroke-width="2" stroke-linecap="round" />
+                <circle cx="16" cy="10" r="2" fill="#2563eb" />
+            </svg>
+            <span class="text-2xl font-extrabold text-blue-400 group-hover:text-blue-600 tracking-wide transition leading-none" style="letter-spacing: 1px;">Future Assets</span>
+        </a>
+        <div class="flex items-center space-x-4">
+            <div id="userArea"></div>
+        </div>
+    </header>
+    <div class="flex">
+        <!-- 左侧导航栏 -->
+        <aside id="sidebar" class="w-48 bg-white shadow min-h-screen p-3 flex flex-col items-center transition-all duration-300 hidden md:flex fixed top-16 left-0 z-40">
+            <button id="sidebarToggle" class="mb-6 p-2 rounded hover:bg-blue-100 transition self-end" onclick="toggleSidebar()">
+                <svg id="sidebarToggleIcon" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 12H5" /></svg>
+            </button>
+            <nav class="space-y-4 flex flex-col items-center w-full mt-20">
+                <a href="index.html" class="flex flex-col items-center justify-center px-2 py-2 rounded hover:bg-blue-50 transition text-gray-700 hover:text-blue-500 sidebar-link" data-i18n="dashboard">
+                    <svg class="w-6 h-6 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8v-10h-8v10zm0-18v6h8V3h-8z"/></svg>
+                    <span class="sidebar-text mt-1 text-center">Dashboard</span>
+                </a>
+                <a href="detail.html" class="flex flex-col items-center justify-center px-2 py-2 rounded hover:bg-blue-50 transition text-blue-500 font-semibold sidebar-link" data-i18n="allocation">
+                    <svg class="w-6 h-6 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 2v10l6 6"/></svg>
+                    <span class="sidebar-text mt-1 text-center">Position Details</span>
+                </a>
+                <a href="management.html" class="flex flex-col items-center justify-center px-2 py-2 rounded hover:bg-blue-50 transition text-gray-700 hover:text-blue-500 sidebar-link" data-i18n="positions">
+                    <svg class="w-6 h-6 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M16 3v4M8 3v4"/></svg>
+                    <span class="sidebar-text mt-1 text-center">Position Management</span>
+                </a>
+            </nav>
+        </aside>
+        <!-- 右侧内容区域 -->
+        <main id="mainContent" class="flex-1 p-6 pt-6 md:ml-48 transition-all duration-300">
+            <h1 id="page-title"></h1>
+            <div id="portfolio-summary"></div>
+            <div id="portfolio-filter"></div>
+            <div id="holdings-list"></div>
+        </main>
+    </div>
     <script src="js/detail.js"></script>
 </body>
 </html>
