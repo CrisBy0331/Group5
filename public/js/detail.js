@@ -63,113 +63,13 @@ const TEXT = {
     }
 };
 
-const holdings = [
-    {
-        id: 1,
-        name: { zh: '贵州茅台', en: 'Kweichow Moutai' },
-        code: '600519',
-        type: { zh: '股票', en: 'Stock' },
-        logo: 'logos/moutai.png',
-        amount: 50000,
-        quantity: 100,
-        buyPrice: 1750,
-        currentPrice: 2000,
-        profit: 15.6,
-        time: '2024-05-01',
-        chart: {
-            labels: { zh: ['1月', '2月', '3月', '4月', '5月', '6月'], en: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'] },
-            data: [1800, 1850, 1900, 1850, 1950, 2000]
-        }
-    },
-    {
-        id: 2,
-        name: { zh: '华夏创新基金', en: 'China Innovation Fund' },
-        code: '000001',
-        type: { zh: '基金', en: 'Fund' },
-        logo: 'logos/huaxia.png',
-        amount: 30000,
-        quantity: 200,
-        buyPrice: 1.52,
-        currentPrice: 1.47,
-        profit: -2.3,
-        time: '2024-04-15',
-        chart: {
-            labels: { zh: ['1月', '2月', '3月', '4月', '5月', '6月'], en: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'] },
-            data: [1.5, 1.48, 1.45, 1.47, 1.46, 1.47]
-        }
-    },
-    {
-        id: 3,
-        name: { zh: '国债', en: 'Government Bond' },
-        code: '019666',
-        type: { zh: '债券', en: 'Bond' },
-        logo: 'logos/bond.png',
-        amount: 100000,
-        quantity: 50,
-        buyPrice: 99.8,
-        currentPrice: 103.2,
-        profit: 3.2,
-        time: '2024-03-20',
-        chart: {
-            labels: { zh: ['1月', '2月', '3月', '4月', '5月', '6月'], en: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'] },
-            data: [100, 101, 102, 102.5, 103, 103.2]
-        }
-    },
-    {
-        id: 4,
-        name: { zh: '黄金ETF', en: 'Gold ETF' },
-        code: '518880',
-        type: { zh: '黄金', en: 'Gold' },
-        logo: 'logos/gold.png',
-        amount: 20000,
-        quantity: 10,
-        buyPrice: 3.7,
-        currentPrice: 4.3,
-        profit: 8.1,
-        time: '2024-05-10',
-        chart: {
-            labels: { zh: ['1月', '2月', '3月', '4月', '5月', '6月'], en: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'] },
-            data: [3.8, 3.9, 4.0, 4.1, 4.2, 4.3]
-        }
-    },
-    {
-        id: 5,
-        name: { zh: '美元理财', en: 'USD Wealth' },
-        code: 'USD001',
-        type: { zh: '货币', en: 'Currency' },
-        logo: 'logos/usd.png',
-        amount: 15000,
-        quantity: 500,
-        buyPrice: 1.00,
-        currentPrice: 1.04,
-        profit: 1.2,
-        time: '2024-02-28',
-        chart: {
-            labels: { zh: ['1月', '2月', '3月', '4月', '5月', '6月'], en: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'] },
-            data: [1.00, 1.01, 1.02, 1.01, 1.03, 1.04]
-        }
-    },
-    {
-        id: 6,
-        name: { zh: '商业地产信托', en: 'Commercial REIT' },
-        code: 'REIT001',
-        type: { zh: '房地产', en: 'Real Estate' },
-        logo: 'logos/reit.png',
-        amount: 80000,
-        quantity: 5,
-        buyPrice: 9.8,
-        currentPrice: 11,
-        profit: 5.5,
-        time: '2024-04-01',
-        chart: {
-            labels: { zh: ['1月', '2月', '3月', '4月', '5月', '6月'], en: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'] },
-            data: [10, 10.2, 10.5, 10.7, 10.8, 11]
-        }
-    }
-];
+let holdings = []; // 声明 holdings 变量，用于存储从后端获取的数据
 
 // 动态生成类型筛选选项
 function renderTypeFilter() {
+    // 确保 holdings 数组已经填充
+    if (holdings.length === 0) return;
+
     const types = Array.from(new Set(holdings.map(h => h.type[lang])));
     const select = document.getElementById('type-filter');
     select.innerHTML = `<option value="all">${TEXT[lang].all}</option>` +
@@ -191,8 +91,8 @@ function renderSummary(filtered) {
     document.getElementById('portfolio-summary').innerHTML =
         TEXT[lang].summary.map((tpl, i) =>
             tpl.replace('{amount}', totalAmount)
-               .replace('{profit}', avgProfit)
-               .replace('{count}', filtered.length)
+            .replace('{profit}', avgProfit)
+            .replace('{count}', filtered.length)
         ).join('<div style="margin-right:32px;display:inline-block"></div>');
 }
 
@@ -217,15 +117,24 @@ function getTypeClass(typeEn) {
         case 'gold': return 'holding-type-gold';
         case 'currency': return 'holding-type-currency';
         case 'real estate': return 'holding-type-realestate';
+        case 'cash': return 'holding-type-cash'; // Add cash type
         default: return '';
     }
 }
 
 // 新增：渲染自定义类型筛选菜单
 function renderTypeFilterCustom() {
+    // 确保 holdings 数组已经填充
+    if (holdings.length === 0) return;
+
     const types = Array.from(new Set(holdings.map(h => h.type[lang])));
     const select = document.getElementById('type-filter');
     select.style.display = 'none';
+
+    // 确保没有重复的自定义菜单
+    if (document.querySelector('.type-filter-dropdown-wrapper')) {
+        document.querySelector('.type-filter-dropdown-wrapper').remove();
+    }
 
     // 创建自定义下拉菜单
     const wrapper = document.createElement('div');
@@ -240,7 +149,8 @@ function renderTypeFilterCustom() {
                 <span class="type-dot type-dot-all"></span>${TEXT[lang].all}
             </div>
             ${types.map(type => {
-                const typeEn = holdings.find(h => h.type[lang] === type).type.en;
+                const holdingOfType = holdings.find(h => h.type[lang] === type);
+                const typeEn = holdingOfType ? holdingOfType.type.en : ''; // Fallback if type not found
                 const typeClass = getTypeClass(typeEn);
                 return `<div class="type-filter-option" data-value="${type}">
                     <span class="type-dot ${typeClass}"></span>${type}
@@ -282,13 +192,32 @@ function renderTypeFilterCustom() {
     selected.innerHTML = list.querySelector('.type-filter-option[data-value="' + select.value + '"]').innerHTML + '<span class="type-filter-arrow">&#9662;</span>';
 }
 
-// 渲染持仓
+
+// 渲染排序字段
+function renderSortFields() {
+    const sortFieldSelect = document.getElementById('sort-field');
+    sortFieldSelect.innerHTML = TEXT[lang].sortFields.map(
+        f => `<option value="${f.value}">${f.label}</option>`
+    ).join('');
+    document.getElementById('sort-field-label').innerText = TEXT[lang].sortField;
+    document.getElementById('sort-order-label').innerText = TEXT[lang].sortOrder;
+    document.getElementById('type-filter-label').innerText = TEXT[lang].typeFilter;
+    document.getElementById('sort-order').options[0].text = TEXT[lang].sortOrders.desc;
+    document.getElementById('sort-order').options[1].text = TEXT[lang].sortOrders.asc;
+}
+
+
+// 渲染持仓列表
 function renderHoldings(type = 'all', sortField = 'time', sortOrder = 'desc') {
     const filtered = getFilteredHoldings(type);
     const sorted = sortHoldings(filtered, sortField, sortOrder);
     renderSummary(sorted);
     const list = document.getElementById('holdings-list');
-    list.innerHTML = '';
+    list.innerHTML = ''; // 清空现有列表
+    if (sorted.length === 0) {
+        list.innerHTML = `<p style="text-align: center; color: #888; padding: 20px;">${lang === 'zh' ? '没有找到符合条件的持仓数据。' : 'No holdings found for the selected criteria.'}</p>`;
+        return;
+    }
     sorted.forEach(h => {
         const typeClass = getTypeClass(h.type.en);
         const card = document.createElement('div');
@@ -322,30 +251,44 @@ function renderHoldings(type = 'all', sortField = 'time', sortOrder = 'desc') {
         `;
         list.appendChild(card);
     });
+    // 每次渲染后重新绑定事件
     bindEvents();
 }
 
 // 绑定事件
 function bindEvents() {
+    // 绑定持仓卡片点击事件（展开/收起图表）
     document.querySelectorAll('.holding-header').forEach(header => {
+        // 先移除旧的事件监听器以避免重复绑定
+        header.onclick = null;
         header.onclick = function() {
             const id = this.getAttribute('data-id');
-            document.querySelectorAll('.trend-container').forEach(c => c.classList.remove('active'));
             const trend = document.getElementById(`trend-${id}`);
+
+            // 关闭所有其他图表
+            document.querySelectorAll('.trend-container').forEach(c => {
+                if (c.id !== `trend-${id}`) { // 只关闭不是当前点击的图表
+                    c.classList.remove('active');
+                }
+            });
+
+            // 切换当前点击图表的显示状态
             const wasActive = trend.classList.contains('active');
             if (!wasActive) {
                 trend.classList.add('active');
                 drawChart(id);
+            } else {
+                trend.classList.remove('active');
+                // 可选：销毁图表实例以释放内存
+                if (window[`chart${id}`]) {
+                    window[`chart${id}`].destroy();
+                    delete window[`chart${id}`];
+                }
             }
         };
     });
-    document.getElementById('type-filter').onchange = function() {
-        renderHoldings(
-            this.value,
-            document.getElementById('sort-field').value,
-            document.getElementById('sort-order').value
-        );
-    };
+
+    // 绑定排序字段和顺序的选择事件
     document.getElementById('sort-field').onchange = function() {
         renderHoldings(
             document.getElementById('type-filter').value,
@@ -360,13 +303,34 @@ function bindEvents() {
             this.value
         );
     };
+    // 自定义类型筛选菜单的事件绑定在 renderTypeFilterCustom 中处理
 }
 
 // 绘制图表
 function drawChart(id) {
     const h = holdings.find(x => x.id == id);
-    const ctx = document.getElementById(`chart-${id}`).getContext('2d');
-    if (window[`chart${id}`]) window[`chart${id}`].destroy();
+    // 这里检查 h.chart 是否存在，因为后端可能没有提供完整图表数据
+    if (!h || !h.chart || !h.chart.data || h.chart.data.length === 0) {
+        console.warn(`图表数据未找到或为空，ID: ${id}`);
+        const trendContainer = document.getElementById(`trend-${id}`);
+        if (trendContainer) {
+            trendContainer.innerHTML = `<p style="text-align: center; color: #888; padding: 20px;">${lang === 'zh' ? '图表数据不可用。' : 'Chart data not available.'}</p>`;
+        }
+        return;
+    }
+
+    const ctx = document.getElementById(`chart-${id}`);
+    if (!ctx) {
+        console.error(`无法找到 canvas 元素 ID: chart-${id}`);
+        return;
+    }
+
+    // 销毁旧图表实例（如果存在）
+    if (window[`chart${id}`]) {
+        window[`chart${id}`].destroy();
+        delete window[`chart${id}`];
+    }
+
     window[`chart${id}`] = new Chart(ctx, {
         type: 'line',
         data: {
@@ -375,59 +339,77 @@ function drawChart(id) {
                 label: h.name[lang] + ' ' + TEXT[lang].chartLabel,
                 data: h.chart.data,
                 borderColor: '#3498db',
-                backgroundColor: 'rgba(52,152,219,0.08)',
-                tension: 0.18,
-                pointRadius: 3
+                backgroundColor: 'rgba(52, 152, 219, 0.2)', // 轻微透明的背景
+                tension: 0.3, // 曲线张力
+                fill: true, // 填充图表下方区域
+                pointRadius: 3, // 点的半径
+                pointBackgroundColor: '#3498db', // 点的颜色
+                pointBorderColor: '#fff', // 点的边框颜色
+                pointHoverRadius: 5, // 鼠标悬停时点的半径
+                borderWidth: 2 // 线条宽度
             }]
         },
         options: {
             responsive: true,
-            plugins: { legend: { display: false } },
-            scales: { y: { beginAtZero: false } }
+            maintainAspectRatio: false, // 允许图表宽度根据父容器调整
+            scales: {
+                x: {
+                    grid: {
+                        display: false // 隐藏X轴网格线
+                    }
+                },
+                y: {
+                    beginAtZero: false,
+                    grid: {
+                        color: '#eee' // Y轴网格线颜色
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    display: false // 不显示图例
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(0,0,0,0.8)',
+                    titleColor: '#fff',
+                    bodyColor: '#fff',
+                    borderColor: '#3498db',
+                    borderWidth: 1,
+                    cornerRadius: 5
+                }
+            }
         }
     });
 }
 
-// 渲染排序字段
-function renderSortFields() {
-    const sortFieldSelect = document.getElementById('sort-field');
-    sortFieldSelect.innerHTML = TEXT[lang].sortFields.map(
-        f => `<option value="${f.value}">${f.label}</option>`
-    ).join('');
-    document.getElementById('sort-field-label').innerText = TEXT[lang].sortField;
-    document.getElementById('sort-order-label').innerText = TEXT[lang].sortOrder;
-    document.getElementById('type-filter-label').innerText = TEXT[lang].typeFilter;
-    document.getElementById('sort-order').options[0].text = TEXT[lang].sortOrders.desc;
-    document.getElementById('sort-order').options[1].text = TEXT[lang].sortOrders.asc;
-}
-
 // 页面加载完成后初始化
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => { // 确保函数是 async
     document.getElementById('page-title').innerText = TEXT[lang].title;
-    renderTypeFilter();
-    renderTypeFilterCustom(); // 新增自定义菜单
-    renderSortFields();
-    renderHoldings();
-    bindEvents();
+    renderSortFields(); // 确保排序字段先渲染，以便获取其值
+
+    try {
+        // *** 关键修改: 从后端 API 获取数据 ***
+        // 假设您有一个用户ID，例如 1。在实际应用中，用户ID会通过登录状态或其他方式获取。
+        const response = await fetch('/api/holdings/1'); 
+        if (!response.ok) {
+            throw new Error(`HTTP 错误! 状态码: ${response.status}`);
+        }
+        holdings = await response.json(); // 将获取到的数据赋值给 holdings
+
+        // 数据可用后，渲染所有内容
+        renderTypeFilter();
+        renderTypeFilterCustom(); // 新增自定义菜单
+        renderHoldings(); // 首次渲染持仓列表
+        // bindEvents() 会在 renderHoldings 内部调用
+    } catch (error) {
+        console.error('获取持仓数据出错:', error);
+        document.getElementById('holdings-list').innerHTML = `<p style="text-align: center; color: red;">${lang === 'zh' ? '加载投资数据失败。请检查后端服务。' : 'Failed to load investment data. Please check the backend service.'}</p>`;
+    }
 });
 
-// 切换图表显示
-function toggleChart(id) {
-    const chartContainer = document.getElementById(`chart-${id}`);
-    const isActive = chartContainer.classList.contains('active');
-
-    // 关闭所有其他图表
-    document.querySelectorAll('.chart-container').forEach(container => {
-        container.classList.remove('active');
-    });
-
-    if (!isActive) {
-        chartContainer.classList.add('active');
-        // 添加小延迟确保容器展开动画完成
-        setTimeout(() => {
-            const holding = holdings.find(h => h.id === id);
-            createChart(`canvas-${id}`, holding.chartData);
-        }, 50);
-    }
+// 切换语言函数（保持不变）
+function switchLang(newLang) {
+    const url = new URL(window.location.href);
+    url.searchParams.set('lang', newLang);
+    window.location.href = url.toString();
 }
-
