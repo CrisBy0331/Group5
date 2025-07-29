@@ -243,12 +243,52 @@
           </div>
           <div class="asset-card p-6 flex flex-col justify-center">
             <h3 class="text-lg font-bold mb-3" data-i18n="assetAllocationDetail">Asset Allocation Details</h3>
-            <ul class="space-y-2 text-sm">
-              <li class="flex justify-between"><span class="text-blue-500">● Stock</span><span>42.6%</span></li>
-              <li class="flex justify-between"><span class="text-indigo-500">● Crypto</span><span>20.3%</span></li>
-              <li class="flex justify-between"><span class="text-green-500">● Fund</span><span>15.2%</span></li>
-              <li class="flex justify-between"><span class="text-yellow-500">● Bond</span><span>12.4%</span></li>
-              <li class="flex justify-between"><span class="text-pink-500">● Cash</span><span>9.5%</span></li>
+            <ul class="space-y-3 text-sm">
+              <li class="flex items-center justify-between">
+                <span class="text-blue-500 w-16">● Stock</span>
+                <div class="flex-1 mx-3">
+                  <div class="bg-gray-200 rounded-full h-2">
+                    <div class="bg-blue-500 h-2 rounded-full" style="width: 42.6%"></div>
+                  </div>
+                </div>
+                <span class="w-12 text-right">42.6%</span>
+              </li>
+              <li class="flex items-center justify-between">
+                <span class="text-indigo-500 w-16">● Crypto</span>
+                <div class="flex-1 mx-3">
+                  <div class="bg-gray-200 rounded-full h-2">
+                    <div class="bg-indigo-500 h-2 rounded-full" style="width: 20.3%"></div>
+                  </div>
+                </div>
+                <span class="w-12 text-right">20.3%</span>
+              </li>
+              <li class="flex items-center justify-between">
+                <span class="text-green-500 w-16">● Fund</span>
+                <div class="flex-1 mx-3">
+                  <div class="bg-gray-200 rounded-full h-2">
+                    <div class="bg-green-500 h-2 rounded-full" style="width: 15.2%"></div>
+                  </div>
+                </div>
+                <span class="w-12 text-right">15.2%</span>
+              </li>
+              <li class="flex items-center justify-between">
+                <span class="text-yellow-500 w-16">● Bond</span>
+                <div class="flex-1 mx-3">
+                  <div class="bg-gray-200 rounded-full h-2">
+                    <div class="bg-yellow-500 h-2 rounded-full" style="width: 12.4%"></div>
+                  </div>
+                </div>
+                <span class="w-12 text-right">12.4%</span>
+              </li>
+              <li class="flex items-center justify-between">
+                <span class="text-pink-500 w-16">● Cash</span>
+                <div class="flex-1 mx-3">
+                  <div class="bg-gray-200 rounded-full h-2">
+                    <div class="bg-pink-500 h-2 rounded-full" style="width: 9.5%"></div>
+                  </div>
+                </div>
+                <span class="w-12 text-right">9.5%</span>
+              </li>
             </ul>
             <p class="text-gray-600 mt-4 text-sm" data-i18n="allocationTip">
               Reasonable allocation can reduce risk. It is recommended to adjust regularly according to the market and your risk tolerance.
@@ -508,7 +548,7 @@
            class="w-9 h-9 rounded-full object-cover cursor-pointer"
            onclick="toggleDropdown()" />
       <div id="dropdownMenu" class="absolute right-0 mt-2 w-28 bg-white border border-gray-200 rounded shadow hidden">
-        <button class="block w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100" onclick="logout()">登出</button>
+        <button class="block w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100" onclick="logout()">Logout</button>
       </div>
     </div>
   `;
@@ -613,72 +653,35 @@
               },
               plugins: {
                 legend: {
-                  position: 'right',
-                  labels: {
-                    font: {
-                      size: 13
-                    },
-                    padding: 8,
-                    usePointStyle: true,
-                    pointStyle: 'circle',
-                    boxWidth: 8,
-                    boxHeight: 8,
-                    generateLabels: function(chart) {
-                      const data = chart.data;
-                      if (data.labels.length && data.datasets.length) {
-                        return data.labels.map((label, i) => {
-                          const dataset = data.datasets[0];
-                          const value = dataset.data[i];
-                          const backgroundColor = dataset.backgroundColor[i];
-                          return {
-                            text: `${label}: ${value}%`,
-                            fillStyle: backgroundColor,
-                            strokeStyle: backgroundColor,
-                            lineWidth: 0,
-                            pointStyle: 'circle',
-                            hidden: false,
-                            index: i
-                          };
-                        });
-                      }
-                      return [];
-                    }
-                  }
+                  display: false // 隐藏图例
                 },
                 tooltip: {
-                  backgroundColor: 'rgba(0, 0, 0, 0.9)',
-                  titleFont: {
-                    size: 14,
-                    weight: 'bold'
-                  },
-                  bodyFont: {
-                    size: 12
-                  },
-                  cornerRadius: 8,
-                  displayColors: false,
-                  callbacks: {
-                    label: function (context) {
-                      let label = context.label || '';
-                      if (label) {
-                        label += ': ';
-                      }
-                      if (context.parsed !== null) {
-                        label += context.parsed + '%';
-                      }
-                      return label;
-                    }
-                  }
+                  enabled: false // 禁用默认tooltip
                 }
               },
               // 悬停选中放大
               onHover: function (event, elements, chart) {
                 if (elements.length > 0) {
-                  chart.setActiveElements([{
-                    datasetIndex: elements[0].datasetIndex,
-                    index: elements[0].index
-                  }]);
+                  const index = elements[0].index;
+                  
+                  // 检查是否已经在显示同一个扇形
+                  if (activeIndex !== index) {
+                    activeIndex = index;
+                    chart.setActiveElements([{
+                      datasetIndex: elements[0].datasetIndex,
+                      index: index
+                    }]);
+                    
+                    // 显示高亮和虚折线
+                    showHighlightAndLine(index, chart);
+                  }
                 } else {
-                  chart.setActiveElements([]);
+                  // 鼠标离开所有扇形时才清除
+                  if (activeIndex !== null) {
+                    activeIndex = null;
+                    chart.setActiveElements([]);
+                    clearHighlightAndLine();
+                  }
                 }
                 chart.update();
               },
@@ -689,67 +692,151 @@
             }
           });
 
-          // 等待图表渲染完成后绘制所有连线
+          // 等待图表渲染完成后初始化
           setTimeout(() => {
-            drawAllConnections(myChart);
+            // 初始化完成
           }, 500);
 
-          // 绘制所有连线函数
-          function drawAllConnections(chart) {
-            // 清除之前的连线
-            clearConnection();
+          // 显示高亮和虚折线函数
+          function showHighlightAndLine(index, chart) {
+            clearHighlightAndLine();
             
             const canvas = document.getElementById('assetAllocationChart');
-            const rect = canvas.getBoundingClientRect();
-            
-            // 获取图表的实际绘制区域
             const chartArea = chart.chartArea;
             
-            // 为每个扇形绘制连线
-            assetData.datasets[0].data.forEach((value, index) => {
-              // 计算饼图扇形中心角度
-              const total = assetData.datasets[0].data.reduce((a, b) => a + b, 0);
-              let currentAngle = -Math.PI / 2; // 从12点钟方向开始
-              for (let i = 0; i < index; i++) {
-                currentAngle += (assetData.datasets[0].data[i] / total) * 2 * Math.PI;
+            // 计算饼图扇形中心角度
+            const total = assetData.datasets[0].data.reduce((a, b) => a + b, 0);
+            let currentAngle = -Math.PI / 2; // 从12点钟方向开始
+            for (let i = 0; i < index; i++) {
+              currentAngle += (assetData.datasets[0].data[i] / total) * 2 * Math.PI;
+            }
+            const sliceAngle = (assetData.datasets[0].data[index] / total) * 2 * Math.PI;
+            const midAngle = currentAngle + sliceAngle / 2;
+            
+            // 计算饼图中心点
+            const pieCenterX = chartArea.left + (chartArea.right - chartArea.left) / 2;
+            const pieCenterY = chartArea.top + (chartArea.bottom - chartArea.top) / 2;
+            
+            // 计算饼图半径
+            const pieRadius = Math.min(chartArea.right - chartArea.left, chartArea.bottom - chartArea.top) * 0.4;
+            
+            // 计算扇形的几何中心点（质心）- 距离中心2/3半径处
+            const centroidRadius = pieRadius * 0.67;
+            const centroidX = pieCenterX + Math.cos(midAngle) * centroidRadius;
+            const centroidY = pieCenterY + Math.sin(midAngle) * centroidRadius;
+            
+            // 计算折线路径点 - 先向外延伸到饼图外部，再水平延伸
+            let cornerX, cornerY, endX, endY;
+            let textX, textY;
+            
+            // 将角度转换为度数，便于判断方向
+            const angleDegrees = (midAngle * 180) / Math.PI;
+            
+            // 第一段：从质心沿着扇形方向延伸到饼图外部
+            const outwardDistance = pieRadius + 45; // 延伸到饼图外45像素
+            const outwardX = pieCenterX + Math.cos(midAngle) * outwardDistance;
+            const outwardY = pieCenterY + Math.sin(midAngle) * outwardDistance;
+            
+            if (angleDegrees >= -45 && angleDegrees < 45) {
+              // 右侧扇形：向右水平延伸
+              cornerX = outwardX;
+              cornerY = outwardY;
+              endX = cornerX + 60;
+              endY = cornerY;
+              textX = endX + 6;
+              textY = endY + 4;
+            } else if (angleDegrees >= 45 && angleDegrees < 135) {
+              // 下方扇形：统一向左水平延伸（紫色部分往左）
+              cornerX = outwardX;
+              cornerY = outwardY;
+              endX = cornerX - 60;
+              endY = cornerY;
+              textX = endX - 50;
+              textY = endY + 4;
+              
+              // 专门为紫色部分（Cash）调整位置
+              if (index === 4) { // Cash是第5个元素，索引为4
+                endX = cornerX - 60;
+                endY = cornerY - 10;
+                textX = endX - 35;
+                textY = endY - 5;
               }
-              const sliceAngle = (assetData.datasets[0].data[index] / total) * 2 * Math.PI;
-              const midAngle = currentAngle + sliceAngle / 2;
-              
-              // 计算饼图中心点
-              const pieCenterX = chartArea.left + (chartArea.right - chartArea.left) / 2;
-              const pieCenterY = chartArea.top + (chartArea.bottom - chartArea.top) / 2;
-              
-              // 计算饼图边缘点（连线起点）
-              const pieRadius = Math.min(chartArea.right - chartArea.left, chartArea.bottom - chartArea.top) * 0.4;
-              const pieX = pieCenterX + Math.cos(midAngle) * pieRadius;
-              const pieY = pieCenterY + Math.sin(midAngle) * pieRadius;
-              
-              // 获取图例位置
-              const legend = chart.legend;
-              if (legend && legend.legendItems && legend.legendItems[index]) {
-                const legendItem = legend.legendItems[index];
-                
-                // 图例项的左侧中心点（连线终点）
-                const legendX = legendItem.x;
-                const legendY = legendItem.y + legendItem.height / 2;
-                
-                console.log(`连线 ${index}: 从(${pieX}, ${pieY}) 到(${legendX}, ${legendY})`);
-                
-                // 创建SVG连线
-                const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-                line.setAttribute('x1', pieX);
-                line.setAttribute('y1', pieY);
-                line.setAttribute('x2', legendX);
-                line.setAttribute('y2', legendY);
-                line.setAttribute('stroke', assetData.datasets[0].backgroundColor[index]);
-                line.setAttribute('stroke-width', '2');
-                line.setAttribute('stroke-dasharray', '4,4');
-                line.setAttribute('opacity', '0.7');
-                
-                connectionLayer.appendChild(line);
-              }
-            });
+            } else if (angleDegrees >= 135 || angleDegrees < -135) {
+              // 左侧扇形：向左水平延伸
+              cornerX = outwardX;
+              cornerY = outwardY;
+              endX = cornerX - 60;
+              endY = cornerY;
+              textX = endX - 50;
+              textY = endY + 4;
+            } else {
+              // 上方扇形：向上垂直延伸
+              cornerX = outwardX;
+              cornerY = outwardY;
+              endX = cornerX;
+              endY = cornerY - 60;
+              textX = endX + 8;
+              textY = endY - 8;
+            }
+            
+            // 创建折线路径点：质心 -> 饼图外部 -> 水平/垂直延伸
+            const points = `${centroidX},${centroidY} ${cornerX},${cornerY} ${endX},${endY}`;
+            
+            // 创建SVG折线
+            const polyline = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
+            polyline.setAttribute('points', points);
+            polyline.setAttribute('stroke', assetData.datasets[0].borderColor[index]); // 使用更深的边框颜色
+            polyline.setAttribute('stroke-width', '2'); // 减小线条宽度
+            polyline.setAttribute('stroke-dasharray', 'none'); // 改为实线
+            polyline.setAttribute('fill', 'none');
+            polyline.setAttribute('opacity', '0.9'); // 增加透明度
+            polyline.id = 'highlight-line';
+            
+            // 添加动画效果 - 使用stroke-dasharray实现逐渐伸出
+            const totalLength = Math.sqrt(Math.pow(cornerX - centroidX, 2) + Math.pow(cornerY - centroidY, 2)) + 
+                               Math.sqrt(Math.pow(endX - cornerX, 2) + Math.pow(endY - cornerY, 2));
+            polyline.style.strokeDasharray = `0,${totalLength}`;
+            polyline.style.transition = 'stroke-dasharray 0.6s ease-in-out';
+            
+            connectionLayer.appendChild(polyline);
+            
+            // 延迟执行动画
+            setTimeout(() => {
+              polyline.style.strokeDasharray = `${totalLength},0`;
+            }, 50);
+            
+            // 创建占比文本（带淡入动画）
+            const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            text.setAttribute('x', textX);
+            text.setAttribute('y', textY);
+            text.setAttribute('font-family', 'Arial, sans-serif');
+            text.setAttribute('font-size', '16');
+            text.setAttribute('font-weight', 'bold');
+            text.setAttribute('fill', assetData.datasets[0].backgroundColor[index]);
+            text.textContent = `${assetData.datasets[0].data[index]}%`;
+            text.id = 'highlight-text';
+            text.style.opacity = '0';
+            text.style.transition = 'opacity 0.4s ease-in-out';
+            
+            connectionLayer.appendChild(text);
+            
+            // 延迟显示文本
+            setTimeout(() => {
+              text.style.opacity = '1';
+            }, 300);
+          }
+
+          // 清除高亮和虚折线
+          function clearHighlightAndLine() {
+            const line = document.getElementById('highlight-line');
+            const text = document.getElementById('highlight-text');
+            
+            if (line && line.parentNode) {
+              line.parentNode.removeChild(line);
+            }
+            if (text && text.parentNode) {
+              text.parentNode.removeChild(text);
+            }
           }
 
           // 清除连线
@@ -758,6 +845,12 @@
             lines.forEach(line => {
               if (line.parentNode) {
                 line.parentNode.removeChild(line);
+              }
+            });
+            const texts = connectionLayer.querySelectorAll('text');
+            texts.forEach(text => {
+              if (text.parentNode) {
+                text.parentNode.removeChild(text);
               }
             });
           }
