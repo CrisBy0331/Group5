@@ -4,232 +4,166 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>持仓管理</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            color: #333;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-
-        .header {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-radius: 15px;
-            padding: 25px;
-            margin-bottom: 25px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-            text-align: center;
-        }
-
-        .header h1 {
-            color: #4a5568;
-            font-size: 2.2rem;
-            margin-bottom: 8px;
-        }
-
-        .header p {
-            color: #718096;
-            font-size: 1rem;
-        }
-
-        .portfolio-section {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-radius: 15px;
-            padding: 25px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-        }
-
-        .section-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-
-        .section-header h2 {
-            color: #4a5568;
-            font-size: 1.5rem;
-        }
-
-        .btn {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 0.9rem;
-            font-weight: 500;
-            transition: all 0.3s ease;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
-        }
-
-        .btn-small {
-            padding: 6px 12px;
-            font-size: 0.8rem;
-        }
-
-        .btn-edit {
-            background: #4299e1;
-        }
-
-        .btn-delete {
-            background: #f56565;
-        }
-
-        .search-bar {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-
-        .search-bar input {
-            flex: 1;
-            padding: 10px;
-            border: 2px solid #e2e8f0;
-            border-radius: 8px;
-            font-size: 0.9rem;
-        }
-
-        .search-bar input:focus {
-            outline: none;
-            border-color: #667eea;
-        }
-
-        .portfolio-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 15px;
-        }
-
-        .portfolio-table th,
-        .portfolio-table td {
-            padding: 12px;
-            text-align: left;
-            border-bottom: 1px solid #e2e8f0;
-        }
-
-        .portfolio-table th {
-            background: #f7fafc;
-            font-weight: 600;
-            color: #4a5568;
-            font-size: 0.9rem;
-        }
-
-        .portfolio-table tr:hover {
-            background: #f7fafc;
-        }
-
-        .action-buttons {
-            display: flex;
-            gap: 6px;
-        }
-
-        .empty-message {
-            text-align: center;
-            padding: 40px;
-            color: #718096;
-            font-style: italic;
-        }
-
-        @media (max-width: 768px) {
-            .container {
-                padding: 15px;
-            }
+    <script>
+        // 检查用户登录状态
+        function checkLoginStatus() {
+            const isLoggedIn = localStorage.getItem('isLoggedIn');
+            const userToken = localStorage.getItem('userToken');
             
-            .header h1 {
-                font-size: 1.8rem;
+            if (!isLoggedIn || !userToken) {
+                window.location.href = 'log_in.html';
+                return false;
             }
+            updateUserArea();
+            return true;
+        }
+
+        // 更新用户区域显示
+        function updateUserArea() {
+            const userAccount = localStorage.getItem('userAccount');
+            const userArea = document.getElementById('userArea');
             
-            .section-header {
-                flex-direction: column;
-                gap: 15px;
-                align-items: stretch;
-            }
-            
-            .search-bar {
-                flex-direction: column;
-            }
-            
-            .portfolio-table {
-                font-size: 0.85rem;
-            }
-            
-            .portfolio-table th,
-            .portfolio-table td {
-                padding: 8px;
+            if (userAccount) {
+                userArea.innerHTML = `
+                    <div class="flex items-center space-x-3">
+                        <span class="text-gray-700 font-medium">${userAccount}</span>
+                        <button onclick="logout()" 
+                            class="text-red-500 hover:text-red-600 text-sm font-medium bg-transparent px-3 py-1 rounded border border-red-300 hover:border-red-400 transition">
+                            Logout
+                        </button>
+                    </div>
+                `;
+            } else {
+                userArea.innerHTML = `
+                    <a href="log_in.html" class="text-blue-500 hover:text-blue-600 text-lg font-bold bg-transparent px-4 py-2 rounded transition">
+                        Login
+                    </a>
+                `;
             }
         }
-    </style>
+
+        // 登出功能
+        function logout() {
+            localStorage.removeItem('isLoggedIn');
+            localStorage.removeItem('userToken');
+            localStorage.removeItem('userAccount');
+            window.location.href = 'log_in.html';
+        }
+
+        // 页面加载时检查登录状态
+        document.addEventListener('DOMContentLoaded', function() {
+            checkLoginStatus();
+        });
+    </script>
+
 </head>
-<body>
-    <div class="container">
-        <!-- 头部 -->
-        <div class="header">
-            <h1>
-                <i class="fas fa-chart-line"></i>
-                持仓管理
-            </h1>
-            <!-- <p>简洁高效的持仓管理系统</p> -->
+<body class="bg-gradient-to-br from-blue-50 via-white to-blue-100 text-gray-800 min-h-screen">
+    <!-- 顶部导航 -->
+    <header class="bg-white shadow h-16 px-6 flex justify-between items-center sticky top-0 z-50">
+        <!-- Left: Logo and platform name -->
+        <a href="index.html" class="flex items-center space-x-4 group cursor-pointer select-none">
+            <!-- Logo icon -->
+            <svg class="w-9 h-9 text-blue-400 group-hover:text-blue-600 transition" fill="none" stroke="currentColor"
+                stroke-width="2" viewBox="0 0 32 32">
+                <circle cx="16" cy="16" r="13" stroke="currentColor" stroke-width="2" fill="#e0f2fe" />
+                <path d="M10 20c2-4 10-4 12 0" stroke="#38bdf8" stroke-width="2" fill="none" />
+                <path d="M16 10v8" stroke="#2563eb" stroke-width="2" stroke-linecap="round" />
+                <circle cx="16" cy="10" r="2" fill="#2563eb" />
+            </svg>
+            <span class="text-2xl font-extrabold text-blue-400 group-hover:text-blue-600 tracking-wide transition leading-none"
+                style="letter-spacing: 1px;">
+                Future Assets
+            </span>
+        </a>
+        <!-- Right: User area -->
+        <div class="flex items-center space-x-4">
+            <div id="userArea">
+                <!-- 这里会被JavaScript动态更新 -->
+            </div>
         </div>
+    </header>
 
-        <!-- 持仓列表 -->
-        <div class="portfolio-section">
-            <div class="section-header">
-                <h2>持仓列表</h2>
-                <button class="btn" onclick="addPortfolio()">
-                    <i class="fas fa-plus"></i>
-                    添加持仓
-                </button>
+    <!-- 页面布局 -->
+    <div class="flex">
+        <!-- 左侧导航栏 -->
+        <aside id="sidebar" class="w-48 bg-white shadow min-h-screen p-3 flex flex-col items-center transition-all duration-300 hidden md:flex fixed top-16 left-0 z-40">
+            <button id="sidebarToggle" class="mb-6 p-2 rounded hover:bg-blue-100 transition self-end" onclick="toggleSidebar()">
+                <svg id="sidebarToggleIcon" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 12H5" /></svg>
+            </button>
+            <nav class="space-y-4 flex flex-col items-center w-full mt-20">
+                <a href="index.html"
+                    class="flex flex-col items-center justify-center px-2 py-2 rounded hover:bg-blue-50 transition text-gray-700 hover:text-blue-500 sidebar-link" data-i18n="dashboard">
+                    <svg class="w-6 h-6 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8v-10h-8v10zm0-18v6h8V3h-8z"/></svg>
+                    <span class="sidebar-text mt-1 text-center">Dashboard</span>
+                </a>
+                <a href="detail.html"
+                    class="flex flex-col items-center justify-center px-2 py-2 rounded hover:bg-blue-50 transition text-gray-700 hover:text-blue-500 sidebar-link" data-i18n="allocation">
+                    <svg class="w-6 h-6 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 2v10l6 6"/></svg>
+                    <span class="sidebar-text mt-1 text-center">Position Details</span>
+                </a>
+                <a href="management.html"
+                    class="flex flex-col items-center justify-center px-2 py-2 rounded hover:bg-blue-50 transition text-blue-500 font-semibold sidebar-link" data-i18n="positions">
+                    <svg class="w-6 h-6 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M16 3v4M8 3v4"/></svg>
+                    <span class="sidebar-text mt-1 text-center">Position Management</span>
+                </a>
+            </nav>
+        </aside>
+
+        <!-- 右侧内容区域 -->
+        <main id="mainContent" class="flex-1 p-6 pt-6 md:ml-48 transition-all duration-300">
+            <!-- 页面标题 -->
+            <h2 class="text-2xl font-bold text-gray-700 mb-6">Position Management</h2>
+            
+            <!-- 头部信息卡片 -->
+            <div class="bg-white rounded-xl shadow-lg p-6 mb-6">
+                <h3 class="text-xl font-bold text-gray-800 mb-2">
+                    <i class="fas fa-chart-line text-blue-500 mr-3"></i>
+                    持仓管理
+                </h3>
+                <p class="text-gray-600">简洁高效的持仓管理系统</p>
             </div>
 
-            <!-- 搜索栏 -->
-            <div class="search-bar">
-                <input type="text" id="searchInput" placeholder="搜索股票代码或名称...">
-                <button class="btn" onclick="filterPortfolio()">
-                    <i class="fas fa-search"></i>
-                    搜索
-                </button>
-            </div>
+            <!-- 持仓列表 -->
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-xl font-bold text-gray-800">持仓列表</h3>
+                    <button class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg font-medium transition duration-200 flex items-center space-x-2" onclick="addPortfolio()">
+                        <i class="fas fa-plus"></i>
+                        <span>添加持仓</span>
+                    </button>
+                </div>
 
-            <!-- 持仓表格 -->
-            <table class="portfolio-table">
-                <thead>
-                    <tr>
-                        <th>代码</th>
-                        <th>名称</th>
-                        <th>持有量</th>
-                        <th>买入价</th>
-                        <th>操作</th>
-                    </tr>
-                </thead>
-                <tbody id="portfolioTableBody">
-                    <!-- 数据将通过JavaScript动态生成 -->
-                </tbody>
-            </table>
-        </div>
+                <!-- 搜索栏 -->
+                <div class="flex gap-4 mb-6">
+                    <input type="text" id="searchInput" placeholder="搜索股票代码或名称..." 
+                           class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm">
+                    <button class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg font-medium transition duration-200 flex items-center space-x-2" onclick="filterPortfolio()">
+                        <i class="fas fa-search"></i>
+                        <span>搜索</span>
+                    </button>
+                </div>
+
+                <!-- 持仓表格 -->
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead>
+                            <tr class="border-b border-gray-200">
+                                <th class="text-left py-3 px-4 font-semibold text-gray-700 text-sm">代码</th>
+                                <th class="text-left py-3 px-4 font-semibold text-gray-700 text-sm">名称</th>
+                                <th class="text-left py-3 px-4 font-semibold text-gray-700 text-sm">持有量</th>
+                                <th class="text-left py-3 px-4 font-semibold text-gray-700 text-sm">买入价</th>
+                                <th class="text-left py-3 px-4 font-semibold text-gray-700 text-sm">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="portfolioTableBody">
+                            <!-- 数据将通过JavaScript动态生成 -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
     </div>
 
     <script>
@@ -283,24 +217,25 @@
             tbody.innerHTML = '';
 
             if (portfolioData.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="5" class="empty-message">暂无持仓数据</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center py-8 text-gray-500 italic">暂无持仓数据</td></tr>';
                 return;
             }
 
             portfolioData.forEach(item => {
                 const row = document.createElement('tr');
+                row.className = 'border-b border-gray-100 hover:bg-gray-50 transition-colors duration-200';
                 row.innerHTML = `
-                    <td>${item.code}</td>
-                    <td>${item.name}</td>
-                    <td>${item.quantity.toLocaleString()}</td>
-                    <td>¥${item.costPrice.toFixed(2)}</td>
-                    <td>
-                        <div class="action-buttons">
-                            <button class="btn btn-small btn-edit" onclick="editPortfolio(${item.id})">
-                                <i class="fas fa-edit"></i>
+                    <td class="py-3 px-4 text-sm text-gray-800">${item.code}</td>
+                    <td class="py-3 px-4 text-sm text-gray-800 font-medium">${item.name}</td>
+                    <td class="py-3 px-4 text-sm text-gray-800">${item.quantity.toLocaleString()}</td>
+                    <td class="py-3 px-4 text-sm text-gray-800">¥${item.costPrice.toFixed(2)}</td>
+                    <td class="py-3 px-4">
+                        <div class="flex space-x-2">
+                            <button class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-xs font-medium transition duration-200" onclick="editPortfolio(${item.id})">
+                                <i class="fas fa-edit mr-1"></i>编辑
                             </button>
-                            <button class="btn btn-small btn-delete" onclick="deletePortfolio(${item.id})">
-                                <i class="fas fa-trash"></i>
+                            <button class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-xs font-medium transition duration-200" onclick="deletePortfolio(${item.id})">
+                                <i class="fas fa-trash mr-1"></i>删除
                             </button>
                         </div>
                     </td>
@@ -391,6 +326,30 @@
                 filterPortfolio();
             }
         });
+
+        // 侧边栏收起/展开功能
+        let sidebarCollapsed = false;
+        function toggleSidebar() {
+            sidebarCollapsed = !sidebarCollapsed;
+            const sidebar = document.getElementById('sidebar');
+            const main = document.getElementById('mainContent');
+            const texts = sidebar.querySelectorAll('.sidebar-text');
+            if (sidebarCollapsed) {
+                sidebar.classList.remove('w-48');
+                sidebar.classList.add('w-16');
+                main.classList.remove('md:ml-48');
+                main.classList.add('md:ml-16');
+                texts.forEach(t => t.classList.add('hidden'));
+                document.getElementById('sidebarToggleIcon').innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />';
+            } else {
+                sidebar.classList.remove('w-16');
+                sidebar.classList.add('w-48');
+                main.classList.remove('md:ml-16');
+                main.classList.add('md:ml-48');
+                texts.forEach(t => t.classList.remove('hidden'));
+                document.getElementById('sidebarToggleIcon').innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 12H5" />';
+            }
+        }
     </script>
 </body>
 </html>
