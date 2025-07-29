@@ -2,91 +2,164 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>注册 · 投资组合管理系统</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    // 检查用户登录状态
-    function checkLoginStatus() {
-      const isLoggedIn = localStorage.getItem('isLoggedIn');
-      const userToken = localStorage.getItem('userToken');
-      
-      if (isLoggedIn && userToken) {
-        window.location.href = 'index.html';
-        return false;
-      }
-      return true;
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root {
+      --primary: #005ce6;
+      --danger: #e74c3c;
+      --bg: #f5f7fa;
+      --radius: 8px;
+      --shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+      --font: "Segoe UI", Roboto, Arial, "PingFang SC", sans-serif;
     }
 
-    // 页面加载时检查登录状态
-    document.addEventListener('DOMContentLoaded', function() {
-      checkLoginStatus();
-    });
-  </script>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font);
+      background: var(--bg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+    }
+
+    .card {
+      background: #fff;
+      padding: 48px 40px;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      width: 100%;
+      max-width: 420px;
+    }
+
+    h2 {
+      text-align: center;
+      margin-bottom: 32px;
+      color: #222;
+      font-weight: 600;
+    }
+
+    input {
+      width: 100%;
+      padding: 12px 14px;
+      margin-bottom: 18px;
+      border: 1px solid #d0d7e4;
+      border-radius: var(--radius);
+      font-size: 15px;
+      transition: border 0.2s;
+    }
+
+    input:focus {
+      border-color: var(--primary);
+      outline: none;
+    }
+
+    button {
+      width: 100%;
+      padding: 14px;
+      border: none;
+      border-radius: var(--radius);
+      background: var(--primary);
+      color: #fff;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    button:hover {
+      background: #004bb5;
+    }
+
+    .footer {
+      margin-top: 24px;
+      text-align: center;
+      font-size: 14px;
+    }
+
+    .footer a {
+      color: var(--primary);
+      text-decoration: none;
+    }
+
+    .footer a:hover {
+      text-decoration: underline;
+    }
+  </style>
 </head>
 
-<body class="bg-gradient-to-br from-blue-50 via-white to-blue-100 text-gray-800 min-h-screen">
-  <!-- 顶部导航 -->
-  <header class="bg-white shadow h-16 px-6 flex justify-between items-center sticky top-0 z-50">
-    <!-- Left: Logo and platform name -->
-    <a href="index.html" class="flex items-center space-x-4 group cursor-pointer select-none">
-      <!-- Logo icon -->
-      <svg class="w-9 h-9 text-blue-400 group-hover:text-blue-600 transition" fill="none" stroke="currentColor"
-        stroke-width="2" viewBox="0 0 32 32">
-        <circle cx="16" cy="16" r="13" stroke="currentColor" stroke-width="2" fill="#e0f2fe" />
-        <path d="M10 20c2-4 10-4 12 0" stroke="#38bdf8" stroke-width="2" fill="none" />
-        <path d="M16 10v8" stroke="#2563eb" stroke-width="2" stroke-linecap="round" />
-        <circle cx="16" cy="10" r="2" fill="#2563eb" />
-      </svg>
-      <span class="text-2xl font-extrabold text-blue-400 group-hover:text-blue-600 tracking-wide transition leading-none"
-        style="letter-spacing: 1px;">
-        Future Assets
-      </span>
-    </a>
-  </header>
-
-  <!-- 注册内容 -->
-  <div class="flex items-center justify-center min-h-screen">
-    <div class="bg-white rounded-xl shadow-lg p-8 w-full max-w-md">
-      <h2 class="text-2xl font-bold text-center text-gray-800 mb-6">创建账户</h2>
-      <form id="registerForm" class="space-y-4" novalidate>
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">邮箱或手机号</label>
-          <input type="text" id="regAccount" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="请输入邮箱或手机号" required />
-        </div>
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">密码</label>
-          <input type="password" id="regPassword" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="密码 (≥8 位)" minlength="8" required />
-        </div>
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">确认密码</label>
-          <input type="password" id="confirmPassword" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="请再次输入密码" required />
-        </div>
-        <button type="submit" class="w-full bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 transition duration-200">
-          立即注册
-        </button>
-      </form>
-      <div class="mt-6 text-center text-sm text-gray-600">
-        <p>已有账号？<a href="log_in.html" class="text-blue-500 hover:text-blue-600">直接登录</a></p>
+<body>
+  <div class="card">
+    <h2>创建账户</h2>
+    <form id="registerForm">
+      <div id="errorMessage"></div>
+      <div class="form-group">
+        <label for="regAccount">账号</label>
+        <input type="text" id="regAccount" placeholder="请输入邮箱或手机号" required />
       </div>
-    </div>
+      <div class="form-group">
+        <label for="regPassword">密码</label>
+        <input type="password" id="regPassword" placeholder="至少8位" minlength="8" required />
+      </div>
+      <div class="form-group">
+        <label for="confirmPassword">确认密码</label>
+        <input type="password" id="confirmPassword" placeholder="请再次输入密码" required />
+      </div>
+      <button type="submit">立即注册</button>
+    </form>
+    <div class="footer">已有账号？<a href="/">直接登录</a></div>
   </div>
 
   <script>
-    // 注册表单提交
-    document.getElementById('registerForm').addEventListener('submit', function (e) {
+    const form = document.getElementById('registerForm');
+    const errorMessage = document.getElementById('errorMessage');
+
+    form.addEventListener('submit', async (e) => {
       e.preventDefault();
+      errorMessage.textContent = ''; // 清空之前的错误信息
+
       const account = document.getElementById('regAccount').value.trim();
       const password = document.getElementById('regPassword').value;
       const confirm = document.getElementById('confirmPassword').value;
 
+      // --- 前端验证 ---
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(account) && !/^1[3-9]\d{9}$/.test(account)) {
+        errorMessage.textContent = '请输入有效的邮箱或手机号';
+        return;
+      }
+      if (password.length < 8) {
+        errorMessage.textContent = '密码长度不能少于8位';
+        return;
+      }
       if (password !== confirm) {
-        alert('两次输入的密码不一致');
+        errorMessage.textContent = '两次输入的密码不一致';
         return;
       }
 
-      alert('注册成功，请验证邮箱/手机号');
-      window.location.href = 'log_in.html';
+      // 发送注册请求（不包含头像）
+      try {
+        const registerRes = await fetch('http://localhost:3000/api/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ account, password })
+        });
+        const registerData = await registerRes.json();
+
+        if (registerRes.ok) {
+          alert('注册成功！将跳转至登录页面。');
+          window.location.href = '/'; // 跳转到登录页
+        } else {
+          // 显示后端返回的错误信息
+          errorMessage.textContent = registerData.message;
+        }
+      } catch (error) {
+        errorMessage.textContent = '请求失败，请检查网络连接。';
+      }
     });
   </script>
 </body>
