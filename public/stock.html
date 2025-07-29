@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Stock Details</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-gradient-to-br from-blue-50 via-white to-blue-100 text-gray-800 min-h-screen">
+  <!-- 顶部导航 -->
+  <header class="bg-white shadow h-16 px-6 flex justify-between items-center sticky top-0 z-50">
+    <!-- Left: Logo and platform name -->
+    <a href="index.html" class="flex items-center space-x-4 group cursor-pointer select-none">
+      <!-- Logo icon -->
+      <svg class="w-9 h-9 text-blue-400 group-hover:text-blue-600 transition" fill="none" stroke="currentColor"
+        stroke-width="2" viewBox="0 0 32 32">
+        <circle cx="16" cy="16" r="13" stroke="currentColor" stroke-width="2" fill="#e0f2fe" />
+        <path d="M10 20c2-4 10-4 12 0" stroke="#38bdf8" stroke-width="2" fill="none" />
+        <path d="M16 10v8" stroke="#2563eb" stroke-width="2" stroke-linecap="round" />
+        <circle cx="16" cy="10" r="2" fill="#2563eb" />
+      </svg>
+      <span class="text-2xl font-extrabold text-blue-400 group-hover:text-blue-600 tracking-wide transition leading-none"
+        style="letter-spacing: 1px;">
+        Future Assets
+      </span>
+    </a>
+    <!-- Right: User area -->
+    <div class="flex items-center space-x-4">
+      <div id="userArea">
+        <!-- 这里会被JavaScript动态更新 -->
+      </div>
+    </div>
+  </header>
+  <!-- 居中搜索框 -->
+  <div class="w-full flex mb-8 mt-6">
+    <div class="mx-auto w-96 relative">
+      <input id="stockSearchInput" type="text" placeholder="Search stock code or name..." class="w-full px-4 py-2 border border-gray-300 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-blue-200 text-base" autocomplete="off" />
+      <button id="stockSearchBtn" class="absolute right-0 top-0 h-full px-5 bg-blue-500 text-white rounded-r-lg hover:bg-blue-600 transition">Search</button>
+      <ul id="stockSearchSuggest" class="absolute left-0 top-full w-full bg-white border border-gray-200 rounded-b-lg shadow z-10 hidden max-h-60 overflow-y-auto"></ul>
+    </div>
+  </div>
+  <script>
+    const input = document.getElementById('stockSearchInput');
+    const btn = document.getElementById('stockSearchBtn');
+    const suggest = document.getElementById('stockSearchSuggest');
+    let timer = null;
+    input.addEventListener('input', function() {
+      clearTimeout(timer);
+      const val = input.value.trim();
+      if (!val) {
+        suggest.classList.add('hidden');
+        suggest.innerHTML = '';
+        return;
+      }
+      timer = setTimeout(async () => {
+        const url = `https://api.twelvedata.com/symbol_search?symbol=${encodeURIComponent(val)}&apikey=d1c361e9f14e4900961253e214f4ea7e`;
+        try {
+          const res = await fetch(url);
+          const data = await res.json();
+          if (data.data && data.data.length > 0) {
+            suggest.innerHTML = data.data.slice(0, 8).map(item =>
+              `<li class='px-4 py-2 hover:bg-blue-50 cursor-pointer' data-symbol='${item.symbol}' data-name='${item.instrument_name || item.name || ''}'>
+                <span class='font-semibold text-blue-600'>${item.symbol}</span> <span class='text-gray-500'>${item.instrument_name || item.name || ''}</span>
+              </li>`
+            ).join('');
+            suggest.classList.remove('hidden');
+          } else {
+            suggest.innerHTML = '<li class="px-4 py-2 text-gray-400">No result</li>';
+            suggest.classList.remove('hidden');
+          }
+        } catch {
+          suggest.innerHTML = '<li class="px-4 py-2 text-red-400">API Error</li>';
+          suggest.classList.remove('hidden');
+        }
+      }, 300);
+    });
+    input.addEventListener('blur', () => setTimeout(() => suggest.classList.add('hidden'), 200));
+    suggest.addEventListener('mousedown', function(e) {
+      const li = e.target.closest('li[data-symbol]');
+      if (li) {
+        window.location.href = `stock.html?query=${encodeURIComponent(li.getAttribute('data-symbol'))}`;
+      }
+    });
+    btn.onclick = function() {
+      const keyword = input.value.trim();
+      if (keyword) {
+        window.location.href = `stock.html?query=${encodeURIComponent(keyword)}`;
+      }
+    };
+    input.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') {
+        btn.click();
+      }
+    });
+  </script>
+  <div class="flex">
+    <!-- 左侧导航栏（完全同步index.html结构） -->
+    <aside id="sidebar" class="w-48 bg-white shadow min-h-screen p-3 flex flex-col items-center transition-all duration-300 hidden md:flex fixed top-16 left-0 z-40">
+      <button id="sidebarToggle" class="mb-6 p-2 rounded hover:bg-blue-100 transition self-end" onclick="toggleSidebar()">
+        <svg id="sidebarToggleIcon" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 12H5" /></svg>
+      </button>
+      <nav class="space-y-4 flex flex-col items-center w-full mt-20">
+        <a href="index.html"
+          class="flex flex-col items-center justify-center px-2 py-2 rounded hover:bg-blue-50 transition text-gray-700 hover:text-blue-500 sidebar-link" data-i18n="dashboard">
+            <svg class="w-6 h-6 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8v-10h-8v10zm0-18v6h8V3h-8z"/></svg>
+            <span class="sidebar-text mt-1 text-center">Dashboard</span>
+        </a>
+        <a href="detail.html"
+          class="flex flex-col items-center justify-center px-2 py-2 rounded hover:bg-blue-50 transition text-gray-700 hover:text-blue-500 sidebar-link" data-i18n="allocation">
+            <svg class="w-6 h-6 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 2v10l6 6"/></svg>
+            <span class="sidebar-text mt-1 text-center">Position Details</span>
+        </a>
+        <a href="management.html"
+          class="flex flex-col items-center justify-center px-2 py-2 rounded hover:bg-blue-50 transition text-gray-700 hover:text-blue-500 sidebar-link" data-i18n="positions">
+            <svg class="w-6 h-6 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M16 3v4M8 3v4"/></svg>
+            <span class="sidebar-text mt-1 text-center">Position Management</span>
+        </a>
+      </nav>
+    </aside>
+    <main id="mainContent" class="flex-1 p-8 pt-6 md:ml-48 transition-all duration-300 flex justify-center">
+      <div class="w-full max-w-4xl">
+        <div id="stock-info" class="mb-8 bg-white/70 bg-gradient-to-br from-white/80 via-blue-50/60 to-blue-100/60 rounded-3xl shadow-2xl p-10 flex flex-col items-center border border-blue-100 backdrop-blur-md">
+          <div class="text-center text-3xl font-extrabold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-blue-700 via-blue-400 to-cyan-400 drop-shadow select-text" id="stock-title">Loading...</div>
+          <div class="flex flex-wrap justify-center gap-6 mb-8 w-full">
+            <div id="stock-meta" class="flex flex-wrap justify-center gap-4 w-full"></div>
+          </div>
+          <div id="stock-chart" class="mb-8 rounded-2xl overflow-hidden bg-blue-50/80 p-6 shadow-2xl w-full border border-blue-100"></div>
+          <div class="flex justify-center mt-8 w-full gap-8">
+            <button id="buyBtn" class="px-10 py-3 bg-gradient-to-r from-green-400 via-green-500 to-emerald-500 text-white rounded-xl text-lg font-bold shadow hover:scale-105 hover:shadow-2xl transition-all duration-200">BUY</button>
+            <button id="soldBtn" class="px-10 py-3 bg-gradient-to-r from-gray-400 via-gray-500 to-gray-600 text-white rounded-xl text-lg font-bold ml-8 shadow hover:scale-105 hover:shadow-2xl transition-all duration-200 hidden">SOLD</button>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+  <script>
+    // 登录状态检查（与index.html一致）
+    function checkLoginStatus() {
+      const isLoggedIn = localStorage.getItem('isLoggedIn');
+      const userToken = localStorage.getItem('userToken');
+      if (!isLoggedIn || !userToken) {
+        window.location.href = 'log_in.html';
+        return false;
+      }
+      updateUserArea();
+      return true;
+    }
+    function updateUserArea() {
+      const userAccount = localStorage.getItem('userAccount');
+      const userArea = document.getElementById('userArea');
+      if (userAccount) {
+        userArea.innerHTML = `
+          <div class="flex items-center space-x-3">
+            <span class="text-gray-700 font-medium">${userAccount}</span>
+            <button onclick="logout()" class="text-red-500 hover:text-red-600 text-sm font-medium bg-transparent px-3 py-1 rounded border border-red-300 hover:border-red-400 transition">Logout</button>
+          </div>
+        `;
+      } else {
+        userArea.innerHTML = `
+          <a href="log_in.html" class="text-blue-500 hover:text-blue-600 text-lg font-bold bg-transparent px-4 py-2 rounded transition">Login</a>
+        `;
+      }
+    }
+    function logout() {
+      localStorage.removeItem('isLoggedIn');
+      localStorage.removeItem('userToken');
+      localStorage.removeItem('userAccount');
+      window.location.href = 'log_in.html';
+    }
+    document.addEventListener('DOMContentLoaded', function() {
+      checkLoginStatus();
+      loadStockInfo();
+    });
+    // 处理BUY/SOLD按钮状态
+    function updateBuySoldBtn(symbol) {
+      const bought = localStorage.getItem('bought_' + symbol);
+      document.getElementById('buyBtn').classList.toggle('hidden', !!bought);
+      document.getElementById('soldBtn').classList.toggle('hidden', !bought);
+    }
+    document.getElementById('buyBtn').onclick = function() {
+      const symbol = window.currentSymbol;
+      if (symbol) {
+        localStorage.setItem('bought_' + symbol, '1');
+        updateBuySoldBtn(symbol);
+      }
+    };
+    document.getElementById('soldBtn').onclick = function() {
+      const symbol = window.currentSymbol;
+      if (symbol) {
+        localStorage.removeItem('bought_' + symbol);
+        updateBuySoldBtn(symbol);
+      }
+    };
+    // 加载股票信息
+    async function loadStockInfo() {
+      const params = new URLSearchParams(window.location.search);
+      const query = params.get('query');
+      if (!query) {
+        document.getElementById('stock-title').textContent = 'No stock selected.';
+        return;
+      }
+      // 1. 搜索股票symbol
+      const searchUrl = `https://api.twelvedata.com/symbol_search?symbol=${encodeURIComponent(query)}&apikey=d1c361e9f14e4900961253e214f4ea7e`;
+      let symbol = '';
+      let name = '';
+      try {
+        const res = await fetch(searchUrl);
+        const data = await res.json();
+        if (data.data && data.data.length > 0) {
+          symbol = data.data[0].symbol;
+          name = data.data[0].instrument_name || data.data[0].name || symbol;
+        } else {
+          document.getElementById('stock-title').textContent = 'Not found.';
+          return;
+        }
+      } catch (e) {
+        document.getElementById('stock-title').textContent = 'API Error.';
+        return;
+      }
+      window.currentSymbol = symbol;
+      document.getElementById('stock-title').textContent = `${symbol} (${name})`;
+      // 2. 获取详细行情
+      const quoteUrl = `https://api.twelvedata.com/quote?symbol=${encodeURIComponent(symbol)}&apikey=d1c361e9f14e4900961253e214f4ea7e`;
+      try {
+        const res = await fetch(quoteUrl);
+        const data = await res.json();
+        if (data.code || data.status === 'error') {
+          document.getElementById('stock-meta').innerHTML = '<span class="text-red-500">Failed to fetch quote.</span>';
+        } else {
+          // 52周高低
+          const week52 = data["fifty_two_week"] || {};
+          document.getElementById('stock-meta').innerHTML = `
+            <div class='flex flex-wrap gap-4 w-full justify-center text-sm'>
+              <div class='flex flex-col items-start bg-white/90 rounded-lg shadow p-3 min-w-[140px] border border-blue-50'>
+                <span class='text-gray-500'>Symbol</span>
+                <span class='font-semibold'>${data.symbol || '-'}</span>
+              </div>
+              <div class='flex flex-col items-start bg-white/90 rounded-lg shadow p-3 min-w-[140px] border border-blue-50'>
+                <span class='text-gray-500'>Name</span>
+                <span class='font-semibold'>${data.name || '-'}</span>
+              </div>
+              <div class='flex flex-col items-start bg-white/90 rounded-lg shadow p-3 min-w-[140px] border border-blue-50'>
+                <span class='text-gray-500'>Exchange</span>
+                <span class='font-semibold'>${data.exchange || '-'}</span>
+              </div>
+              <div class='flex flex-col items-start bg-white/90 rounded-lg shadow p-3 min-w-[140px] border border-blue-50'>
+                <span class='text-gray-500'>Currency</span>
+                <span class='font-semibold'>${data.currency || '-'}</span>
+              </div>
+              <div class='flex flex-col items-start bg-white/90 rounded-lg shadow p-3 min-w-[140px] border border-blue-50'>
+                <span class='text-gray-500'>Datetime</span>
+                <span class='font-semibold'>${data.datetime || '-'}</span>
+              </div>
+              <div class='flex flex-col items-start bg-white/90 rounded-lg shadow p-3 min-w-[140px] border border-blue-50'>
+                <span class='text-gray-500'>Price</span>
+                <span class='font-semibold text-blue-600'>${data.price || '-'}</span>
+              </div>
+              <div class='flex flex-col items-start bg-white/90 rounded-lg shadow p-3 min-w-[140px] border border-blue-50'>
+                <span class='text-gray-500'>Change</span>
+                <span class='font-semibold ${parseFloat(data.change) >= 0 ? 'text-green-600' : 'text-red-500'}'>${data.change || '-'}</span>
+              </div>
+              <div class='flex flex-col items-start bg-white/90 rounded-lg shadow p-3 min-w-[140px] border border-blue-50'>
+                <span class='text-gray-500'>% Change</span>
+                <span class='font-semibold ${parseFloat(data.percent_change) >= 0 ? 'text-green-600' : 'text-red-500'}'>${data.percent_change || '-'}%</span>
+              </div>
+              <div class='flex flex-col items-start bg-white/90 rounded-lg shadow p-3 min-w-[140px] border border-blue-50'>
+                <span class='text-gray-500'>Open</span>
+                <span class='font-semibold'>${data.open || '-'}</span>
+              </div>
+              <div class='flex flex-col items-start bg-white/90 rounded-lg shadow p-3 min-w-[140px] border border-blue-50'>
+                <span class='text-gray-500'>High</span>
+                <span class='font-semibold'>${data.high || '-'}</span>
+              </div>
+              <div class='flex flex-col items-start bg-white/90 rounded-lg shadow p-3 min-w-[140px] border border-blue-50'>
+                <span class='text-gray-500'>Low</span>
+                <span class='font-semibold'>${data.low || '-'}</span>
+              </div>
+              <div class='flex flex-col items-start bg-white/90 rounded-lg shadow p-3 min-w-[140px] border border-blue-50'>
+                <span class='text-gray-500'>Close</span>
+                <span class='font-semibold'>${data.close || '-'}</span>
+              </div>
+              <div class='flex flex-col items-start bg-white/90 rounded-lg shadow p-3 min-w-[140px] border border-blue-50'>
+                <span class='text-gray-500'>Prev Close</span>
+                <span class='font-semibold'>${data.previous_close || '-'}</span>
+              </div>
+              <div class='flex flex-col items-start bg-white/90 rounded-lg shadow p-3 min-w-[140px] border border-blue-50'>
+                <span class='text-gray-500'>Volume</span>
+                <span class='font-semibold'>${data.volume || '-'}</span>
+              </div>
+              <div class='flex flex-col items-start bg-white/90 rounded-lg shadow p-3 min-w-[140px] border border-blue-50'>
+                <span class='text-gray-500'>Avg Volume</span>
+                <span class='font-semibold'>${data.average_volume || '-'}</span>
+              </div>
+            </div>
+          `;
+        }
+      } catch (e) {
+        document.getElementById('stock-meta').innerHTML = '<span class="text-red-500">API Error.</span>';
+      }
+      // 3. 获取历史K线数据，画图
+      const kUrl = `https://api.twelvedata.com/time_series?symbol=${encodeURIComponent(symbol)}&interval=1day&outputsize=30&apikey=d1c361e9f14e4900961253e214f4ea7e`;
+      try {
+        const res = await fetch(kUrl);
+        const data = await res.json();
+        if (data.status === 'ok' && data.values) {
+          const ctxId = 'stockKChart';
+          document.getElementById('stock-chart').innerHTML = `<canvas id="${ctxId}" height="220"></canvas>`;
+          const labels = data.values.map(v => v.datetime).reverse();
+          const prices = data.values.map(v => parseFloat(v.close)).reverse();
+          new Chart(document.getElementById(ctxId), {
+            type: 'line',
+            data: {
+              labels: labels,
+              datasets: [{
+                label: 'Close Price',
+                data: prices,
+                borderColor: '#2563eb',
+                backgroundColor: 'rgba(37,99,235,0.1)',
+                fill: true,
+                tension: 0.2,
+                pointRadius: 0
+              }]
+            },
+            options: {
+              plugins: { legend: { display: false } },
+              scales: {
+                x: { display: false },
+                y: { display: true, grid: { color: '#e5e7eb' } }
+              }
+            }
+          });
+        } else {
+          document.getElementById('stock-chart').innerHTML = '<span class="text-gray-400">No chart data.</span>';
+        }
+      } catch (e) {
+        document.getElementById('stock-chart').innerHTML = '<span class="text-red-500">API Error.</span>';
+      }
+      // 4. 按钮状态
+      updateBuySoldBtn(symbol);
+    }
+    // 侧边栏收起/展开功能（与index.html一致）
+    let sidebarCollapsed = false;
+    function toggleSidebar() {
+      sidebarCollapsed = !sidebarCollapsed;
+      const sidebar = document.getElementById('sidebar');
+      const main = document.getElementById('mainContent');
+      const texts = sidebar.querySelectorAll('.sidebar-text');
+      if (sidebarCollapsed) {
+        sidebar.classList.remove('w-48');
+        sidebar.classList.add('w-16');
+        main.classList.remove('md:ml-48');
+        main.classList.add('md:ml-16');
+        texts.forEach(t => t.classList.add('hidden'));
+        document.getElementById('sidebarToggleIcon').innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />';
+      } else {
+        sidebar.classList.remove('w-16');
+        sidebar.classList.add('w-48');
+        main.classList.remove('md:ml-16');
+        main.classList.add('md:ml-48');
+        texts.forEach(t => t.classList.remove('hidden'));
+        document.getElementById('sidebarToggleIcon').innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 12H5" />';
+      }
+    }
+    // 页面加载后初始化一次，防止刷新后状态不同步
+    document.addEventListener('DOMContentLoaded', function() {
+      const sidebar = document.getElementById('sidebar');
+      const texts = sidebar.querySelectorAll('.sidebar-text');
+      if (sidebarCollapsed) {
+        texts.forEach(t => t.classList.add('hidden'));
+      } else {
+        texts.forEach(t => t.classList.remove('hidden'));
+      }
+    });
+  </script>
+</body>
+</html> 

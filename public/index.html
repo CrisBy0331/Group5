@@ -150,6 +150,68 @@
 
     <!-- 右侧内容区域 -->
     <main id="mainContent" class="flex-1 p-6 pt-6 md:ml-48 transition-all duration-300">
+      <!-- 居中搜索框 -->
+      <div class="w-full flex mb-6">
+        <div class="mx-auto w-96 relative">
+          <input id="stockSearchInput" type="text" placeholder="Search stock code or name..." class="w-full px-4 py-2 border border-gray-300 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-blue-200 text-base" autocomplete="off" />
+          <button id="stockSearchBtn" class="absolute right-0 top-0 h-full px-5 bg-blue-500 text-white rounded-r-lg hover:bg-blue-600 transition">Search</button>
+          <ul id="stockSearchSuggest" class="absolute left-0 top-full w-full bg-white border border-gray-200 rounded-b-lg shadow z-10 hidden max-h-60 overflow-y-auto"></ul>
+        </div>
+      </div>
+      <script>
+        const input = document.getElementById('stockSearchInput');
+        const btn = document.getElementById('stockSearchBtn');
+        const suggest = document.getElementById('stockSearchSuggest');
+        let timer = null;
+        input.addEventListener('input', function() {
+          clearTimeout(timer);
+          const val = input.value.trim();
+          if (!val) {
+            suggest.classList.add('hidden');
+            suggest.innerHTML = '';
+            return;
+          }
+          timer = setTimeout(async () => {
+            const url = `https://api.twelvedata.com/symbol_search?symbol=${encodeURIComponent(val)}&apikey=d1c361e9f14e4900961253e214f4ea7e`;
+            try {
+              const res = await fetch(url);
+              const data = await res.json();
+              if (data.data && data.data.length > 0) {
+                suggest.innerHTML = data.data.slice(0, 8).map(item =>
+                  `<li class='px-4 py-2 hover:bg-blue-50 cursor-pointer' data-symbol='${item.symbol}' data-name='${item.instrument_name || item.name || ''}'>
+                    <span class='font-semibold text-blue-600'>${item.symbol}</span> <span class='text-gray-500'>${item.instrument_name || item.name || ''}</span>
+                  </li>`
+                ).join('');
+                suggest.classList.remove('hidden');
+              } else {
+                suggest.innerHTML = '<li class="px-4 py-2 text-gray-400">No result</li>';
+                suggest.classList.remove('hidden');
+              }
+            } catch {
+              suggest.innerHTML = '<li class="px-4 py-2 text-red-400">API Error</li>';
+              suggest.classList.remove('hidden');
+            }
+          }, 300);
+        });
+        input.addEventListener('blur', () => setTimeout(() => suggest.classList.add('hidden'), 200));
+        suggest.addEventListener('mousedown', function(e) {
+          const li = e.target.closest('li[data-symbol]');
+          if (li) {
+            window.location.href = `stock.html?query=${encodeURIComponent(li.getAttribute('data-symbol'))}`;
+          }
+        });
+        btn.onclick = function() {
+          const keyword = input.value.trim();
+          if (keyword) {
+            window.location.href = `stock.html?query=${encodeURIComponent(keyword)}`;
+          }
+        };
+        input.addEventListener('keydown', function(e) {
+          if (e.key === 'Enter') {
+            btn.click();
+          }
+        });
+      </script>
 
       <!-- 用户资料区（预留） -->
       <section id="userProfile" class="hidden">
