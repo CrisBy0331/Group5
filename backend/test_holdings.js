@@ -14,14 +14,14 @@ jest.mock('sqlite3', () => {
                 params = [];
             }
             
-            if (query.includes('INSERT INTO user_holdings')) {
+            if (query.includes('INSERT INTO holding')) {
                 if (callback) {
                     const result = { lastID: 1, changes: 1 };
                     callback.call(result, null);
                 }
-            } else if (query.includes('UPDATE user_holdings')) {
+            } else if (query.includes('UPDATE holding')) {
                 // Check if the record_id parameter is '999' (non-existent holding)
-                const record_id = params[6]; // record_id is the 7th parameter in UPDATE user_holdings SET type = ?, stock_id = ?, stock_name = ?, buyin_price = ?, quantity = ? WHERE user_id = ? AND record_id = ?
+                const record_id = params[6]; // record_id is the 7th parameter in UPDATE holding SET type = ?, ticker = ?, name = ?, buyin_price = ?, quantity = ? WHERE user_id = ? AND record_id = ?
                 if (record_id === '999') {
                     if (callback) {
                         const result = { changes: 0 };
@@ -33,9 +33,9 @@ jest.mock('sqlite3', () => {
                         callback.call(result, null);
                     }
                 }
-            } else if (query.includes('DELETE FROM user_holdings')) {
+            } else if (query.includes('DELETE FROM holding')) {
                 // Check if the record_id parameter is '999' (non-existent holding)
-                const record_id = params[1]; // record_id is the 2nd parameter in DELETE FROM user_holdings WHERE user_id = ? AND record_id = ?
+                const record_id = params[1]; // record_id is the 2nd parameter in DELETE FROM holding WHERE user_id = ? AND record_id = ?
                 if (record_id === '999') {
                     if (callback) {
                         const result = { changes: 0 };
@@ -79,7 +79,7 @@ jest.mock('sqlite3', () => {
                 params = [];
             }
             
-            if (query.includes('user_holdings')) {
+            if (query.includes('holding')) {
                 const user_id = params[0];
                 if (user_id === '999') {
                     if (callback) callback(null, []);
@@ -89,8 +89,8 @@ jest.mock('sqlite3', () => {
                             record_id: 1, 
                             user_id: parseInt(user_id), 
                             type: 'stock', 
-                            stock_id: 'AAPL', 
-                            stock_name: 'Apple Inc.', 
+                            ticker: 'AAPL', 
+                            name: 'Apple Inc.', 
                             buyin_price: 150.00, 
                             quantity: 10,
                             updated_at: '2024-01-01 10:00:00'
@@ -99,8 +99,8 @@ jest.mock('sqlite3', () => {
                             record_id: 2, 
                             user_id: parseInt(user_id), 
                             type: 'bond', 
-                            stock_id: 'BOND001', 
-                            stock_name: 'Treasury Bond', 
+                            ticker: 'BOND001', 
+                            name: 'Treasury Bond', 
                             buyin_price: 1000.00, 
                             quantity: 5,
                             updated_at: '2024-01-01 11:00:00'
@@ -141,10 +141,10 @@ describe('Holdings API Tests', () => {
             
             expect(response.body).toHaveLength(2);
             expect(response.body[0].type).toBe('stock');
-            expect(response.body[0].stock_id).toBe('AAPL');
-            expect(response.body[0].stock_name).toBe('Apple Inc.');
+            expect(response.body[0].ticker).toBe('AAPL');
+            expect(response.body[0].name).toBe('Apple Inc.');
             expect(response.body[1].type).toBe('bond');
-            expect(response.body[1].stock_id).toBe('BOND001');
+            expect(response.body[1].ticker).toBe('BOND001');
         });
 
         test('should return empty array for user with no holdings', async () => {
@@ -160,8 +160,8 @@ describe('Holdings API Tests', () => {
         test('should create a new holding', async () => {
             const holdingData = {
                 type: 'fund',
-                stock_id: 'VTI',
-                stock_name: 'Vanguard Total Stock Market ETF',
+                ticker: 'VTI',
+                name: 'Vanguard Total Stock Market ETF',
                 buyin_price: 250.00,
                 quantity: 20
             };
@@ -177,8 +177,8 @@ describe('Holdings API Tests', () => {
 
         test('should handle missing type', async () => {
             const holdingData = {
-                stock_id: 'VTI',
-                stock_name: 'Vanguard Total Stock Market ETF',
+                ticker: 'VTI',
+                name: 'Vanguard Total Stock Market ETF',
                 buyin_price: 250.00,
                 quantity: 20
             };
@@ -191,10 +191,10 @@ describe('Holdings API Tests', () => {
             expect(response.body.message).toBe('All fields are required');
         });
 
-        test('should handle missing stock_id', async () => {
+        test('should handle missing ticker', async () => {
             const holdingData = {
                 type: 'fund',
-                stock_name: 'Vanguard Total Stock Market ETF',
+                name: 'Vanguard Total Stock Market ETF',
                 buyin_price: 250.00,
                 quantity: 20
             };
@@ -207,10 +207,10 @@ describe('Holdings API Tests', () => {
             expect(response.body.message).toBe('All fields are required');
         });
 
-        test('should handle missing stock_name', async () => {
+        test('should handle missing name', async () => {
             const holdingData = {
                 type: 'fund',
-                stock_id: 'VTI',
+                ticker: 'VTI',
                 buyin_price: 250.00,
                 quantity: 20
             };
@@ -226,8 +226,8 @@ describe('Holdings API Tests', () => {
         test('should handle missing buyin_price', async () => {
             const holdingData = {
                 type: 'fund',
-                stock_id: 'VTI',
-                stock_name: 'Vanguard Total Stock Market ETF',
+                ticker: 'VTI',
+                name: 'Vanguard Total Stock Market ETF',
                 quantity: 20
             };
 
@@ -242,8 +242,8 @@ describe('Holdings API Tests', () => {
         test('should handle missing quantity', async () => {
             const holdingData = {
                 type: 'fund',
-                stock_id: 'VTI',
-                stock_name: 'Vanguard Total Stock Market ETF',
+                ticker: 'VTI',
+                name: 'Vanguard Total Stock Market ETF',
                 buyin_price: 250.00
             };
 
@@ -260,8 +260,8 @@ describe('Holdings API Tests', () => {
         test('should update existing holding', async () => {
             const updateData = {
                 type: 'stock',
-                stock_id: 'GOOGL',
-                stock_name: 'Alphabet Inc.',
+                ticker: 'GOOGL',
+                name: 'Alphabet Inc.',
                 buyin_price: 2800.00,
                 quantity: 5
             };
@@ -277,8 +277,8 @@ describe('Holdings API Tests', () => {
         test('should return 404 for non-existent holding', async () => {
             const updateData = {
                 type: 'stock',
-                stock_id: 'GOOGL',
-                stock_name: 'Alphabet Inc.',
+                ticker: 'GOOGL',
+                name: 'Alphabet Inc.',
                 buyin_price: 2800.00,
                 quantity: 5
             };
@@ -293,8 +293,8 @@ describe('Holdings API Tests', () => {
 
         test('should handle missing type', async () => {
             const updateData = {
-                stock_id: 'GOOGL',
-                stock_name: 'Alphabet Inc.',
+                ticker: 'GOOGL',
+                name: 'Alphabet Inc.',
                 buyin_price: 2800.00,
                 quantity: 5
             };
@@ -307,10 +307,10 @@ describe('Holdings API Tests', () => {
             expect(response.body.message).toBe('All fields are required');
         });
 
-        test('should handle missing stock_id', async () => {
+        test('should handle missing ticker', async () => {
             const updateData = {
                 type: 'stock',
-                stock_name: 'Alphabet Inc.',
+                name: 'Alphabet Inc.',
                 buyin_price: 2800.00,
                 quantity: 5
             };
@@ -323,10 +323,10 @@ describe('Holdings API Tests', () => {
             expect(response.body.message).toBe('All fields are required');
         });
 
-        test('should handle missing stock_name', async () => {
+        test('should handle missing name', async () => {
             const updateData = {
                 type: 'stock',
-                stock_id: 'GOOGL',
+                ticker: 'GOOGL',
                 buyin_price: 2800.00,
                 quantity: 5
             };
@@ -342,8 +342,8 @@ describe('Holdings API Tests', () => {
         test('should handle missing buyin_price', async () => {
             const updateData = {
                 type: 'stock',
-                stock_id: 'GOOGL',
-                stock_name: 'Alphabet Inc.',
+                ticker: 'GOOGL',
+                name: 'Alphabet Inc.',
                 quantity: 5
             };
 
@@ -358,8 +358,8 @@ describe('Holdings API Tests', () => {
         test('should handle missing quantity', async () => {
             const updateData = {
                 type: 'stock',
-                stock_id: 'GOOGL',
-                stock_name: 'Alphabet Inc.',
+                ticker: 'GOOGL',
+                name: 'Alphabet Inc.',
                 buyin_price: 2800.00
             };
 
@@ -433,8 +433,8 @@ describe('Holdings API Tests', () => {
             for (const type of validTypes) {
                 const holdingData = {
                     type: type,
-                    stock_id: 'TEST',
-                    stock_name: 'Test Holding',
+                    ticker: 'TEST',
+                    name: 'Test Holding',
                     buyin_price: 100.00,
                     quantity: 1
                 };

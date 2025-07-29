@@ -18,12 +18,12 @@ db.serialize(() => {
     `);
 
     db.run(`
-        CREATE TABLE IF NOT EXISTS user_holdings (
+        CREATE TABLE IF NOT EXISTS holding (
             user_id INTEGER NOT NULL,
             record_id INTEGER PRIMARY KEY AUTOINCREMENT,
             type TEXT CHECK(type IN ('stock', 'bond', 'fund', 'gold', 'cash')) NOT NULL,
-            stock_id TEXT NOT NULL,
-            stock_name TEXT NOT NULL,
+            ticker TEXT NOT NULL,
+            name TEXT NOT NULL,
             buyin_price REAL NOT NULL,
             quantity REAL NOT NULL,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -116,7 +116,7 @@ app.delete('/api/users/:user_id', (req, res) => {
 
 app.get('/api/holdings/:user_id', (req, res) => {
     const user_id = req.params.user_id;
-    db.all('SELECT * FROM user_holdings WHERE user_id = ?', [user_id], (err, rows) => {
+    db.all('SELECT * FROM holding WHERE user_id = ?', [user_id], (err, rows) => {
         if (err) {
             res.status(500).json({ message: 'Database error', error: err.message });
         } else {
@@ -127,14 +127,14 @@ app.get('/api/holdings/:user_id', (req, res) => {
 
 app.post('/api/holdings/:user_id', (req, res) => {
     const user_id = req.params.user_id;
-    const { type, stock_id, stock_name, buyin_price, quantity } = req.body;
+    const { type, ticker, name, buyin_price, quantity } = req.body;
     
-    if (!type || !stock_id || !stock_name || !buyin_price || !quantity) {
+    if (!type || !ticker || !name || !buyin_price || !quantity) {
         return res.status(400).json({ message: 'All fields are required' });
     }
     
-    db.run('INSERT INTO user_holdings (user_id, type, stock_id, stock_name, buyin_price, quantity) VALUES (?, ?, ?, ?, ?, ?)', 
-        [user_id, type, stock_id, stock_name, buyin_price, quantity], function(err) {
+    db.run('INSERT INTO holding (user_id, type, ticker, name, buyin_price, quantity) VALUES (?, ?, ?, ?, ?, ?)', 
+        [user_id, type, ticker, name, buyin_price, quantity], function(err) {
         if (err) {
             res.status(500).json({ message: 'Database error', error: err.message });
         } else {
@@ -146,14 +146,14 @@ app.post('/api/holdings/:user_id', (req, res) => {
 app.put('/api/holdings/:user_id/:record_id', (req, res) => {
     const user_id = req.params.user_id;
     const record_id = req.params.record_id;
-    const { type, stock_id, stock_name, buyin_price, quantity } = req.body;
+    const { type, ticker, name, buyin_price, quantity } = req.body;
     
-    if (!type || !stock_id || !stock_name || !buyin_price || !quantity) {
+    if (!type || !ticker || !name || !buyin_price || !quantity) {
         return res.status(400).json({ message: 'All fields are required' });
     }
     
-    db.run('UPDATE user_holdings SET type = ?, stock_id = ?, stock_name = ?, buyin_price = ?, quantity = ? WHERE user_id = ? AND record_id = ?', 
-        [type, stock_id, stock_name, buyin_price, quantity, user_id, record_id], function(err) {
+    db.run('UPDATE holding SET type = ?, ticker = ?, name = ?, buyin_price = ?, quantity = ? WHERE user_id = ? AND record_id = ?', 
+        [type, ticker, name, buyin_price, quantity, user_id, record_id], function(err) {
         if (err) {
             res.status(500).json({ message: 'Database error', error: err.message });
         } else if (this.changes === 0) {
@@ -167,7 +167,7 @@ app.put('/api/holdings/:user_id/:record_id', (req, res) => {
 app.delete('/api/holdings/:user_id/:record_id', (req, res) => {
     const user_id = req.params.user_id;
     const record_id = req.params.record_id;
-    db.run('DELETE FROM user_holdings WHERE user_id = ? AND record_id = ?', [user_id, record_id], function(err) {
+    db.run('DELETE FROM holding WHERE user_id = ? AND record_id = ?', [user_id, record_id], function(err) {
         if (err) {
             res.status(500).json({ message: 'Database error', error: err.message });
         } else if (this.changes === 0) {
