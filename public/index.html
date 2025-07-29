@@ -1,0 +1,886 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Wealth Management Platform</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    function scrollToSection(id) {
+      const element = document.getElementById(id);
+      const headerHeight = document.querySelector('header').offsetHeight;
+      const top = element.getBoundingClientRect().top + window.scrollY - headerHeight;
+      window.scrollTo({ top, behavior: 'smooth' });
+    }
+  </script>
+  <style>
+    @keyframes marquee {
+      0% {
+        transform: translateX(100%);
+      }
+
+      100% {
+        transform: translateX(-100%);
+      }
+    }
+
+    .animate-marquee {
+      display: inline-block;
+      white-space: nowrap;
+      animation: marquee 20s linear infinite;
+    }
+
+    /* 新增样式 */
+    .asset-card {
+      background-color: #ffffff;
+      border-radius: 1rem;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+      transition: all 0.3s ease;
+    }
+
+    .asset-card:hover {
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+      transform: translateY(-3px);
+    }
+  </style>
+</head>
+
+<body class="bg-gradient-to-br from-blue-50 via-white to-blue-100 text-gray-800 min-h-screen">
+  <!-- 顶部导航 -->
+  <header class="bg-white shadow h-16 px-6 flex justify-between items-center sticky top-0 z-50">
+    <!-- Left: Logo and platform name -->
+    <a href="index.html" class="flex items-center space-x-4 group cursor-pointer select-none">
+      <!-- Logo icon -->
+      <svg class="w-9 h-9 text-blue-500 group-hover:text-blue-600 transition" fill="none" stroke="currentColor"
+        stroke-width="2" viewBox="0 0 32 32">
+        <circle cx="16" cy="16" r="13" stroke="currentColor" stroke-width="2" fill="#e0f2fe" />
+        <path d="M10 20c2-4 10-4 12 0" stroke="#38bdf8" stroke-width="2" fill="none" />
+        <path d="M16 10v8" stroke="#2563eb" stroke-width="2" stroke-linecap="round" />
+        <circle cx="16" cy="10" r="2" fill="#2563eb" />
+      </svg>
+      <span class="text-2xl font-extrabold text-blue-500 group-hover:text-blue-600 tracking-wide transition leading-none"
+        style="letter-spacing: 1px;">
+        Future Assets
+      </span>
+    </a>
+    <!-- Right: Language switch & Login button or avatar -->
+    <div class="flex items-center space-x-4">
+      <div id="userArea">
+        <button id="loginBtn"
+          class="text-blue-500 group-hover:text-blue-600 text-lg font-bold bg-transparent px-4 py-2 rounded transition"
+          onclick="login()">
+          Login
+        </button>
+      </div>
+    </div>
+  </header>
+
+
+  <!-- 页面布局 -->
+  <div class="flex">
+    <!-- 左侧导航栏 -->
+    <aside id="sidebar" class="w-48 bg-white shadow min-h-screen p-3 flex flex-col items-center transition-all duration-300 hidden md:flex fixed top-16 left-0 z-40">
+      <button id="sidebarToggle" class="mb-6 p-2 rounded hover:bg-blue-100 transition self-end" onclick="toggleSidebar()">
+        <svg id="sidebarToggleIcon" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 12H5" /></svg>
+      </button>
+      <nav class="space-y-4 flex flex-col items-center w-full mt-20">
+        <a href="javascript:void(0)" onclick="scrollToSection('dashboard')"
+          class="flex flex-col items-center justify-center px-2 py-2 rounded hover:bg-blue-50 transition text-blue-500 font-semibold sidebar-link" data-i18n="dashboard">
+            <svg class="w-6 h-6 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8v-10h-8v10zm0-18v6h8V3h-8z"/></svg>
+            <span class="sidebar-text mt-1 text-center">Dashboard</span>
+        </a>
+        <a href="javascript:void(0)" onclick="scrollToSection('allocation')"
+          class="flex flex-col items-center justify-center px-2 py-2 rounded hover:bg-blue-50 transition text-gray-700 hover:text-blue-500 sidebar-link" data-i18n="allocation">
+            <svg class="w-6 h-6 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 2v10l6 6"/></svg>
+            <span class="sidebar-text mt-1 text-center">Asset Allocation</span>
+        </a>
+        <a href="javascript:void(0)" onclick="scrollToSection('positions')"
+          class="flex flex-col items-center justify-center px-2 py-2 rounded hover:bg-blue-50 transition text-gray-700 hover:text-blue-500 sidebar-link" data-i18n="positions">
+            <svg class="w-6 h-6 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M16 3v4M8 3v4"/></svg>
+            <span class="sidebar-text mt-1 text-center">Positions Overview</span>
+        </a>
+      </nav>
+    </aside>
+
+    <!-- 右侧内容区域 -->
+    <main id="mainContent" class="flex-1 p-6 pt-6 md:ml-48 transition-all duration-300">
+
+      <!-- 用户资料区（预留） -->
+      <section id="userProfile" class="hidden">
+        <h2 class="text-2xl font-bold text-gray-700 mb-4" data-i18n="userProfile">User Profile</h2>
+        <!-- 用户信息表单、头像上传等 -->
+      </section>
+      <!-- 投资组合管理区（预留） -->
+      <section id="portfolioManage" class="hidden">
+        <h2 class="text-2xl font-bold text-gray-700 mb-4" data-i18n="portfolioManage">Portfolio Management</h2>
+        <!-- 组合列表、重命名、删除、权限设置等 -->
+      </section>
+      <!-- 资产管理区（预留） -->
+      <section id="assetManage" class="hidden">
+        <h2 class="text-2xl font-bold text-gray-700 mb-4" data-i18n="assetManage">Asset Management</h2>
+        <!-- 资产列表、添加、删除、分类等 -->
+      </section>
+
+      <!-- 仪表盘概览 -->
+      <section id="dashboard">
+        <!-- 实时行情滚动条 -->
+        <div id="marketTicker" class="overflow-hidden whitespace-nowrap bg-white rounded shadow mb-6 h-10 flex items-center">
+          <div id="tickerContent" class="animate-marquee text-blue-500 text-base font-semibold px-4"></div>
+        </div>
+        <h2 class="text-2xl font-bold text-gray-700 mb-4" data-i18n="portfolioOverview">Portfolio Overview</h2>
+        <!-- 优化后的卡片布局 -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <!-- 总资产价值卡片 -->
+          <div class="bg-white rounded-xl shadow-lg p-6 transition-all duration-300 hover:shadow-xl transform hover:-translate-y-1 border-l-4 border-blue-500">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="text-gray-600 font-medium" data-i18n="totalAssets">Total Asset Value</h3>
+              <div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-500">
+                <!-- 资产图标 -->
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M8 12h8M12 8v8"/></svg>
+              </div>
+            </div>
+            <div class="mb-2">
+              <span class="text-3xl font-bold text-gray-800">￥1,248,560</span>
+            </div>
+            <div class="flex items-center">
+              <span class="text-green-600 text-sm font-medium flex items-center">
+                <i class="fa fa-arrow-up mr-1"></i> ￥24,560 (2.01%)
+              </span>
+            </div>
+          </div>
+
+          <!-- 总投资收益卡片 -->
+          <div class="bg-white rounded-xl shadow-lg p-6 transition-all duration-300 hover:shadow-xl transform hover:-translate-y-1 border-l-4 border-green-500">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="text-gray-600 font-medium" data-i18n="totalProfit">Total Investment Profit</h3>
+              <div class="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center text-green-500">
+                <!-- 收益图标 -->
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="4 14 10 10 14 14 20 8"/><path d="M4 20h16"/></svg>
+              </div>
+            </div>
+            <div class="mb-2">
+              <span class="text-3xl font-bold text-gray-800">￥248,560</span>
+            </div>
+            <div class="flex items-center">
+              <span class="text-green-600 text-sm font-medium flex items-center">
+                <i class="fa fa-arrow-up mr-1"></i> ￥12,340 (1.05%)
+              </span>
+            </div>
+          </div>
+
+          <!-- 现金余额卡片 -->
+          <div class="bg-white rounded-xl shadow-lg p-6 transition-all duration-300 hover:shadow-xl transform hover:-translate-y-1 border-l-4 border-yellow-500">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="text-gray-600 font-medium" data-i18n="cashBalance">Cash Balance</h3>
+              <div class="w-10 h-10 rounded-full bg-yellow-100 flex items-center justify-center text-yellow-500">
+                <!-- 现金图标 -->
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="10" rx="2"/><circle cx="12" cy="12" r="3"/></svg>
+              </div>
+            </div>
+            <div class="mb-2">
+              <span class="text-3xl font-bold text-gray-800">￥148,200</span>
+            </div>
+            <div class="flex items-center">
+              <span class="text-gray-500 text-sm font-medium flex items-center">
+                <i class="fa fa-minus mr-1"></i> No Change
+              </span>
+            </div>
+          </div>
+
+          <!-- 年化收益率卡片 -->
+          <div class="bg-white rounded-xl shadow-lg p-6 transition-all duration-300 hover:shadow-xl transform hover:-translate-y-1 border-l-4 border-red-500">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="text-gray-600 font-medium" data-i18n="annualYield">Annual Yield</h3>
+              <div class="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center text-red-500">
+                <!-- 年化收益图标 -->
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+              </div>
+            </div>
+            <div class="mb-2">
+              <span class="text-3xl font-bold text-gray-800">12.8%</span>
+            </div>
+            <div class="flex items-center">
+              <span class="text-red-600 text-sm font-medium flex items-center">
+                <i class="fa fa-arrow-down mr-1"></i> MoM -0.7%
+              </span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 资产分配页面 -->
+      <!-- 增加与上方内容的间距 -->
+      <section id="allocation" class="mt-12">
+        <h2 class="text-2xl font-bold text-gray-700 mb-4" data-i18n="assetAllocation">Asset Allocation</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="asset-card p-6 relative">
+            <div style="height: 340px; position: relative;">
+              <canvas id="assetAllocationChart"></canvas>
+              <!-- SVG连线层 -->
+              <svg id="connectionLayer" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 10;">
+                <defs>
+                  <filter id="glow">
+                    <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+                    <feMerge> 
+                      <feMergeNode in="coloredBlur"/>
+                      <feMergeNode in="SourceGraphic"/>
+                    </feMerge>
+                  </filter>
+                </defs>
+              </svg>
+            </div>
+          </div>
+          <div class="asset-card p-6 flex flex-col justify-center">
+            <h3 class="text-lg font-bold mb-3" data-i18n="assetAllocationDetail">Asset Allocation Details</h3>
+            <ul class="space-y-3 text-sm">
+              <li class="flex items-center justify-between">
+                <span class="text-blue-500 w-16">● Stock</span>
+                <div class="flex-1 mx-3">
+                  <div class="bg-gray-200 rounded-full h-2">
+                    <div class="bg-blue-500 h-2 rounded-full" style="width: 42.6%"></div>
+                  </div>
+                </div>
+                <span class="w-12 text-right">42.6%</span>
+              </li>
+              <li class="flex items-center justify-between">
+                <span class="text-indigo-500 w-16">● Crypto</span>
+                <div class="flex-1 mx-3">
+                  <div class="bg-gray-200 rounded-full h-2">
+                    <div class="bg-indigo-500 h-2 rounded-full" style="width: 20.3%"></div>
+                  </div>
+                </div>
+                <span class="w-12 text-right">20.3%</span>
+              </li>
+              <li class="flex items-center justify-between">
+                <span class="text-green-500 w-16">● Fund</span>
+                <div class="flex-1 mx-3">
+                  <div class="bg-gray-200 rounded-full h-2">
+                    <div class="bg-green-500 h-2 rounded-full" style="width: 15.2%"></div>
+                  </div>
+                </div>
+                <span class="w-12 text-right">15.2%</span>
+              </li>
+              <li class="flex items-center justify-between">
+                <span class="text-yellow-500 w-16">● Bond</span>
+                <div class="flex-1 mx-3">
+                  <div class="bg-gray-200 rounded-full h-2">
+                    <div class="bg-yellow-500 h-2 rounded-full" style="width: 12.4%"></div>
+                  </div>
+                </div>
+                <span class="w-12 text-right">12.4%</span>
+              </li>
+              <li class="flex items-center justify-between">
+                <span class="text-pink-500 w-16">● Cash</span>
+                <div class="flex-1 mx-3">
+                  <div class="bg-gray-200 rounded-full h-2">
+                    <div class="bg-pink-500 h-2 rounded-full" style="width: 9.5%"></div>
+                  </div>
+                </div>
+                <span class="w-12 text-right">9.5%</span>
+              </li>
+            </ul>
+            <p class="text-gray-600 mt-4 text-sm" data-i18n="allocationTip">
+              Reasonable allocation can reduce risk. It is recommended to adjust regularly according to the market and your risk tolerance.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- 持仓概况页面 -->
+      <section id="positions" class="mt-12">
+        <h2 class="text-2xl font-bold text-gray-700 mb-4" data-i18n="currentPositions">Current Positions</h2>
+
+        <!-- 持仓列表 -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="positionsList">
+          <!-- 持仓项1 -->
+          <div class="bg-white rounded-xl shadow-md overflow-hidden transition-all duration-300 hover:shadow-xl transform hover:-translate-y-1 flex flex-col">
+            <div class="p-4 flex flex-col gap-2">
+              <div class="flex justify-between items-center mb-2">
+                <div>
+                  <h3 class="font-bold text-lg" data-i18n="apple">Apple Inc.</h3>
+                  <span class="text-gray-400 text-xs font-mono">AAPL</span>
+                </div>
+                <div class="bg-green-100 text-green-600 px-2 py-1 rounded text-xs font-medium">+2.45%</div>
+              </div>
+              <div class="grid grid-cols-3 gap-x-2 mb-2">
+                <div>
+                  <div class="text-gray-500 text-xs" data-i18n="holdingAmount">Holding</div>
+                  <div class="font-bold text-base">120</div>
+                </div>
+                <div>
+                  <div class="text-gray-500 text-xs" data-i18n="currentPrice">Price</div>
+                  <div class="font-bold text-base">￥1,420.50</div>
+                </div>
+                <div>
+                  <div class="text-gray-500 text-xs" data-i18n="marketValue">Value</div>
+                  <div class="font-bold text-base">￥170,460</div>
+                </div>
+              </div>
+              <div class="flex justify-between items-center text-xs text-gray-500 mt-2">
+                <span data-i18n="sector">Sector: Tech</span>
+                <span data-i18n="days">Days: 365</span>
+                <span data-i18n="type">Type: Stock</span>
+              </div>
+            </div>
+            <div class="bg-gray-50 px-4 py-2 flex justify-between items-center">
+              <div class="text-gray-500 text-sm" data-i18n="proportion">Proportion 13.7%</div>
+              <button class="text-blue-500 text-sm hover:underline" data-i18n="viewDetail">View Details</button>
+            </div>
+          </div>
+          <!-- 持仓项2 -->
+          <div class="bg-white rounded-xl shadow-md overflow-hidden transition-all duration-300 hover:shadow-xl transform hover:-translate-y-1 flex flex-col">
+            <div class="p-4 flex flex-col gap-2">
+              <div class="flex justify-between items-center mb-2">
+                <div>
+                  <h3 class="font-bold text-lg" data-i18n="microsoft">Microsoft</h3>
+                  <span class="text-gray-400 text-xs font-mono">MSFT</span>
+                </div>
+                <div class="bg-red-100 text-red-600 px-2 py-1 rounded text-xs font-medium">-1.23%</div>
+              </div>
+              <div class="grid grid-cols-3 gap-x-2 mb-2">
+                <div>
+                  <div class="text-gray-500 text-xs" data-i18n="holdingAmount">Holding</div>
+                  <div class="font-bold text-base">85</div>
+                </div>
+                <div>
+                  <div class="text-gray-500 text-xs" data-i18n="currentPrice">Price</div>
+                  <div class="font-bold text-base">￥2,340.00</div>
+                </div>
+                <div>
+                  <div class="text-gray-500 text-xs" data-i18n="marketValue">Value</div>
+                  <div class="font-bold text-base">￥198,900</div>
+                </div>
+              </div>
+              <div class="flex justify-between items-center text-xs text-gray-500 mt-2">
+                <span data-i18n="sector">Sector: Software</span>
+                <span data-i18n="days">Days: 210</span>
+                <span data-i18n="type">Type: Stock</span>
+              </div>
+            </div>
+            <div class="bg-gray-50 px-4 py-2 flex justify-between items-center">
+              <div class="text-gray-500 text-sm" data-i18n="proportion">Proportion 15.9%</div>
+              <button class="text-blue-500 text-sm hover:underline" data-i18n="viewDetail">View Details</button>
+            </div>
+          </div>
+          <!-- 持仓项3 -->
+          <div class="bg-white rounded-xl shadow-md overflow-hidden transition-all duration-300 hover:shadow-xl transform hover:-translate-y-1 flex flex-col">
+            <div class="p-4 flex flex-col gap-2">
+              <div class="flex justify-between items-center mb-2">
+                <div>
+                  <h3 class="font-bold text-lg" data-i18n="tesla">Tesla</h3>
+                  <span class="text-gray-400 text-xs font-mono">TSLA</span>
+                </div>
+                <div class="bg-green-100 text-green-600 px-2 py-1 rounded text-xs font-medium">+3.12%</div>
+              </div>
+              <div class="grid grid-cols-3 gap-x-2 mb-2">
+                <div>
+                  <div class="text-gray-500 text-xs" data-i18n="holdingAmount">Holding</div>
+                  <div class="font-bold text-base">50</div>
+                </div>
+                <div>
+                  <div class="text-gray-500 text-xs" data-i18n="currentPrice">Price</div>
+                  <div class="font-bold text-base">￥785.30</div>
+                </div>
+                <div>
+                  <div class="text-gray-500 text-xs" data-i18n="marketValue">Value</div>
+                  <div class="font-bold text-base">￥39,265</div>
+                </div>
+              </div>
+              <div class="flex justify-between items-center text-xs text-gray-500 mt-2">
+                <span data-i18n="sector">Sector: Automotive</span>
+                <span data-i18n="days">Days: 90</span>
+                <span data-i18n="type">Type: Stock</span>
+              </div>
+            </div>
+            <div class="bg-gray-50 px-4 py-2 flex justify-between items-center">
+              <div class="text-gray-500 text-sm" data-i18n="proportion">Proportion 3.2%</div>
+              <button class="text-blue-500 text-sm hover:underline" data-i18n="viewDetail">View Details</button>
+            </div>
+          </div>
+          <!-- 持仓项4 -->
+          <div class="bg-white rounded-xl shadow-md overflow-hidden transition-all duration-300 hover:shadow-xl transform hover:-translate-y-1 flex flex-col">
+            <div class="p-4 flex flex-col gap-2">
+              <div class="flex justify-between items-center mb-2">
+                <div>
+                  <h3 class="font-bold text-lg" data-i18n="amazon">Amazon</h3>
+                  <span class="text-gray-400 text-xs font-mono">AMZN</span>
+                </div>
+                <div class="bg-green-100 text-green-600 px-2 py-1 rounded text-xs font-medium">+0.87%</div>
+              </div>
+              <div class="grid grid-cols-3 gap-x-2 mb-2">
+                <div>
+                  <div class="text-gray-500 text-xs" data-i18n="holdingAmount">Holding</div>
+                  <div class="font-bold text-base">35</div>
+                </div>
+                <div>
+                  <div class="text-gray-500 text-xs" data-i18n="currentPrice">Price</div>
+                  <div class="font-bold text-base">￥1,876.20</div>
+                </div>
+                <div>
+                  <div class="text-gray-500 text-xs" data-i18n="marketValue">Value</div>
+                  <div class="font-bold text-base">￥65,667</div>
+                </div>
+              </div>
+              <div class="flex justify-between items-center text-xs text-gray-500 mt-2">
+                <span data-i18n="sector">Sector: E-Commerce</span>
+                <span data-i18n="days">Days: 180</span>
+                <span data-i18n="type">Type: Stock</span>
+              </div>
+            </div>
+            <div class="bg-gray-50 px-4 py-2 flex justify-between items-center">
+              <div class="text-gray-500 text-sm" data-i18n="proportion">Proportion 5.3%</div>
+              <button class="text-blue-500 text-sm hover:underline" data-i18n="viewDetail">View Details</button>
+            </div>
+          </div>
+          <!-- 持仓项5 -->
+          <div class="bg-white rounded-xl shadow-md overflow-hidden transition-all duration-300 hover:shadow-xl transform hover:-translate-y-1 flex flex-col">
+            <div class="p-4 flex flex-col gap-2">
+              <div class="flex justify-between items-center mb-2">
+                <div>
+                  <h3 class="font-bold text-lg" data-i18n="alibaba">Alibaba</h3>
+                  <span class="text-gray-400 text-xs font-mono">BABA</span>
+                </div>
+                <div class="bg-red-100 text-red-600 px-2 py-1 rounded text-xs font-medium">-2.35%</div>
+              </div>
+              <div class="grid grid-cols-3 gap-x-2 mb-2">
+                <div>
+                  <div class="text-gray-500 text-xs" data-i18n="holdingAmount">Holding</div>
+                  <div class="font-bold text-base">100</div>
+                </div>
+                <div>
+                  <div class="text-gray-500 text-xs" data-i18n="currentPrice">Price</div>
+                  <div class="font-bold text-base">￥89.65</div>
+                </div>
+                <div>
+                  <div class="text-gray-500 text-xs" data-i18n="marketValue">Value</div>
+                  <div class="font-bold text-base">￥8,965</div>
+                </div>
+              </div>
+              <div class="flex justify-between items-center text-xs text-gray-500 mt-2">
+                <span data-i18n="sector">Sector: E-Commerce</span>
+                <span data-i18n="days">Days: 60</span>
+                <span data-i18n="type">Type: Stock</span>
+              </div>
+            </div>
+            <div class="bg-gray-50 px-4 py-2 flex justify-between items-center">
+              <div class="text-gray-500 text-sm" data-i18n="proportion">Proportion 0.7%</div>
+              <button class="text-blue-500 text-sm hover:underline" data-i18n="viewDetail">View Details</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 显示更多按钮 -->
+        <div class="mt-8 text-center">
+          <button id="showMoreBtn"
+            class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg font-medium transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50" data-i18n="showMore">
+            Show More <i class="fa fa-chevron-down ml-1"></i>
+          </button>
+        </div>
+      </section>
+
+      <!-- 弹窗组件 -->
+      <div id="modal" class="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-xl shadow-lg p-8 w-full max-w-md relative">
+          <button onclick="closeModal()"
+            class="absolute top-2 right-2 text-gray-400 hover:text-gray-700 text-2xl">&times;</button>
+          <div id="modalContent">
+            <!-- 动态内容区域 -->
+          </div>
+        </div>
+      </div>
+
+      <script>
+        function scrollToSection(sectionId) {
+          const element = document.getElementById(sectionId);
+          const header = document.querySelector('header');
+          const headerHeight = header ? header.offsetHeight : 0;
+          const top = element.getBoundingClientRect().top + window.scrollY - headerHeight;
+          window.scrollTo({ top, behavior: 'smooth' });
+          // 隐藏移动端菜单
+          const mobileNav = document.getElementById('mobileNav');
+          if (mobileNav && mobileNav.classList.contains('block')) {
+            mobileNav.classList.add('hidden');
+          }
+        }
+
+        function openModal(type) {
+          const modal = document.getElementById('modal');
+          const content = document.getElementById('modalContent');
+          let html = '';
+          if (type === 'newPortfolio') {
+            html = `<h3 class="text-lg font-bold mb-4">新建投资组合</h3>
+                <input class="border rounded px-3 py-2 w-full mb-4" placeholder="请输入组合名称">
+                <button class="bg-blue-500 text-white px-4 py-2 rounded" onclick="alert('创建成功')">创建</button>`;
+          } else if (type === 'userManage') {
+            html = `<h3 class="text-lg font-bold mb-4">用户管理</h3>
+                <p>这里可以进行用户列表、添加、删除等操作。</p>`;
+          } else if (type === 'assetManage') {
+            html = `<h3 class="text-lg font-bold mb-4">资产管理</h3>
+                <p>这里可以管理资产类型、添加资产等。</p>`;
+          } else if (type === 'portfolioManage') {
+            html = `<h3 class="text-lg font-bold mb-4">投资组合管理</h3>
+                <p>这里可以重命名、删除、设置权限等。</p>`;
+          }
+          content.innerHTML = html;
+          modal.classList.remove('hidden');
+        }
+
+        function closeModal() {
+          document.getElementById('modal').classList.add('hidden');
+        }
+
+        // 模拟登录
+        function login() {
+          document.getElementById('userArea').innerHTML = `
+    <div class="relative">
+      <img src="https://avatars.githubusercontent.com/u/1?v=4" alt="User Avatar"
+           class="w-9 h-9 rounded-full object-cover cursor-pointer"
+           onclick="toggleDropdown()" />
+      <div id="dropdownMenu" class="absolute right-0 mt-2 w-28 bg-white border border-gray-200 rounded shadow hidden">
+        <button class="block w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100" onclick="logout()">Logout</button>
+      </div>
+    </div>
+  `;
+        }
+
+        // 切换下拉菜单显示
+        function toggleDropdown() {
+          const menu = document.getElementById('dropdownMenu');
+          if (menu) {
+            menu.classList.toggle('hidden');
+          }
+        }
+
+        // 登出并还原为登录按钮
+        function logout() {
+          document.getElementById('userArea').innerHTML = `
+    <button id="loginBtn" class="text-blue-400 group-hover:text-blue-600 text-lg font-bold bg-transparent px-4 py-2 rounded transition" onclick="login()">
+      Login
+    </button>
+  `;
+        }
+
+
+        // 示例API数据拉取与滚动展示
+        async function fetchMarketTicker() {
+          // 这里用模拟数据，实际可替换为你的行情API
+          // const res = await fetch('https://your-api/market-ticker');
+          // const data = await res.json();
+          const data = [
+            { symbol: 'AAPL', price: 192.34, change: '+1.23%' },
+            { symbol: 'MSFT', price: 342.12, change: '-0.45%' },
+            { symbol: 'BTC', price: 67890, change: '+2.1%' },
+            { symbol: 'ETH', price: 3456, change: '-1.2%' },
+            { symbol: 'TSLA', price: 245.67, change: '+0.89%' }
+          ];
+          const ticker = data.map(item =>
+            `<span class="mx-6">${item.symbol}: <span class="font-bold">${item.price}</span> <span class="${item.change.startsWith('+') ? 'text-green-600' : 'text-red-600'}">${item.change}</span></span>`
+          ).join('');
+          document.getElementById('tickerContent').innerHTML = ticker;
+        }
+        fetchMarketTicker();
+        // 可定时刷新
+        setInterval(fetchMarketTicker, 60000);
+
+        // 绘制资产分配饼状图
+        document.addEventListener('DOMContentLoaded', function () {
+          const ctx = document.getElementById('assetAllocationChart').getContext('2d');
+          const connectionLayer = document.getElementById('connectionLayer');
+          let myChart;
+          let currentConnection = null;
+          
+          // 选中变大功能
+          let activeIndex = null;
+          const assetData = {
+            labels: ['Stock', 'Crypto', 'Fund', 'Bond', 'Cash'],
+            datasets: [{
+              data: [42.6, 20.3, 15.2, 12.4, 9.5],
+              backgroundColor: [
+                'rgba(54, 162, 235, 0.8)',
+                'rgba(153, 102, 255, 0.8)',
+                'rgba(75, 192, 192, 0.8)',
+                'rgba(255, 205, 86, 0.8)',
+                'rgba(255, 99, 132, 0.8)'
+              ],
+              borderColor: [
+                'rgba(54, 162, 235, 1)',
+                'rgba(153, 102, 255, 1)',
+                'rgba(75, 192, 192, 1)',
+                'rgba(255, 205, 86, 1)',
+                'rgba(255, 99, 132, 1)'
+              ],
+              borderWidth: 2,
+              hoverBackgroundColor: [
+                'rgba(54, 162, 235, 1)',
+                'rgba(153, 102, 255, 1)',
+                'rgba(75, 192, 192, 1)',
+                'rgba(255, 205, 86, 1)',
+                'rgba(255, 99, 132, 1)'
+              ],
+              hoverOffset: 15
+            }]
+          };
+
+          // 修正选中放大后显示不全：动态调整canvas父容器高度和canvas高度
+          const chartContainer = document.getElementById('assetAllocationChart').parentNode;
+          chartContainer.style.height = '340px';
+          document.getElementById('assetAllocationChart').height = 340;
+
+          myChart = new Chart(ctx, {
+            type: 'pie',
+            data: assetData,
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              layout: {
+                padding: {
+                  top: 20,
+                  bottom: 20,
+                  left: 20,
+                  right: 20
+                }
+              },
+              plugins: {
+                legend: {
+                  display: false // 隐藏图例
+                },
+                tooltip: {
+                  enabled: false // 禁用默认tooltip
+                }
+              },
+              // 悬停选中放大
+              onHover: function (event, elements, chart) {
+                if (elements.length > 0) {
+                  const index = elements[0].index;
+                  
+                  // 检查是否已经在显示同一个扇形
+                  if (activeIndex !== index) {
+                    activeIndex = index;
+                    chart.setActiveElements([{
+                      datasetIndex: elements[0].datasetIndex,
+                      index: index
+                    }]);
+                    
+                    // 显示高亮和虚折线
+                    showHighlightAndLine(index, chart);
+                  }
+                } else {
+                  // 鼠标离开所有扇形时才清除
+                  if (activeIndex !== null) {
+                    activeIndex = null;
+                    chart.setActiveElements([]);
+                    clearHighlightAndLine();
+                  }
+                }
+                chart.update();
+              },
+              animation: {
+                animateRotate: true,
+                animateScale: true
+              }
+            }
+          });
+
+          // 等待图表渲染完成后初始化
+          setTimeout(() => {
+            // 初始化完成
+          }, 500);
+
+          // 显示高亮和虚折线函数
+          function showHighlightAndLine(index, chart) {
+            clearHighlightAndLine();
+            
+            const canvas = document.getElementById('assetAllocationChart');
+            const chartArea = chart.chartArea;
+            
+            // 计算饼图扇形中心角度
+            const total = assetData.datasets[0].data.reduce((a, b) => a + b, 0);
+            let currentAngle = -Math.PI / 2; // 从12点钟方向开始
+            for (let i = 0; i < index; i++) {
+              currentAngle += (assetData.datasets[0].data[i] / total) * 2 * Math.PI;
+            }
+            const sliceAngle = (assetData.datasets[0].data[index] / total) * 2 * Math.PI;
+            const midAngle = currentAngle + sliceAngle / 2;
+            
+            // 计算饼图中心点
+            const pieCenterX = chartArea.left + (chartArea.right - chartArea.left) / 2;
+            const pieCenterY = chartArea.top + (chartArea.bottom - chartArea.top) / 2;
+            
+            // 计算饼图半径
+            const pieRadius = Math.min(chartArea.right - chartArea.left, chartArea.bottom - chartArea.top) * 0.4;
+            
+            // 计算扇形的几何中心点（质心）- 距离中心2/3半径处
+            const centroidRadius = pieRadius * 0.67;
+            const centroidX = pieCenterX + Math.cos(midAngle) * centroidRadius;
+            const centroidY = pieCenterY + Math.sin(midAngle) * centroidRadius;
+            
+            // 计算折线路径点 - 先向外延伸到饼图外部，再水平延伸
+            let cornerX, cornerY, endX, endY;
+            let textX, textY;
+            
+            // 将角度转换为度数，便于判断方向
+            const angleDegrees = (midAngle * 180) / Math.PI;
+            
+            // 第一段：从质心沿着扇形方向延伸到饼图外部
+            const outwardDistance = pieRadius + 45; // 延伸到饼图外45像素
+            const outwardX = pieCenterX + Math.cos(midAngle) * outwardDistance;
+            const outwardY = pieCenterY + Math.sin(midAngle) * outwardDistance;
+            
+            if (angleDegrees >= -45 && angleDegrees < 45) {
+              // 右侧扇形：向右水平延伸
+              cornerX = outwardX;
+              cornerY = outwardY;
+              endX = cornerX + 60;
+              endY = cornerY;
+              textX = endX + 6;
+              textY = endY + 4;
+            } else if (angleDegrees >= 45 && angleDegrees < 135) {
+              // 下方扇形：统一向左水平延伸（紫色部分往左）
+              cornerX = outwardX;
+              cornerY = outwardY;
+              endX = cornerX - 60;
+              endY = cornerY;
+              textX = endX - 50;
+              textY = endY + 4;
+              
+              // 专门为紫色部分（Cash）调整位置
+              if (index === 4) { // Cash是第5个元素，索引为4
+                endX = cornerX - 60;
+                endY = cornerY - 10;
+                textX = endX - 35;
+                textY = endY - 5;
+              }
+            } else if (angleDegrees >= 135 || angleDegrees < -135) {
+              // 左侧扇形：向左水平延伸
+              cornerX = outwardX;
+              cornerY = outwardY;
+              endX = cornerX - 60;
+              endY = cornerY;
+              textX = endX - 50;
+              textY = endY + 4;
+            } else {
+              // 上方扇形：向上垂直延伸
+              cornerX = outwardX;
+              cornerY = outwardY;
+              endX = cornerX;
+              endY = cornerY - 60;
+              textX = endX + 8;
+              textY = endY - 8;
+            }
+            
+            // 创建折线路径点：质心 -> 饼图外部 -> 水平/垂直延伸
+            const points = `${centroidX},${centroidY} ${cornerX},${cornerY} ${endX},${endY}`;
+            
+            // 创建SVG折线
+            const polyline = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
+            polyline.setAttribute('points', points);
+            polyline.setAttribute('stroke', assetData.datasets[0].borderColor[index]); // 使用更深的边框颜色
+            polyline.setAttribute('stroke-width', '2'); // 减小线条宽度
+            polyline.setAttribute('stroke-dasharray', 'none'); // 改为实线
+            polyline.setAttribute('fill', 'none');
+            polyline.setAttribute('opacity', '0.9'); // 增加透明度
+            polyline.id = 'highlight-line';
+            
+            // 添加动画效果 - 使用stroke-dasharray实现逐渐伸出
+            const totalLength = Math.sqrt(Math.pow(cornerX - centroidX, 2) + Math.pow(cornerY - centroidY, 2)) + 
+                               Math.sqrt(Math.pow(endX - cornerX, 2) + Math.pow(endY - cornerY, 2));
+            polyline.style.strokeDasharray = `0,${totalLength}`;
+            polyline.style.transition = 'stroke-dasharray 0.6s ease-in-out';
+            
+            connectionLayer.appendChild(polyline);
+            
+            // 延迟执行动画
+            setTimeout(() => {
+              polyline.style.strokeDasharray = `${totalLength},0`;
+            }, 50);
+            
+            // 创建占比文本（带淡入动画）
+            const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            text.setAttribute('x', textX);
+            text.setAttribute('y', textY);
+            text.setAttribute('font-family', 'Arial, sans-serif');
+            text.setAttribute('font-size', '16');
+            text.setAttribute('font-weight', 'bold');
+            text.setAttribute('fill', assetData.datasets[0].backgroundColor[index]);
+            text.textContent = `${assetData.datasets[0].data[index]}%`;
+            text.id = 'highlight-text';
+            text.style.opacity = '0';
+            text.style.transition = 'opacity 0.4s ease-in-out';
+            
+            connectionLayer.appendChild(text);
+            
+            // 延迟显示文本
+            setTimeout(() => {
+              text.style.opacity = '1';
+            }, 300);
+          }
+
+          // 清除高亮和虚折线
+          function clearHighlightAndLine() {
+            const line = document.getElementById('highlight-line');
+            const text = document.getElementById('highlight-text');
+            
+            if (line && line.parentNode) {
+              line.parentNode.removeChild(line);
+            }
+            if (text && text.parentNode) {
+              text.parentNode.removeChild(text);
+            }
+          }
+
+          // 清除连线
+          function clearConnection() {
+            const lines = connectionLayer.querySelectorAll('line');
+            lines.forEach(line => {
+              if (line.parentNode) {
+                line.parentNode.removeChild(line);
+              }
+            });
+            const texts = connectionLayer.querySelectorAll('text');
+            texts.forEach(text => {
+              if (text.parentNode) {
+                text.parentNode.removeChild(text);
+              }
+            });
+          }
+        });
+
+        // 侧边栏收起/展开功能
+        let sidebarCollapsed = false;
+        function toggleSidebar() {
+          sidebarCollapsed = !sidebarCollapsed;
+          const sidebar = document.getElementById('sidebar');
+          const main = document.getElementById('mainContent');
+          const texts = sidebar.querySelectorAll('.sidebar-text');
+          if (sidebarCollapsed) {
+            sidebar.classList.remove('w-48');
+            sidebar.classList.add('w-16');
+            main.classList.remove('md:ml-48');
+            main.classList.add('md:ml-16');
+            texts.forEach(t => t.classList.add('hidden'));
+            document.getElementById('sidebarToggleIcon').innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />';
+          } else {
+            sidebar.classList.remove('w-16');
+            sidebar.classList.add('w-48');
+            main.classList.remove('md:ml-16');
+            main.classList.add('md:ml-48');
+            texts.forEach(t => t.classList.remove('hidden'));
+            document.getElementById('sidebarToggleIcon').innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 12H5" />';
+          }
+        }
+        // 页面加载后初始化一次，防止刷新后状态不同步
+        document.addEventListener('DOMContentLoaded', function() {
+          const sidebar = document.getElementById('sidebar');
+          const texts = sidebar.querySelectorAll('.sidebar-text');
+          if (sidebarCollapsed) {
+            texts.forEach(t => t.classList.add('hidden'));
+          } else {
+            texts.forEach(t => t.classList.remove('hidden'));
+          }
+        });
+      </script>
+</body>
+
+</html>
