@@ -19,7 +19,10 @@
   },
   "homepage": "https://github.com/CrisBy0331/Group5#readme",
   "dependencies": {
+    "axios": "^1.11.0",
+    "better-sqlite3": "^12.2.0",
     "body-parser": "^2.2.0",
+    "crypto": "^1.0.1",
     "dotenv": "^17.2.1",
     "express": "^5.1.0",
     "mysql2": "^3.14.2",
