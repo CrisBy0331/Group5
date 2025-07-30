@@ -7,6 +7,92 @@
     <title>Position Details</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+    // 检查用户登录状态
+    function checkLoginStatus() {
+      // 从localStorage获取登录状态
+      const isLoggedIn = localStorage.getItem('isLoggedIn');
+      const userToken = localStorage.getItem('userToken');
+      
+      // 如果没有登录状态或token，跳转到登录页面
+      if (!isLoggedIn || !userToken) {
+        window.location.href = 'log_in.html';
+        return false;
+      }
+      
+      // 如果已登录，更新用户区域显示
+      updateUserArea();
+      return true;
+    }
+
+    // 更新用户区域显示
+    function updateUserArea() {
+      const userAccount = localStorage.getItem('userAccount');
+      const userArea = document.getElementById('userArea');
+      
+      if (userAccount) {
+        userArea.innerHTML = `
+          <div class="flex items-center space-x-3">
+            <span class="text-gray-700 font-medium">${userAccount}</span>
+            <button onclick="logout()" 
+              class="text-red-500 hover:text-red-600 text-sm font-medium bg-transparent px-3 py-1 rounded border border-red-300 hover:border-red-400 transition">
+              Logout
+            </button>
+          </div>
+        `;
+      } else {
+        // 如果没有登录信息，显示登录链接
+        userArea.innerHTML = `
+          <a href="log_in.html" class="text-blue-500 hover:text-blue-600 text-lg font-bold bg-transparent px-4 py-2 rounded transition">
+            Login
+          </a>
+        `;
+      }
+    }
+
+    // 登出功能
+    function logout() {
+      localStorage.removeItem('isLoggedIn');
+      localStorage.removeItem('userToken');
+      localStorage.removeItem('userAccount');
+      window.location.href = 'log_in.html';
+    }
+
+    // 页面加载时检查登录状态
+    document.addEventListener('DOMContentLoaded', function() {
+      checkLoginStatus();
+    });
+  </script>
+  <style>
+    @keyframes marquee {
+      0% {
+        transform: translateX(100%);
+      }
+
+      100% {
+        transform: translateX(-100%);
+      }
+    }
+
+    .animate-marquee {
+      display: inline-block;
+      white-space: nowrap;
+      animation: marquee 20s linear infinite;
+    }
+
+    /* 新增样式 */
+    .asset-card {
+      background-color: #ffffff;
+      border-radius: 1rem;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+      transition: all 0.3s ease;
+    }
+
+    .asset-card:hover {
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+      transform: translateY(-3px);
+    }
+  </style>
 </head>
 
 <body class="bg-gradient-to-br from-blue-50 via-white to-blue-100 text-gray-800 min-h-screen">
