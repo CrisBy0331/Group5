@@ -235,9 +235,7 @@ jest.mock('sqlite3', () => {
     }));
 
     return {
-        verbose: () => ({
-            Database: mockDatabase
-        })
+        Database: mockDatabase
     };
 });
 
