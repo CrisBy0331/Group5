@@ -432,7 +432,11 @@ app.post('/api/holdings/:user_id/buy', async (req, res) => {
                 type = 'stock'; // fallback type
             }
             if (needsName) {
-                return res.status(500).json({ message: 'Unable to fetch current name', error: error.message });
+                console.warn(`Failed to fetch name for ${ticker}, requiring manual input:`, error.message);
+                return res.status(400).json({ 
+                    message: 'Unable to auto-detect name. Please provide the name field manually.',
+                    error: 'Name detection service unavailable'
+                });
             }
         }
     } else {
@@ -450,7 +454,11 @@ app.post('/api/holdings/:user_id/buy', async (req, res) => {
             try {
                 name = await getCurrentName(ticker);
             } catch (error) {
-                return res.status(500).json({ message: 'Unable to fetch current name', error: error.message });
+                console.warn(`Failed to fetch name for ${ticker}, requiring manual input:`, error.message);
+                return res.status(400).json({ 
+                    message: 'Unable to auto-detect name. Please provide the name field manually.',
+                    error: 'Name detection service unavailable'
+                });
             }
         }
     }
@@ -460,7 +468,11 @@ app.post('/api/holdings/:user_id/buy', async (req, res) => {
         try {
             price = await getCurrentPrice(ticker);
         } catch (error) {
-            return res.status(500).json({ message: 'Unable to fetch current price', error: error.message });
+            console.warn(`Failed to fetch price for ${ticker}, requiring manual input:`, error.message);
+            return res.status(400).json({ 
+                message: 'Unable to auto-detect price. Please provide the price field manually.',
+                error: 'Price detection service unavailable'
+            });
         }
     }
     
@@ -534,7 +546,11 @@ app.post('/api/holdings/:user_id/sell', async (req, res) => {
         try {
             price = await getCurrentPrice(ticker);
         } catch (error) {
-            return res.status(500).json({ message: 'Unable to fetch current price', error: error.message });
+            console.warn(`Failed to fetch price for ${ticker}, requiring manual input:`, error.message);
+            return res.status(400).json({ 
+                message: 'Unable to auto-detect price. Please provide the price field manually.',
+                error: 'Price detection service unavailable'
+            });
         }
     }
     
