@@ -1227,15 +1227,7 @@
           // 确保显示加载状态
           showGlobalLoading();
 
-          // 临时跳过登录检查用于开发测试
-          // checkLoginStatus(); // 先检查登录状态
-
-          // 设置默认用户信息用于测试
-          localStorage.setItem('isLoggedIn', 'true');
-          localStorage.setItem('userToken', 'test-token');
-          localStorage.setItem('userAccount', 'demo');
-          localStorage.setItem('currentUserId', '1');
-          updateUserArea();
+          checkLoginStatus(); // 先检查登录状态
 
           console.log('开始加载投资组合数据...');
           loadPortfolioData(); // 然后加载投资组合数据
