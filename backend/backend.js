@@ -1,7 +1,12 @@
 const sqlite3 = require('sqlite3').verbose();
 const express = require('express');
 const crypto = require('crypto');
+const dotenv = require('dotenv');
+
+dotenv.config();
 const PORT = 3000;
+
+console.log(process.env.TWELVE_DATA_API_KEY);
 
 // Create database connection
 const db = new sqlite3.Database('database.db');
@@ -211,7 +216,7 @@ app.get('api/stock/quote/:ticker', (req, res) => {
 // Helper function to fetch current stock price
 async function getCurrentPrice(ticker) {
     try {
-        const url = `https://api.twelvedata.com/price?symbol=${ticker}&apikey=${process.env.TWELVE_DATA_API_KEY}`;
+        const url = `https://api.twelvedata.com/price?symbol\=${ticker}&apikey\=${process.env.TWELVE_DATA_API_KEY}`;
         const response = await fetch(url);
         const data = await response.json();
         

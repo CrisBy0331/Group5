@@ -10,6 +10,7 @@
     "test:coverage": "jest --coverage"
   },
   "dependencies": {
+    "dotenv": "^17.2.1",
     "express": "^4.18.2",
     "sqlite3": "^5.1.6"
   },
@@ -19,13 +20,20 @@
   },
   "jest": {
     "testEnvironment": "node",
-    "testMatch": ["**/test_*.js"],
+    "testMatch": [
+      "**/test_*.js"
+    ],
     "collectCoverageFrom": [
       "*.js",
       "!**/node_modules/**"
     ]
   },
-  "keywords": ["api", "express", "sqlite", "users"],
+  "keywords": [
+    "api",
+    "express",
+    "sqlite",
+    "users"
+  ],
   "author": "Group5",
   "license": "MIT"
 }
