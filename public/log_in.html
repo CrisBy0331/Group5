@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>用户登录 · 投资组合管理系统</title>
+  <title>Login · Portfolio Management System</title>
   <style>
     :root {
       --primary: #005ce6;
@@ -114,32 +114,148 @@
     #loginModal a:hover {
       text-decoration: underline;
     }
+
+    
+    
   </style>
 </head>
 
 <body>
   <header class="navbar">
-    <strong>投资组合管理系统</strong>
+    <strong>Portfolio Management System</strong>
     <div id="authArea">
-        <!-- 默认显示登录按钮 -->
-        <button onclick="showLoginModal()">登录/注册</button>
+        <!-- Default: show login button -->
+        <button onclick="showLoginModal()">Login / Register</button>
     </div>
   </header>
 
   <div id="overlay"></div>
   <div id="loginModal">
-    <h3>登录</h3>
+    <h3>Login</h3>
     <div id="errorMessage"></div>
     <div class="form-group">
-      <input type="text" id="loginAccount" placeholder="邮箱或手机号" required />
+      <input type="text" id="loginAccount" placeholder="Email or Phone" required />
     </div>
     <div class="form-group">
-      <input type="password" id="loginPassword" placeholder="密码" required />
+      <input type="password" id="loginPassword" placeholder="Password" required />
     </div>
-    <button onclick="handleLogin()">登录</button>
-    <p>没有账号？<a href="/register">去注册</a></p>
+    <div class="form-group" style="display: flex; align-items: center; justify-content: flex-start; gap: 4px; margin-bottom: 20px;">
+      <input type="checkbox" id="rememberMe" style="width: 16px; height: 16px; accent-color: #005ce6; margin: 0;" />
+      <label for="rememberMe" style="font-size: 14px; font-weight: 500; cursor: pointer;">Remember Me</label>
+    </div>
+
+    <button onclick="handleLogin()">Login</button>
+    <p>No account? <a href="/register">Register</a></p>
   </div>
 
+  <script>
+    const loginModal = document.getElementById('loginModal');
+    const overlay = document.getElementById('overlay');
+    const authArea = document.getElementById('authArea');
+    const errorMessage = document.getElementById('errorMessage');
+    const loginAccountInput = document.getElementById('loginAccount');
+    const rememberMeCheckbox = document.getElementById('rememberMe');
+
+    // --- Inactivity timeout ---
+    let inactivityTimer;
+    const INACTIVITY_TIMEOUT = 1 * 60 * 1000;
+    const userActivityEvents = ['mousemove', 'mousedown', 'keydown', 'scroll', 'touchstart'];
+
+    function logoutDueToInactivity() {
+      authArea.innerHTML = `<button onclick="showLoginModal()">Login / Register</button>`;
+      errorMessage.textContent = 'You have been inactive for a long time. Please log in again.';
+      document.getElementById('loginPassword').value = '';
+      showLoginModal();
+      userActivityEvents.forEach(event => {
+        window.removeEventListener(event, resetInactivityTimer, true);
+      });
+      if (!rememberMeCheckbox.checked) {
+        loginAccountInput.value = '';
+        document.getElementById('loginPassword').value = '';
+      }
+    }
+
+    function resetInactivityTimer() {
+      clearTimeout(inactivityTimer);
+      inactivityTimer = setTimeout(logoutDueToInactivity, INACTIVITY_TIMEOUT);
+    }
+
+    function startWatchingInactivity() {
+      userActivityEvents.forEach(event => {
+        window.addEventListener(event, resetInactivityTimer, true);
+      });
+      resetInactivityTimer();
+    }
+
+    // --- 页面加载逻辑 ---
+    window.onload = () => {
+        // 修改点：检查本地存储中是否有记住的账号
+        const savedAccount = localStorage.getItem('rememberedAccount');
+        if (savedAccount) {
+            loginAccountInput.value = savedAccount;
+            rememberMeCheckbox.checked = true;
+        }
+
+        showLoginModal();
+    };
+
+
+    function showLoginModal() {
+        loginModal.style.display = 'block';
+        overlay.style.display = 'block';
+    }
+
+    function hideLoginModal() {
+        loginModal.style.display = 'none';
+        overlay.style.display = 'none';
+        errorMessage.textContent = '';
+    }
+    
+    overlay.onclick = hideLoginModal;
+
+
+    async function handleLogin() {
+      // 修改点：获取账号、密码和“记住我”复选框的状态
+      const account = loginAccountInput.value.trim();
+      const password = document.getElementById('loginPassword').value.trim();
+      const rememberMe = rememberMeCheckbox.checked;
+      errorMessage.textContent = '';
+
+      if (!account || !password) {
+        errorMessage.textContent = 'Please enter account and password';
+        return;
+      }
+
+      try {
+        const res = await fetch('http://localhost:3000/api/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ account, password })
+        });
+        const data = await res.json();
+
+        if (res.ok && data.user) {
+          hideLoginModal();
+          authArea.innerHTML = `
+            <div class="user-info">
+              <span>Welcome, ${data.user.account}</span>
+              <img src="${data.user.avatar}" alt="avatar" />
+            </div>`;
+          if (rememberMe) {
+            localStorage.setItem('rememberedAccount', account);
+          } else {
+            localStorage.removeItem('rememberedAccount');
+          }
+          startWatchingInactivity();
+        } else {
+          errorMessage.textContent = data.message;
+        }
+      } catch (error) {
+        errorMessage.textContent = 'Login request failed. Please check your network or contact the administrator.';
+      }
+    }
+  </script>
+<!--
   <script>
    const loginModal = document.getElementById('loginModal');
     const overlay = document.getElementById('overlay');
@@ -201,5 +317,6 @@
       }
     }
   </script>
+-->
 </body>
 </html>
