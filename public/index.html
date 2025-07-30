@@ -6,6 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Wealth Management Platform</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="js/api.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script>
     // 检查用户登录状态
@@ -55,13 +56,11 @@
       localStorage.removeItem('isLoggedIn');
       localStorage.removeItem('userToken');
       localStorage.removeItem('userAccount');
+      localStorage.removeItem('currentUserId'); // 同时清除用户ID
       window.location.href = 'log_in.html';
     }
 
-    // 页面加载时检查登录状态
-    document.addEventListener('DOMContentLoaded', function() {
-      checkLoginStatus();
-    });
+    // 页面加载时检查登录状态 - 已移至下方统一处理
   </script>
   <style>
     @keyframes marquee {
@@ -237,83 +236,92 @@
         </div>
         <h2 class="text-2xl font-bold text-gray-700 mb-4" data-i18n="portfolioOverview">Portfolio Overview</h2>
         <!-- 优化后的卡片布局 -->
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+         <!-- 投资组合概览统计卡片 -->
+         <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
           <!-- 总资产价值卡片 -->
           <div class="bg-white rounded-xl shadow-lg p-6 transition-all duration-300 hover:shadow-xl transform hover:-translate-y-1 border-l-4 border-blue-500">
-            <div class="flex items-center justify-between mb-4">
-              <h3 class="text-gray-600 font-medium" data-i18n="totalAssets">Total Asset Value</h3>
-              <div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-500">
-                <!-- 资产图标 -->
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M8 12h8M12 8v8"/></svg>
+              <div class="flex items-center justify-between mb-4">
+                  <h3 class="text-gray-600 font-medium">Total Asset Value</h3>
+                  <div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-500">
+                      <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                          <circle cx="12" cy="12" r="10"/>
+                          <path d="M8 12h8M12 8v8"/>
+                      </svg>
+                  </div>
               </div>
-            </div>
-            <div class="mb-2">
-              <span class="text-3xl font-bold text-gray-800">￥1,248,560</span>
-            </div>
-            <div class="flex items-center">
-              <span class="text-green-600 text-sm font-medium flex items-center">
-                <i class="fa fa-arrow-up mr-1"></i> ￥24,560 (2.01%)
-              </span>
-            </div>
+              <div class="mb-2">
+                  <span id="totalValue" class="text-3xl font-bold text-gray-800">$0</span>
+              </div>
+              <div class="flex items-center">
+                  <span id="totalValueChange" class="text-green-600 text-sm font-medium flex items-center">
+                      <i class="fa fa-arrow-up mr-1"></i> Loading...
+                  </span>
+              </div>
           </div>
 
           <!-- 总投资收益卡片 -->
           <div class="bg-white rounded-xl shadow-lg p-6 transition-all duration-300 hover:shadow-xl transform hover:-translate-y-1 border-l-4 border-green-500">
-            <div class="flex items-center justify-between mb-4">
-              <h3 class="text-gray-600 font-medium" data-i18n="totalProfit">Total Investment Profit</h3>
-              <div class="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center text-green-500">
-                <!-- 收益图标 -->
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="4 14 10 10 14 14 20 8"/><path d="M4 20h16"/></svg>
+              <div class="flex items-center justify-between mb-4">
+                  <h3 class="text-gray-600 font-medium">Total Investment Profit</h3>
+                  <div class="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center text-green-500">
+                      <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                          <polyline points="4 14 10 10 14 14 20 8"/>
+                          <path d="M4 20h16"/>
+                      </svg>
+                  </div>
               </div>
-            </div>
-            <div class="mb-2">
-              <span class="text-3xl font-bold text-gray-800">￥248,560</span>
-            </div>
-            <div class="flex items-center">
-              <span class="text-green-600 text-sm font-medium flex items-center">
-                <i class="fa fa-arrow-up mr-1"></i> ￥12,340 (1.05%)
-              </span>
-            </div>
+              <div class="mb-2">
+                  <span id="totalGain" class="text-3xl font-bold text-gray-800">$0</span>
+              </div>
+              <div class="flex items-center">
+                  <span id="totalGainChange" class="text-green-600 text-sm font-medium flex items-center">
+                      <i class="fa fa-arrow-up mr-1"></i> Loading...
+                  </span>
+              </div>
           </div>
 
           <!-- 现金余额卡片 -->
           <div class="bg-white rounded-xl shadow-lg p-6 transition-all duration-300 hover:shadow-xl transform hover:-translate-y-1 border-l-4 border-yellow-500">
-            <div class="flex items-center justify-between mb-4">
-              <h3 class="text-gray-600 font-medium" data-i18n="CurrencyBalance">Currency Balance</h3>
-              <div class="w-10 h-10 rounded-full bg-yellow-100 flex items-center justify-center text-yellow-500">
-                <!-- 现金图标 -->
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="10" rx="2"/><circle cx="12" cy="12" r="3"/></svg>
+              <div class="flex items-center justify-between mb-4">
+                  <h3 class="text-gray-600 font-medium">Cash Balance</h3>
+                  <div class="w-10 h-10 rounded-full bg-yellow-100 flex items-center justify-center text-yellow-500">
+                      <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                          <rect x="2" y="7" width="20" height="10" rx="2"/>
+                          <circle cx="12" cy="12" r="3"/>
+                      </svg>
+                  </div>
               </div>
-            </div>
-            <div class="mb-2">
-              <span class="text-3xl font-bold text-gray-800">￥148,200</span>
-            </div>
-            <div class="flex items-center">
-              <span class="text-gray-500 text-sm font-medium flex items-center">
-                <i class="fa fa-minus mr-1"></i> No Change
-              </span>
-            </div>
+              <div class="mb-2">
+                  <span id="cashBalance" class="text-3xl font-bold text-gray-800">$15,000</span>
+              </div>
+              <div class="flex items-center">
+                  <span class="text-gray-500 text-sm font-medium flex items-center">
+                      <i class="fa fa-minus mr-1"></i> No Change
+                  </span>
+              </div>
           </div>
 
           <!-- 年化收益率卡片 -->
           <div class="bg-white rounded-xl shadow-lg p-6 transition-all duration-300 hover:shadow-xl transform hover:-translate-y-1 border-l-4 border-red-500">
-            <div class="flex items-center justify-between mb-4">
-              <h3 class="text-gray-600 font-medium" data-i18n="annualYield">Annual Yield</h3>
-              <div class="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center text-red-500">
-                <!-- 年化收益图标 -->
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+              <div class="flex items-center justify-between mb-4">
+                  <h3 class="text-gray-600 font-medium">Annual Return</h3>
+                  <div class="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center text-red-500">
+                      <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                          <circle cx="12" cy="12" r="10"/>
+                          <path d="M12 6v6l4 2"/>
+                      </svg>
+                  </div>
               </div>
-            </div>
-            <div class="mb-2">
-              <span class="text-3xl font-bold text-gray-800">12.8%</span>
-            </div>
-            <div class="flex items-center">
-              <span class="text-red-600 text-sm font-medium flex items-center">
-                <i class="fa fa-arrow-down mr-1"></i> MoM -0.7%
-              </span>
-            </div>
+              <div class="mb-2">
+                  <span id="annualReturn" class="text-3xl font-bold text-gray-800">0%</span>
+              </div>
+              <div class="flex items-center">
+                  <span id="annualReturnChange" class="text-red-600 text-sm font-medium flex items-center">
+                      <i class="fa fa-arrow-down mr-1"></i> Loading...
+                  </span>
+              </div>
           </div>
-        </div>
+      </div>
       </section>
 
       <!-- 资产分配页面 -->
@@ -401,7 +409,7 @@
         <!-- 持仓列表 -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="positionsList">
           <!-- 持仓项1 -->
-          <div class="bg-white rounded-xl shadow-md overflow-hidden transition-all duration-300 hover:shadow-xl transform hover:-translate-y-1 flex flex-col">
+          <!-- <div class="bg-white rounded-xl shadow-md overflow-hidden transition-all duration-300 hover:shadow-xl transform hover:-translate-y-1 flex flex-col">
             <div class="p-4 flex flex-col gap-2">
               <div class="flex justify-between items-center mb-2">
                 <div>
@@ -430,20 +438,19 @@
                 <span data-i18n="type">Type: Stock</span>
               </div>
             </div>
-            <div class="bg-gray-50 px-4 py-2 flex justify-between items-center">
+            <div class="bg-gray-50 px-4 py-2">
               <div class="text-gray-500 text-sm" data-i18n="proportion">Proportion 13.7%</div>
-              <button class="text-blue-500 text-sm hover:underline" data-i18n="viewDetail">View Details</button>
             </div>
-          </div>
+          </div> -->
           <!-- 持仓项2 -->
-          <div class="bg-white rounded-xl shadow-md overflow-hidden transition-all duration-300 hover:shadow-xl transform hover:-translate-y-1 flex flex-col">
-            <div class="p-4 flex flex-col gap-2">
-              <div class="flex justify-between items-center mb-2">
-                <div>
-                  <h3 class="font-bold text-lg" data-i18n="microsoft">Microsoft</h3>
-                  <span class="text-gray-400 text-xs font-mono">MSFT</span>
-                </div>
-                <div class="bg-red-100 text-red-600 px-2 py-1 rounded text-xs font-medium">-1.23%</div>
+            <!-- <div class="bg-white rounded-xl shadow-md overflow-hidden transition-all duration-300 hover:shadow-xl transform hover:-translate-y-1 flex flex-col">
+              <div class="p-4 flex flex-col gap-2">
+                <div class="flex justify-between items-center mb-2">
+                  <div>
+                    <h3 class="font-bold text-lg" data-i18n="microsoft">Microsoft</h3>
+                    <span class="text-gray-400 text-xs font-mono">MSFT</span>
+                  </div>
+                  <div class="bg-red-100 text-red-600 px-2 py-1 rounded text-xs font-medium">-1.23%</div>
               </div>
               <div class="grid grid-cols-3 gap-x-2 mb-2">
                 <div>
@@ -465,13 +472,12 @@
                 <span data-i18n="type">Type: Stock</span>
               </div>
             </div>
-            <div class="bg-gray-50 px-4 py-2 flex justify-between items-center">
+            <div class="bg-gray-50 px-4 py-2">
               <div class="text-gray-500 text-sm" data-i18n="proportion">Proportion 15.9%</div>
-              <button class="text-blue-500 text-sm hover:underline" data-i18n="viewDetail">View Details</button>
             </div>
-          </div>
+          </div> -->
           <!-- 持仓项3 -->
-          <div class="bg-white rounded-xl shadow-md overflow-hidden transition-all duration-300 hover:shadow-xl transform hover:-translate-y-1 flex flex-col">
+          <!-- <div class="bg-white rounded-xl shadow-md overflow-hidden transition-all duration-300 hover:shadow-xl transform hover:-translate-y-1 flex flex-col">
             <div class="p-4 flex flex-col gap-2">
               <div class="flex justify-between items-center mb-2">
                 <div>
@@ -500,13 +506,12 @@
                 <span data-i18n="type">Type: Stock</span>
               </div>
             </div>
-            <div class="bg-gray-50 px-4 py-2 flex justify-between items-center">
+            <div class="bg-gray-50 px-4 py-2">
               <div class="text-gray-500 text-sm" data-i18n="proportion">Proportion 3.2%</div>
-              <button class="text-blue-500 text-sm hover:underline" data-i18n="viewDetail">View Details</button>
             </div>
-          </div>
+          </div> -->
           <!-- 持仓项4 -->
-          <div class="bg-white rounded-xl shadow-md overflow-hidden transition-all duration-300 hover:shadow-xl transform hover:-translate-y-1 flex flex-col">
+          <!-- <div class="bg-white rounded-xl shadow-md overflow-hidden transition-all duration-300 hover:shadow-xl transform hover:-translate-y-1 flex flex-col">
             <div class="p-4 flex flex-col gap-2">
               <div class="flex justify-between items-center mb-2">
                 <div>
@@ -535,13 +540,12 @@
                 <span data-i18n="type">Type: Stock</span>
               </div>
             </div>
-            <div class="bg-gray-50 px-4 py-2 flex justify-between items-center">
+            <div class="bg-gray-50 px-4 py-2">
               <div class="text-gray-500 text-sm" data-i18n="proportion">Proportion 5.3%</div>
-              <button class="text-blue-500 text-sm hover:underline" data-i18n="viewDetail">View Details</button>
             </div>
-          </div>
+          </div> -->
           <!-- 持仓项5 -->
-          <div class="bg-white rounded-xl shadow-md overflow-hidden transition-all duration-300 hover:shadow-xl transform hover:-translate-y-1 flex flex-col">
+          <!-- <div class="bg-white rounded-xl shadow-md overflow-hidden transition-all duration-300 hover:shadow-xl transform hover:-translate-y-1 flex flex-col">
             <div class="p-4 flex flex-col gap-2">
               <div class="flex justify-between items-center mb-2">
                 <div>
@@ -570,18 +574,17 @@
                 <span data-i18n="type">Type: Stock</span>
               </div>
             </div>
-            <div class="bg-gray-50 px-4 py-2 flex justify-between items-center">
+            <div class="bg-gray-50 px-4 py-2">
               <div class="text-gray-500 text-sm" data-i18n="proportion">Proportion 0.7%</div>
-              <button class="text-blue-500 text-sm hover:underline" data-i18n="viewDetail">View Details</button>
             </div>
           </div>
-        </div>
+        </div> -->
 
         <!-- 显示更多按钮 -->
         <div class="mt-8 text-center">
-          <button id="showMoreBtn"
+          <button id="showMoreBtn" onclick="window.location.href='detail.html'"
             class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg font-medium transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50" data-i18n="showMore">
-            Show More <i class="fa fa-chevron-down ml-1"></i>
+            Show More <i class="fa fa-chevron-right ml-1"></i>
           </button>
         </div>
       </section>
@@ -746,6 +749,267 @@
 
         // 每30秒检查一次是否需要更新（但实际API调用间隔是2分钟）
         setInterval(fetchMarketTicker, 30000);
+
+        // 真实数据加载函数 (使用management.html的逻辑)
+        let portfolioData = [];
+        const API_BASE_URL = 'http://localhost:3000/api';
+
+        async function loadPortfolioData() {
+          console.log('loadPortfolioData 函数开始执行');
+          try {
+            const userId = getCurrentUserId();
+            console.log('Loading portfolio data for user:', userId);
+
+            const response = await fetch(`${API_BASE_URL}/holdings/${userId}`);
+            if (response.ok) {
+              portfolioData = await response.json();
+              console.log('Portfolio data loaded:', portfolioData);
+              await updatePortfolioSummary(); // 更新统计数据
+              updateHoldingsList(portfolioData).catch(error => {
+                console.error('Failed to update holdings list:', error);
+              });
+            } else {
+              console.error('Failed to load portfolio data, status:', response.status);
+              portfolioData = [];
+              updatePortfolioSummaryFallback(); // 显示默认数据
+            }
+
+            // 旧的计算逻辑已移除，现在使用 updatePortfolioSummary() 函数
+
+          } catch (error) {
+            console.error('Error loading portfolio data:', error);
+            portfolioData = [];
+            updatePortfolioSummaryFallback(); // 显示默认数据
+          }
+        }
+
+        // 更新投资组合统计数据 (从management.html复制)
+        async function updatePortfolioSummary() {
+          try {
+            let totalValue = 0;
+            let totalCost = 0;
+
+            // 计算总价值和总成本
+            for (const holding of portfolioData) {
+              try {
+                // 尝试获取当前价格
+                const priceResponse = await fetch(`${API_BASE_URL}/stock/price/${holding.ticker}`);
+                let currentPrice = holding.buyin_price; // 默认使用买入价
+
+                if (priceResponse.ok) {
+                  const priceData = await priceResponse.json();
+                  currentPrice = parseFloat(priceData.price) || holding.buyin_price;
+                }
+
+                const holdingValue = currentPrice * holding.quantity;
+                const holdingCost = holding.buyin_price * holding.quantity;
+
+                totalValue += holdingValue;
+                totalCost += holdingCost;
+              } catch (error) {
+                console.warn(`Failed to get price for ${holding.ticker}:`, error);
+                // 使用买入价作为后备
+                const holdingValue = holding.buyin_price * holding.quantity;
+                totalValue += holdingValue;
+                totalCost += holdingValue;
+              }
+            }
+
+            const totalGain = totalValue - totalCost;
+            const annualReturn = totalCost > 0 ? ((totalGain / totalCost) * 100) : 0;
+            const cashBalance = 15000; // 固定现金余额
+
+            // 更新UI
+            document.getElementById('totalValue').textContent = `$${totalValue.toLocaleString()}`;
+            document.getElementById('totalGain').textContent = `${totalGain >= 0 ? '+' : ''}$${totalGain.toLocaleString()}`;
+            document.getElementById('annualReturn').textContent = `${annualReturn.toFixed(2)}%`;
+            document.getElementById('cashBalance').textContent = `$${cashBalance.toLocaleString()}`;
+
+            // 更新颜色和图标
+            const gainElement = document.getElementById('totalGain');
+            const gainChangeElement = document.getElementById('totalGainChange');
+            const returnChangeElement = document.getElementById('annualReturnChange');
+
+            if (totalGain >= 0) {
+              gainElement.className = 'text-3xl font-bold text-green-600';
+              gainChangeElement.innerHTML = '<i class="fa fa-arrow-up mr-1"></i> Profit';
+              gainChangeElement.className = 'text-green-600 text-sm font-medium flex items-center';
+            } else {
+              gainElement.className = 'text-3xl font-bold text-red-600';
+              gainChangeElement.innerHTML = '<i class="fa fa-arrow-down mr-1"></i> Loss';
+              gainChangeElement.className = 'text-red-600 text-sm font-medium flex items-center';
+            }
+
+            if (annualReturn >= 0) {
+              returnChangeElement.innerHTML = '<i class="fa fa-arrow-up mr-1"></i> Positive';
+              returnChangeElement.className = 'text-green-600 text-sm font-medium flex items-center';
+            } else {
+              returnChangeElement.innerHTML = '<i class="fa fa-arrow-down mr-1"></i> Negative';
+              returnChangeElement.className = 'text-red-600 text-sm font-medium flex items-center';
+            }
+
+            document.getElementById('totalValueChange').innerHTML = '<i class="fa fa-refresh mr-1"></i> Updated';
+
+          } catch (error) {
+            console.error('Error updating portfolio summary:', error);
+            updatePortfolioSummaryFallback();
+          }
+        }
+
+        // 后备统计数据 (从management.html复制)
+        function updatePortfolioSummaryFallback() {
+          document.getElementById('totalValue').textContent = '$0';
+          document.getElementById('totalGain').textContent = '$0';
+          document.getElementById('annualReturn').textContent = '0%';
+          document.getElementById('cashBalance').textContent = '$15,000';
+          document.getElementById('totalValueChange').innerHTML = '<i class="fa fa-minus mr-1"></i> No Data';
+          document.getElementById('totalGainChange').innerHTML = '<i class="fa fa-minus mr-1"></i> No Data';
+          document.getElementById('annualReturnChange').innerHTML = '<i class="fa fa-minus mr-1"></i> No Data';
+        }
+
+        // 旧的后备数据函数已被 updatePortfolioSummaryFallback 替代
+
+        // 获取当前用户ID (与management.html一致)
+        function getCurrentUserId() {
+          let userId = localStorage.getItem('currentUserId');
+          if (!userId) {
+            userId = '1'; // 默认用户ID，与management.html一致
+            localStorage.setItem('currentUserId', userId);
+            console.log('设置默认用户ID:', userId);
+          }
+          console.log('当前用户ID:', userId);
+          return userId;
+        }
+
+        // 更新持仓列表
+        async function updateHoldingsList(holdings) {
+          const positionsList = document.getElementById('positionsList');
+
+          if (!holdings || holdings.length === 0) {
+            positionsList.innerHTML = `
+              <div class="col-span-full text-center py-12">
+                <div class="text-gray-400 text-lg mb-2">
+                  <i class="fas fa-chart-line text-4xl mb-4"></i>
+                </div>
+                <h3 class="text-gray-600 font-medium mb-2">No Holdings Found</h3>
+                <p class="text-gray-500 text-sm">Start investing to see your portfolio here</p>
+                <a href="stock.html" class="inline-block mt-4 bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg transition">
+                  Explore Stocks
+                </a>
+              </div>
+            `;
+            return;
+          }
+
+          let holdingsHTML = '';
+
+          for (const holding of holdings) {
+            try {
+              // 获取当前价格和变化
+              let currentPrice = holding.buyin_price;
+              let priceChange = 0;
+              let priceChangePercent = 0;
+
+              try {
+                const priceResponse = await fetch(`${API_BASE_URL}/stock/price/${holding.ticker}`);
+                if (priceResponse.ok) {
+                  const priceData = await priceResponse.json();
+                  currentPrice = parseFloat(priceData.price) || holding.buyin_price;
+                  priceChange = currentPrice - holding.buyin_price;
+                  priceChangePercent = ((priceChange / holding.buyin_price) * 100);
+                }
+              } catch (error) {
+                console.warn(`Failed to get current price for ${holding.ticker}`);
+              }
+
+              const totalValue = currentPrice * holding.quantity;
+              const totalCost = holding.buyin_price * holding.quantity;
+              const totalGain = totalValue - totalCost;
+              const gainPercent = ((totalGain / totalCost) * 100);
+
+              const isPositive = gainPercent >= 0;
+              const changeClass = isPositive ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600';
+              const changeIcon = isPositive ? '+' : '';
+
+              holdingsHTML += `
+                <div class="bg-white rounded-xl shadow-md overflow-hidden transition-all duration-300 hover:shadow-xl transform hover:-translate-y-1 flex flex-col">
+                  <div class="p-4 flex flex-col gap-2">
+                    <div class="flex justify-between items-center mb-2">
+                      <div>
+                        <h3 class="font-bold text-lg">${holding.name || holding.ticker}</h3>
+                        <span class="text-gray-400 text-xs font-mono">${holding.ticker}</span>
+                      </div>
+                      <div class="${changeClass} px-2 py-1 rounded text-xs font-medium">
+                        ${changeIcon}${gainPercent.toFixed(2)}%
+                      </div>
+                    </div>
+                    <div class="grid grid-cols-3 gap-x-2 mb-2">
+                      <div>
+                        <div class="text-gray-500 text-xs">Holding</div>
+                        <div class="font-bold text-base">${holding.quantity.toLocaleString()}</div>
+                      </div>
+                      <div>
+                        <div class="text-gray-500 text-xs">Avg Cost</div>
+                        <div class="font-bold text-base">$${holding.buyin_price.toFixed(2)}</div>
+                      </div>
+                      <div>
+                        <div class="text-gray-500 text-xs">Current</div>
+                        <div class="font-bold text-base">$${currentPrice.toFixed(2)}</div>
+                      </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-x-2">
+                      <div>
+                        <div class="text-gray-500 text-xs">Market Value</div>
+                        <div class="font-bold text-base">$${totalValue.toLocaleString()}</div>
+                      </div>
+                      <div>
+                        <div class="text-gray-500 text-xs">P&L</div>
+                        <div class="font-bold text-base ${isPositive ? 'text-green-600' : 'text-red-600'}">
+                          ${changeIcon}$${Math.abs(totalGain).toLocaleString()}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="bg-gray-50 px-4 py-2">
+                    <div class="text-gray-500 text-sm">
+                      Proportion ${((totalValue / getTotalPortfolioValue()) * 100).toFixed(1)}%
+                    </div>
+                  </div>
+                </div>
+              `;
+            } catch (error) {
+              console.error(`Error processing holding ${holding.ticker}:`, error);
+            }
+          }
+
+          // 添加Show More按钮
+          holdingsHTML += `
+            <div class="col-span-full mt-8 text-center">
+              <button onclick="window.location.href='detail.html'"
+                class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg font-medium transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">
+                Show More <i class="fa fa-chevron-right ml-1"></i>
+              </button>
+            </div>
+          `;
+
+          positionsList.innerHTML = holdingsHTML;
+        }
+
+        // 获取投资组合总价值（用于计算比例）
+        function getTotalPortfolioValue() {
+          const totalValueText = document.getElementById('totalValue').textContent;
+          return parseFloat(totalValueText.replace(/[$,]/g, '')) || 1;
+        }
+
+        // showLoadingState 函数已移除，使用 management.html 的加载逻辑
+
+        // 页面加载时调用
+        document.addEventListener('DOMContentLoaded', function() {
+          console.log('页面加载完成，开始初始化...');
+          checkLoginStatus(); // 先检查登录状态
+          console.log('开始加载投资组合数据...');
+          loadPortfolioData(); // 然后加载投资组合数据
+        });
 
         // 绘制资产分配饼状图
         document.addEventListener('DOMContentLoaded', function () {
