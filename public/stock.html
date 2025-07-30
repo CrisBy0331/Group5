@@ -6,6 +6,69 @@
   <title>Stock Details</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    /* 价格变化动画 */
+    @keyframes priceUp {
+      0% { background-color: rgba(34, 197, 94, 0.1); }
+      100% { background-color: transparent; }
+    }
+
+    @keyframes priceDown {
+      0% { background-color: rgba(239, 68, 68, 0.1); }
+      100% { background-color: transparent; }
+    }
+
+    .price-up {
+      animation: priceUp 1s ease-out;
+    }
+
+    .price-down {
+      animation: priceDown 1s ease-out;
+    }
+
+    /* 按钮悬停效果 */
+    .btn-hover-effect {
+      position: relative;
+      overflow: hidden;
+    }
+
+    .btn-hover-effect::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+      transition: left 0.5s;
+    }
+
+    .btn-hover-effect:hover::before {
+      left: 100%;
+    }
+
+    /* 卡片悬停效果 */
+    .info-card {
+      transition: all 0.3s ease;
+    }
+
+    .info-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+    }
+
+    /* 加载骨架屏 */
+    .skeleton {
+      background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+      background-size: 200% 100%;
+      animation: loading 1.5s infinite;
+    }
+
+    @keyframes loading {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+  </style>
 </head>
 <body class="bg-gradient-to-br from-blue-50 via-white to-blue-100 text-gray-800 min-h-screen">
   <!-- 顶部导航 -->
@@ -118,17 +181,89 @@
         </a>
       </nav>
     </aside>
-    <main id="mainContent" class="flex-1 p-8 pt-6 md:ml-48 transition-all duration-300 flex justify-center">
-      <div class="w-full max-w-4xl">
-        <div id="stock-info" class="mb-8 bg-white/70 bg-gradient-to-br from-white/80 via-blue-50/60 to-blue-100/60 rounded-3xl shadow-2xl p-10 flex flex-col items-center border border-blue-100 backdrop-blur-md">
-          <div class="text-center text-3xl font-extrabold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-blue-700 via-blue-400 to-cyan-400 drop-shadow select-text" id="stock-title">Loading...</div>
-          <div class="flex flex-wrap justify-center gap-6 mb-8 w-full">
-            <div id="stock-meta" class="flex flex-wrap justify-center gap-4 w-full"></div>
+    <main id="mainContent" class="flex-1 p-8 pt-6 md:ml-48 transition-all duration-300">
+      <div class="w-full max-w-6xl mx-auto">
+        <!-- 股票标题和基本信息 -->
+        <div class="mb-8 bg-gradient-to-r from-white via-blue-50 to-white rounded-3xl shadow-2xl border border-blue-100 overflow-hidden">
+          <div class="p-8">
+            <div class="text-center mb-6">
+              <div class="text-4xl font-extrabold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-blue-700 via-blue-500 to-cyan-500" id="stock-title">Loading...</div>
+              <div id="stock-subtitle" class="text-gray-600 text-lg"></div>
+            </div>
+
+            <!-- 价格显示区域 -->
+            <div id="price-section" class="bg-white/80 rounded-xl p-5 mb-5 shadow-md border border-blue-100">
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
+                <div class="space-y-1">
+                  <div class="text-xs text-gray-500 uppercase tracking-wide">Current Price</div>
+                  <div id="current-price" class="text-2xl font-bold text-gray-800">--</div>
+                </div>
+                <div class="space-y-1">
+                  <div class="text-xs text-gray-500 uppercase tracking-wide">Change</div>
+                  <div id="price-change" class="text-xl font-semibold">--</div>
+                </div>
+                <div class="space-y-1">
+                  <div class="text-xs text-gray-500 uppercase tracking-wide">Change %</div>
+                  <div id="price-change-percent" class="text-xl font-semibold">--</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 详细信息网格 -->
+            <div id="stock-meta" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3 mb-5"></div>
           </div>
-          <div id="stock-chart" class="mb-8 rounded-2xl overflow-hidden bg-blue-50/80 p-6 shadow-2xl w-full border border-blue-100"></div>
-          <div class="flex justify-center mt-8 w-full gap-8">
-            <button id="buyBtn" class="px-10 py-3 bg-gradient-to-r from-green-400 via-green-500 to-emerald-500 text-white rounded-xl text-lg font-bold shadow hover:scale-105 hover:shadow-2xl transition-all duration-200">BUY</button>
-            <button id="soldBtn" class="px-10 py-3 bg-gradient-to-r from-gray-400 via-gray-500 to-gray-600 text-white rounded-xl text-lg font-bold ml-8 shadow hover:scale-105 hover:shadow-2xl transition-all duration-200 hidden">SOLD</button>
+        </div>
+
+        <!-- 图表区域 -->
+        <div class="mb-6 bg-white rounded-2xl shadow-lg border border-blue-100 overflow-hidden">
+          <div class="p-5">
+            <div class="flex items-center justify-between mb-4">
+              <h3 id="chart-title" class="text-lg font-semibold text-gray-800 flex items-center">
+                <svg class="w-5 h-5 mr-2 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                </svg>
+                1-Day Price Chart
+              </h3>
+              <div class="flex space-x-1">
+                <button id="chart-1d" class="chart-period-btn px-3 py-1 text-xs bg-blue-500 text-white rounded-md hover:bg-blue-600 transition font-medium active" data-period="1d" data-interval="5min" data-size="78">1D</button>
+                <button id="chart-1w" class="chart-period-btn px-3 py-1 text-xs bg-gray-100 text-gray-600 rounded-md hover:bg-gray-200 transition" data-period="1w" data-interval="1day" data-size="7">1W</button>
+                <button id="chart-1m" class="chart-period-btn px-3 py-1 text-xs bg-gray-100 text-gray-600 rounded-md hover:bg-gray-200 transition" data-period="1m" data-interval="1day" data-size="30">1M</button>
+                <button id="chart-1y" class="chart-period-btn px-3 py-1 text-xs bg-gray-100 text-gray-600 rounded-md hover:bg-gray-200 transition" data-period="1y" data-interval="1week" data-size="52">1Y</button>
+              </div>
+            </div>
+            <div id="stock-chart" class="rounded-xl bg-white p-4 border border-gray-100 shadow-sm" style="height: 380px;">
+              <div class="w-full h-full flex items-center justify-center text-gray-400">
+                <svg class="animate-spin w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                </svg>
+                Loading chart data...
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 操作按钮区域 -->
+        <div class="bg-white rounded-2xl shadow-lg border border-blue-100 p-6">
+          <div class="flex items-center justify-center gap-4">
+            <button id="buyBtn" class="btn-hover-effect group relative px-8 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl text-base font-semibold shadow-md hover:shadow-lg transform hover:-translate-y-1 transition-all duration-300 overflow-hidden">
+              <span class="relative z-10 flex items-center">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                </svg>
+                BUY STOCK
+              </span>
+              <div class="absolute inset-0 bg-gradient-to-r from-green-600 to-emerald-700 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></div>
+            </button>
+
+            <button id="soldBtn" class="btn-hover-effect group relative px-8 py-3 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-xl text-base font-semibold shadow-md hover:shadow-lg transform hover:-translate-y-1 transition-all duration-300 overflow-hidden hidden">
+              <span class="relative z-10 flex items-center">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"></path>
+                </svg>
+                SELL STOCK
+              </span>
+              <div class="absolute inset-0 bg-gradient-to-r from-red-600 to-red-700 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></div>
+            </button>
           </div>
         </div>
       </div>
@@ -168,9 +303,323 @@
       localStorage.removeItem('userAccount');
       window.location.href = 'log_in.html';
     }
-    document.addEventListener('DOMContentLoaded', function() {
+    // 数据缓存机制
+    const dataCache = {
+      search: new Map(),
+      quote: new Map(),
+      timeSeries: new Map()
+    };
+    const CACHE_DURATION = 2 * 60 * 1000; // 2分钟缓存
+
+    // 图表相关变量
+    let currentChart = null;
+    let currentPeriod = '1d';
+
+    function getCachedData(type, key) {
+      const cache = dataCache[type];
+      const cached = cache.get(key);
+      if (cached && (Date.now() - cached.timestamp) < CACHE_DURATION) {
+        console.log(`Using cached ${type} data for ${key}`);
+        return cached.data;
+      }
+      return null;
+    }
+
+    function setCachedData(type, key, data) {
+      const cache = dataCache[type];
+      cache.set(key, {
+        data: data,
+        timestamp: Date.now()
+      });
+    }
+
+    // 时间段切换功能
+    function switchChartPeriod(period, interval, size, title) {
+      currentPeriod = period;
+
+      // 更新按钮状态
+      document.querySelectorAll('.chart-period-btn').forEach(btn => {
+        btn.classList.remove('bg-blue-500', 'text-white', 'font-medium', 'active');
+        btn.classList.add('bg-gray-100', 'text-gray-600');
+      });
+
+      const activeBtn = document.querySelector(`[data-period="${period}"]`);
+      if (activeBtn) {
+        activeBtn.classList.remove('bg-gray-100', 'text-gray-600');
+        activeBtn.classList.add('bg-blue-500', 'text-white', 'font-medium', 'active');
+      }
+
+      // 更新标题
+      document.getElementById('chart-title').innerHTML = `
+        <svg class="w-5 h-5 mr-2 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+        </svg>
+        ${title}
+      `;
+
+      // 重新加载图表数据
+      if (window.currentSymbol) {
+        loadChartData(window.currentSymbol, interval, size);
+      }
+    }
+
+    // 获取时间段标题
+    function getPeriodTitle(period) {
+      const titles = {
+        '1d': '1-Day Price Chart',
+        '1w': '1-Week Price Chart',
+        '1m': '1-Month Price Chart',
+        '1y': '1-Year Price Chart'
+      };
+      return titles[period] || 'Price Chart';
+    }
+
+    // 加载图表数据
+    async function loadChartData(symbol, interval = '1day', outputsize = 90) {
+      const cacheKey = `${symbol}_${interval}_${outputsize}`;
+      let timeSeriesData = getCachedData('timeSeries', cacheKey);
+
+      if (!timeSeriesData) {
+        const kUrl = `https://api.twelvedata.com/time_series?symbol=${encodeURIComponent(symbol)}&interval=${interval}&outputsize=${outputsize}&apikey=d1c361e9f14e4900961253e214f4ea7e`;
+        try {
+          console.log('Fetching time series for:', symbol, 'Interval:', interval, 'Size:', outputsize);
+          const res = await fetch(kUrl);
+          timeSeriesData = await res.json();
+          console.log('Time series response:', timeSeriesData);
+
+          // 只缓存成功的响应
+          if (!timeSeriesData.code && timeSeriesData.status === 'ok') {
+            setCachedData('timeSeries', cacheKey, timeSeriesData);
+          }
+        } catch (e) {
+          console.error('Time series fetch error:', e);
+          document.getElementById('stock-chart').innerHTML = `
+            <div class="w-full h-full flex flex-col items-center justify-center text-red-400">
+              <svg class="w-12 h-12 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192L5.636 18.364M12 2.25a9.75 9.75 0 109.75 9.75A9.75 9.75 0 0012 2.25z"></path>
+              </svg>
+              <div class="text-center">
+                <div class="font-medium">Network Error</div>
+                <div class="text-sm mt-1">Unable to load chart data</div>
+              </div>
+            </div>
+          `;
+          return;
+        }
+      }
+
+      if (timeSeriesData.code) {
+        document.getElementById('stock-chart').innerHTML = `
+          <div class="w-full h-full flex flex-col items-center justify-center text-red-400">
+            <svg class="w-12 h-12 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            <div class="text-center">
+              <div class="font-medium">Chart API Error</div>
+              <div class="text-sm mt-1">${timeSeriesData.message || timeSeriesData.code}</div>
+            </div>
+          </div>
+        `;
+        console.error('Time series API Error:', timeSeriesData);
+      } else if (timeSeriesData.status === 'ok' && timeSeriesData.values) {
+        renderChart(timeSeriesData, interval);
+      } else {
+        document.getElementById('stock-chart').innerHTML = `
+          <div class="w-full h-full flex flex-col items-center justify-center text-gray-400">
+            <svg class="w-12 h-12 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+            </svg>
+            <div class="text-center">
+              <div class="font-medium">No chart data available</div>
+              <div class="text-sm mt-1">Historical data not found for this symbol</div>
+            </div>
+          </div>
+        `;
+      }
+    }
+
+    // 渲染图表
+    function renderChart(timeSeriesData, interval) {
+      const ctxId = 'stockKChart';
+      document.getElementById('stock-chart').innerHTML = `<canvas id="${ctxId}" style="width: 100%; height: 100%;"></canvas>`;
+
+      // 根据时间间隔格式化标签
+      const labels = timeSeriesData.values.map(v => {
+        const date = new Date(v.datetime);
+        if (interval === '5min') {
+          // 1D数据显示时间
+          return date.toLocaleTimeString('en-US', {
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false
+          });
+        } else if (interval === '1week') {
+          // 1Y数据显示月日
+          return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        } else {
+          // 1W, 1M数据显示月日
+          return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        }
+      }).reverse();
+
+      const prices = timeSeriesData.values.map(v => parseFloat(v.close)).reverse();
+
+      // 销毁之前的图表
+      if (currentChart) {
+        currentChart.destroy();
+      }
+
+      currentChart = new Chart(document.getElementById(ctxId), {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Close Price ($)',
+            data: prices,
+            borderColor: '#3b82f6',
+            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+            fill: true,
+            tension: 0.3,
+            pointRadius: 3,
+            pointHoverRadius: 6,
+            pointBackgroundColor: '#3b82f6',
+            pointBorderColor: '#ffffff',
+            pointBorderWidth: 2,
+            borderWidth: 2
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: {
+            intersect: false,
+            mode: 'index'
+          },
+          plugins: {
+            legend: {
+              display: true,
+              position: 'top',
+              labels: {
+                usePointStyle: true,
+                padding: 20,
+                font: {
+                  size: 12,
+                  weight: '500'
+                }
+              }
+            },
+            tooltip: {
+              backgroundColor: 'rgba(0, 0, 0, 0.8)',
+              titleColor: '#ffffff',
+              bodyColor: '#ffffff',
+              borderColor: '#3b82f6',
+              borderWidth: 1,
+              cornerRadius: 8,
+              displayColors: false,
+              callbacks: {
+                title: function(context) {
+                  return context[0].label;
+                },
+                label: function(context) {
+                  return 'Price: $' + context.parsed.y.toFixed(2);
+                }
+              }
+            }
+          },
+          scales: {
+            x: {
+              display: true,
+              grid: {
+                color: 'rgba(0, 0, 0, 0.05)',
+                drawBorder: false
+              },
+              ticks: {
+                color: '#6b7280',
+                font: {
+                  size: 11
+                },
+                maxTicksLimit: interval === '5min' ? 12 : (interval === '1week' ? 10 : 8)
+              }
+            },
+            y: {
+              display: true,
+              grid: {
+                color: 'rgba(0, 0, 0, 0.05)',
+                drawBorder: false
+              },
+              ticks: {
+                color: '#6b7280',
+                font: {
+                  size: 11
+                },
+                callback: function(value) {
+                  return '$' + value.toFixed(2);
+                }
+              }
+            }
+          },
+          elements: {
+            point: {
+              hoverBackgroundColor: '#3b82f6'
+            }
+          }
+        }
+      });
+    }
+
+    // API状态检查
+    async function checkAPIStatus() {
+      try {
+        const testUrl = `https://api.twelvedata.com/quote?symbol=AAPL&apikey=d1c361e9f14e4900961253e214f4ea7e`;
+        const response = await fetch(testUrl);
+        const data = await response.json();
+
+        if (data.code === 429) {
+          document.getElementById('stock-title').innerHTML = `
+            <div class="text-red-500 text-center">
+              <div class="text-lg font-bold">API Rate Limit Exceeded</div>
+              <div class="text-sm mt-2">Please wait a moment and try again. Free API has limited requests per minute.</div>
+            </div>
+          `;
+          return false;
+        } else if (data.code === 401) {
+          document.getElementById('stock-title').innerHTML = `
+            <div class="text-red-500 text-center">
+              <div class="text-lg font-bold">API Key Invalid</div>
+              <div class="text-sm mt-2">The API key may have expired or is invalid.</div>
+            </div>
+          `;
+          return false;
+        } else if (data.code) {
+          console.warn('API Status Check:', data);
+        }
+        return true;
+      } catch (error) {
+        console.error('API Status Check Failed:', error);
+        return true; // 继续尝试，可能是网络问题
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', async function() {
       checkLoginStatus();
-      loadStockInfo();
+
+      // 添加时间段按钮事件监听器
+      document.querySelectorAll('.chart-period-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+          const period = this.dataset.period;
+          const interval = this.dataset.interval;
+          const size = parseInt(this.dataset.size);
+          const title = getPeriodTitle(period);
+
+          switchChartPeriod(period, interval, size, title);
+        });
+      });
+
+      // 检查API状态
+      const apiOk = await checkAPIStatus();
+      if (apiOk) {
+        loadStockInfo();
+      }
     });
     // 处理BUY/SOLD按钮状态
     function updateBuySoldBtn(symbol) {
@@ -192,6 +641,7 @@
         updateBuySoldBtn(symbol);
       }
     };
+
     // 加载股票信息
     async function loadStockInfo() {
       const params = new URLSearchParams(window.location.search);
@@ -200,142 +650,149 @@
         document.getElementById('stock-title').textContent = 'No stock selected.';
         return;
       }
-      // 1. 搜索股票symbol
-      const searchUrl = `https://api.twelvedata.com/symbol_search?symbol=${encodeURIComponent(query)}&apikey=d1c361e9f14e4900961253e214f4ea7e`;
+      // 1. 搜索股票symbol (使用缓存)
       let symbol = '';
       let name = '';
-      try {
-        const res = await fetch(searchUrl);
-        const data = await res.json();
-        if (data.data && data.data.length > 0) {
-          symbol = data.data[0].symbol;
-          name = data.data[0].instrument_name || data.data[0].name || symbol;
-        } else {
-          document.getElementById('stock-title').textContent = 'Not found.';
+      let data = getCachedData('search', query);
+
+      if (!data) {
+        const searchUrl = `https://api.twelvedata.com/symbol_search?symbol=${encodeURIComponent(query)}&apikey=d1c361e9f14e4900961253e214f4ea7e`;
+        try {
+          console.log('Searching for:', query, 'URL:', searchUrl);
+          const res = await fetch(searchUrl);
+          data = await res.json();
+          console.log('Search response:', data);
+
+          // 只缓存成功的响应
+          if (!data.code) {
+            setCachedData('search', query, data);
+          }
+        } catch (e) {
+          console.error('Search API Error:', e);
+          document.getElementById('stock-title').textContent = `Network Error: ${e.message}`;
           return;
         }
-      } catch (e) {
-        document.getElementById('stock-title').textContent = 'API Error.';
+      }
+
+      if (data.code) {
+        console.error('API Error:', data);
+        // 如果是配额限制，使用模拟数据
+        if (data.code === 429) {
+          console.log('Using demo data due to rate limit');
+          symbol = query.toUpperCase();
+          name = `${symbol} Inc.`;
+        } else {
+          document.getElementById('stock-title').textContent = `API Error: ${data.message || data.code}`;
+          return;
+        }
+      }
+
+      if (data.data && data.data.length > 0) {
+        symbol = data.data[0].symbol;
+        name = data.data[0].instrument_name || data.data[0].name || symbol;
+      } else if (!symbol) { // 只有在没有从错误处理中设置symbol时才显示未找到
+        document.getElementById('stock-title').textContent = 'Stock not found. Try: AAPL, MSFT, GOOGL';
         return;
       }
       window.currentSymbol = symbol;
-      document.getElementById('stock-title').textContent = `${symbol} (${name})`;
-      // 2. 获取详细行情
-      const quoteUrl = `https://api.twelvedata.com/quote?symbol=${encodeURIComponent(symbol)}&apikey=d1c361e9f14e4900961253e214f4ea7e`;
-      try {
-        const res = await fetch(quoteUrl);
-        const data = await res.json();
-        if (data.code || data.status === 'error') {
-          document.getElementById('stock-meta').innerHTML = '<span class="text-red-500">Failed to fetch quote.</span>';
-        } else {
-          // 52周高低
-          const week52 = data["fifty_two_week"] || {};
+      document.getElementById('stock-title').textContent = symbol;
+      document.getElementById('stock-subtitle').textContent = name;
+      // 2. 获取详细行情 (使用缓存)
+      let quoteData = getCachedData('quote', symbol);
+
+      if (!quoteData) {
+        const quoteUrl = `https://api.twelvedata.com/quote?symbol=${encodeURIComponent(symbol)}&apikey=d1c361e9f14e4900961253e214f4ea7e`;
+        try {
+          console.log('Fetching quote for:', symbol, 'URL:', quoteUrl);
+          const res = await fetch(quoteUrl);
+          quoteData = await res.json();
+          console.log('Quote response:', quoteData);
+
+          // 只缓存成功的响应
+          if (!quoteData.code && quoteData.status !== 'error') {
+            setCachedData('quote', symbol, quoteData);
+          }
+        } catch (e) {
+          console.error('Quote fetch error:', e);
+          document.getElementById('stock-meta').innerHTML = `<span class="text-red-500 col-span-full text-center">Network Error: ${e.message}</span>`;
+          return;
+        }
+      }
+
+      if (quoteData.code || quoteData.status === 'error') {
+        const errorMsg = quoteData.message || quoteData.code || 'Unknown error';
+        document.getElementById('stock-meta').innerHTML = `<span class="text-red-500 col-span-full text-center">Quote API Error: ${errorMsg}</span>`;
+        console.error('Quote API Error:', quoteData);
+      } else {
+          // 更新价格显示区域
+          const currentPrice = parseFloat(quoteData.price || 0);
+          const change = parseFloat(quoteData.change || 0);
+          const changePercent = parseFloat(quoteData.percent_change || 0);
+
+          const priceElement = document.getElementById('current-price');
+          const oldPrice = parseFloat(priceElement.textContent.replace('$', '')) || 0;
+          priceElement.textContent = `$${currentPrice.toFixed(2)}`;
+
+          // 添加价格变化动画
+          if (oldPrice !== 0 && oldPrice !== currentPrice) {
+            priceElement.classList.remove('price-up', 'price-down');
+            if (currentPrice > oldPrice) {
+              priceElement.classList.add('price-up');
+            } else {
+              priceElement.classList.add('price-down');
+            }
+          }
+
+          const changeColor = change >= 0 ? 'text-green-600' : 'text-red-600';
+          const changeSign = change >= 0 ? '+' : '';
+          document.getElementById('price-change').className = `text-2xl font-semibold ${changeColor}`;
+          document.getElementById('price-change').textContent = `${changeSign}$${change.toFixed(2)}`;
+
+          document.getElementById('price-change-percent').className = `text-2xl font-semibold ${changeColor}`;
+          document.getElementById('price-change-percent').textContent = `${changeSign}${changePercent.toFixed(2)}%`;
+
+          // 更新详细信息网格
           document.getElementById('stock-meta').innerHTML = `
-            <div class='flex flex-wrap gap-4 w-full justify-center text-sm'>
-              <div class='flex flex-col items-start bg-white/90 rounded-lg shadow p-3 min-w-[140px] border border-blue-50'>
-                <span class='text-gray-500'>Symbol</span>
-                <span class='font-semibold'>${data.symbol || '-'}</span>
-              </div>
-              <div class='flex flex-col items-start bg-white/90 rounded-lg shadow p-3 min-w-[140px] border border-blue-50'>
-                <span class='text-gray-500'>Name</span>
-                <span class='font-semibold'>${data.name || '-'}</span>
-              </div>
-              <div class='flex flex-col items-start bg-white/90 rounded-lg shadow p-3 min-w-[140px] border border-blue-50'>
-                <span class='text-gray-500'>Exchange</span>
-                <span class='font-semibold'>${data.exchange || '-'}</span>
-              </div>
-              <div class='flex flex-col items-start bg-white/90 rounded-lg shadow p-3 min-w-[140px] border border-blue-50'>
-                <span class='text-gray-500'>Currency</span>
-                <span class='font-semibold'>${data.currency || '-'}</span>
-              </div>
-              <div class='flex flex-col items-start bg-white/90 rounded-lg shadow p-3 min-w-[140px] border border-blue-50'>
-                <span class='text-gray-500'>Datetime</span>
-                <span class='font-semibold'>${data.datetime || '-'}</span>
-              </div>
-              <div class='flex flex-col items-start bg-white/90 rounded-lg shadow p-3 min-w-[140px] border border-blue-50'>
-                <span class='text-gray-500'>Price</span>
-                <span class='font-semibold text-blue-600'>${data.price || '-'}</span>
-              </div>
-              <div class='flex flex-col items-start bg-white/90 rounded-lg shadow p-3 min-w-[140px] border border-blue-50'>
-                <span class='text-gray-500'>Change</span>
-                <span class='font-semibold ${parseFloat(data.change) >= 0 ? 'text-green-600' : 'text-red-500'}'>${data.change || '-'}</span>
-              </div>
-              <div class='flex flex-col items-start bg-white/90 rounded-lg shadow p-3 min-w-[140px] border border-blue-50'>
-                <span class='text-gray-500'>% Change</span>
-                <span class='font-semibold ${parseFloat(data.percent_change) >= 0 ? 'text-green-600' : 'text-red-500'}'>${data.percent_change || '-'}%</span>
-              </div>
-              <div class='flex flex-col items-start bg-white/90 rounded-lg shadow p-3 min-w-[140px] border border-blue-50'>
-                <span class='text-gray-500'>Open</span>
-                <span class='font-semibold'>${data.open || '-'}</span>
-              </div>
-              <div class='flex flex-col items-start bg-white/90 rounded-lg shadow p-3 min-w-[140px] border border-blue-50'>
-                <span class='text-gray-500'>High</span>
-                <span class='font-semibold'>${data.high || '-'}</span>
-              </div>
-              <div class='flex flex-col items-start bg-white/90 rounded-lg shadow p-3 min-w-[140px] border border-blue-50'>
-                <span class='text-gray-500'>Low</span>
-                <span class='font-semibold'>${data.low || '-'}</span>
-              </div>
-              <div class='flex flex-col items-start bg-white/90 rounded-lg shadow p-3 min-w-[140px] border border-blue-50'>
-                <span class='text-gray-500'>Close</span>
-                <span class='font-semibold'>${data.close || '-'}</span>
-              </div>
-              <div class='flex flex-col items-start bg-white/90 rounded-lg shadow p-3 min-w-[140px] border border-blue-50'>
-                <span class='text-gray-500'>Prev Close</span>
-                <span class='font-semibold'>${data.previous_close || '-'}</span>
-              </div>
-              <div class='flex flex-col items-start bg-white/90 rounded-lg shadow p-3 min-w-[140px] border border-blue-50'>
-                <span class='text-gray-500'>Volume</span>
-                <span class='font-semibold'>${data.volume || '-'}</span>
-              </div>
-              <div class='flex flex-col items-start bg-white/90 rounded-lg shadow p-3 min-w-[140px] border border-blue-50'>
-                <span class='text-gray-500'>Avg Volume</span>
-                <span class='font-semibold'>${data.average_volume || '-'}</span>
-              </div>
+            <div class='info-card bg-white/90 rounded-lg shadow-sm p-3 border border-blue-50'>
+              <div class='text-xs text-gray-500 uppercase tracking-wide mb-1'>Exchange</div>
+              <div class='font-semibold text-gray-800 text-sm'>${quoteData.exchange || '-'}</div>
+            </div>
+            <div class='info-card bg-white/90 rounded-lg shadow-sm p-3 border border-blue-50'>
+              <div class='text-xs text-gray-500 uppercase tracking-wide mb-1'>Currency</div>
+              <div class='font-semibold text-gray-800 text-sm'>${quoteData.currency || '-'}</div>
+            </div>
+            <div class='info-card bg-white/90 rounded-lg shadow-sm p-3 border border-blue-50'>
+              <div class='text-xs text-gray-500 uppercase tracking-wide mb-1'>Open</div>
+              <div class='font-semibold text-gray-800 text-sm'>$${parseFloat(quoteData.open || 0).toFixed(2)}</div>
+            </div>
+            <div class='info-card bg-white/90 rounded-lg shadow-sm p-3 border border-blue-50'>
+              <div class='text-xs text-gray-500 uppercase tracking-wide mb-1'>High</div>
+              <div class='font-semibold text-green-600 text-sm'>$${parseFloat(quoteData.high || 0).toFixed(2)}</div>
+            </div>
+            <div class='info-card bg-white/90 rounded-lg shadow-sm p-3 border border-blue-50'>
+              <div class='text-xs text-gray-500 uppercase tracking-wide mb-1'>Low</div>
+              <div class='font-semibold text-red-600 text-sm'>$${parseFloat(quoteData.low || 0).toFixed(2)}</div>
+            </div>
+            <div class='info-card bg-white/90 rounded-lg shadow-sm p-3 border border-blue-50'>
+              <div class='text-xs text-gray-500 uppercase tracking-wide mb-1'>Volume</div>
+              <div class='font-semibold text-gray-800 text-sm'>${quoteData.volume ? parseInt(quoteData.volume).toLocaleString() : '-'}</div>
+            </div>
+            <div class='info-card bg-white/90 rounded-lg shadow-sm p-3 border border-blue-50'>
+              <div class='text-xs text-gray-500 uppercase tracking-wide mb-1'>Prev Close</div>
+              <div class='font-semibold text-gray-800 text-sm'>$${parseFloat(quoteData.previous_close || 0).toFixed(2)}</div>
+            </div>
+            <div class='info-card bg-white/90 rounded-lg shadow-sm p-3 border border-blue-50'>
+              <div class='text-xs text-gray-500 uppercase tracking-wide mb-1'>Avg Volume</div>
+              <div class='font-semibold text-gray-800 text-sm'>${quoteData.average_volume ? parseInt(quoteData.average_volume).toLocaleString() : '-'}</div>
             </div>
           `;
         }
-      } catch (e) {
-        document.getElementById('stock-meta').innerHTML = '<span class="text-red-500">API Error.</span>';
-      }
-      // 3. 获取历史K线数据，画图
-      const kUrl = `https://api.twelvedata.com/time_series?symbol=${encodeURIComponent(symbol)}&interval=1day&outputsize=30&apikey=d1c361e9f14e4900961253e214f4ea7e`;
-      try {
-        const res = await fetch(kUrl);
-        const data = await res.json();
-        if (data.status === 'ok' && data.values) {
-          const ctxId = 'stockKChart';
-          document.getElementById('stock-chart').innerHTML = `<canvas id="${ctxId}" height="220"></canvas>`;
-          const labels = data.values.map(v => v.datetime).reverse();
-          const prices = data.values.map(v => parseFloat(v.close)).reverse();
-          new Chart(document.getElementById(ctxId), {
-            type: 'line',
-            data: {
-              labels: labels,
-              datasets: [{
-                label: 'Close Price',
-                data: prices,
-                borderColor: '#2563eb',
-                backgroundColor: 'rgba(37,99,235,0.1)',
-                fill: true,
-                tension: 0.2,
-                pointRadius: 0
-              }]
-            },
-            options: {
-              plugins: { legend: { display: false } },
-              scales: {
-                x: { display: false },
-                y: { display: true, grid: { color: '#e5e7eb' } }
-              }
-            }
-          });
-        } else {
-          document.getElementById('stock-chart').innerHTML = '<span class="text-gray-400">No chart data.</span>';
-        }
-      } catch (e) {
-        document.getElementById('stock-chart').innerHTML = '<span class="text-red-500">API Error.</span>';
-      }
+      // 3. 加载默认图表数据 (1天)
+      const activeBtn = document.querySelector('.chart-period-btn.active') || document.querySelector('[data-period="1d"]');
+      const interval = activeBtn ? activeBtn.dataset.interval : '5min';
+      const size = activeBtn ? parseInt(activeBtn.dataset.size) : 78;
+
+      loadChartData(symbol, interval, size);
       // 4. 按钮状态
       updateBuySoldBtn(symbol);
     }
