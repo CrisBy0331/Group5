@@ -191,10 +191,371 @@
         </main>
     </div>
 
+    <!-- Custom Modal System -->
+    <!-- Alert Modal -->
+    <div id="alertModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 transform transition-all duration-300 scale-95" id="alertModalContent">
+            <div class="p-6">
+                <div class="flex items-center mb-4">
+                    <div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center mr-3">
+                        <i class="fas fa-info-circle text-blue-500"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-800">提示</h3>
+                </div>
+                <p id="alertMessage" class="text-gray-600 mb-6"></p>
+                <div class="flex justify-end">
+                    <button onclick="closeAlertModal()" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg font-medium transition duration-200">
+                        确定
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Prompt Modal -->
+    <div id="promptModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 transform transition-all duration-300 scale-95" id="promptModalContent">
+            <div class="p-6">
+                <div class="flex items-center mb-4">
+                    <div class="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center mr-3">
+                        <i class="fas fa-edit text-green-500"></i>
+                    </div>
+                    <h3 id="promptTitle" class="text-lg font-semibold text-gray-800">输入信息</h3>
+                </div>
+                <p id="promptMessage" class="text-gray-600 mb-4"></p>
+                <input type="text" id="promptInput" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+                <div class="flex justify-end space-x-3 mt-6">
+                    <button onclick="closePromptModal(false)" class="bg-gray-300 hover:bg-gray-400 text-gray-700 px-4 py-2 rounded-lg font-medium transition duration-200">
+                        取消
+                    </button>
+                    <button onclick="closePromptModal(true)" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg font-medium transition duration-200">
+                        确定
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Buy Asset Modal -->
+    <div id="buyAssetModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-lg shadow-xl max-w-lg w-full mx-4 transform transition-all duration-300 scale-95" id="buyAssetModalContent">
+            <div class="p-6">
+                <div class="flex items-center mb-6">
+                    <div class="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center mr-3">
+                        <i class="fas fa-plus text-green-500 text-lg"></i>
+                    </div>
+                    <h3 id="buyAssetTitle" class="text-xl font-semibold text-gray-800">买入资产</h3>
+                </div>
+                
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">资产代码</label>
+                        <input type="text" id="buyTicker" placeholder="例如: AAPL" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">资产名称</label>
+                        <input type="text" id="buyName" placeholder="例如: Apple Inc." class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">资产类型</label>
+                        <select id="buyType" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            <option value="stock">股票 (Stock)</option>
+                            <option value="bond">债券 (Bond)</option>
+                            <option value="fund">基金 (Fund)</option>
+                            <option value="gold">黄金 (Gold)</option>
+                            <option value="currency">货币 (Currency)</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">购买数量</label>
+                        <input type="number" id="buyQuantity" placeholder="输入数量" min="1" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">购买价格 <span class="text-gray-500 text-sm">(留空使用当前市价)</span></label>
+                        <input type="number" id="buyPrice" placeholder="输入价格或留空" step="0.01" min="0" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+                    </div>
+                </div>
+                
+                <div class="flex justify-end space-x-3 mt-8">
+                    <button onclick="closeBuyAssetModal(false)" class="bg-gray-300 hover:bg-gray-400 text-gray-700 px-6 py-2 rounded-lg font-medium transition duration-200">
+                        取消
+                    </button>
+                    <button onclick="closeBuyAssetModal(true)" class="bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded-lg font-medium transition duration-200">
+                        确认买入
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sell Asset Modal -->
+    <div id="sellAssetModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-lg shadow-xl max-w-lg w-full mx-4 transform transition-all duration-300 scale-95" id="sellAssetModalContent">
+            <div class="p-6">
+                <div class="flex items-center mb-6">
+                    <div class="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center mr-3">
+                        <i class="fas fa-minus text-red-500 text-lg"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold text-gray-800">卖出资产</h3>
+                </div>
+                
+                <div class="space-y-4">
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <p class="text-sm text-gray-600">资产代码</p>
+                        <p id="sellTickerDisplay" class="text-lg font-semibold text-gray-800"></p>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">卖出数量</label>
+                        <input type="number" id="sellQuantity" placeholder="输入数量" min="1" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+                        <p id="sellMaxQuantity" class="text-sm text-gray-500 mt-1"></p>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">卖出价格 <span class="text-gray-500 text-sm">(留空使用当前市价)</span></label>
+                        <input type="number" id="sellPrice" placeholder="输入价格或留空" step="0.01" min="0" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+                    </div>
+                </div>
+                
+                <div class="flex justify-end space-x-3 mt-8">
+                    <button onclick="closeSellAssetModal(false)" class="bg-gray-300 hover:bg-gray-400 text-gray-700 px-6 py-2 rounded-lg font-medium transition duration-200">
+                        取消
+                    </button>
+                    <button onclick="closeSellAssetModal(true)" class="bg-red-500 hover:bg-red-600 text-white px-6 py-2 rounded-lg font-medium transition duration-200">
+                        确认卖出
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         // Portfolio data will be loaded from backend
         let portfolioData = [];
         const API_BASE_URL = 'http://localhost:3000/api';
+
+        // Custom Modal System
+        let currentPromptResolver = null;
+        let currentBuyAssetResolver = null;
+        let currentSellAssetResolver = null;
+
+        // Custom Alert Function
+        function showAlert(message, type = 'info') {
+            const modal = document.getElementById('alertModal');
+            const content = document.getElementById('alertModalContent');
+            const messageEl = document.getElementById('alertMessage');
+            const icon = content.querySelector('i');
+            const iconContainer = content.querySelector('.w-10');
+            
+            messageEl.textContent = message;
+            
+            // Set icon and color based on type
+            if (type === 'error') {
+                icon.className = 'fas fa-exclamation-triangle text-red-500';
+                iconContainer.className = 'w-10 h-10 rounded-full bg-red-100 flex items-center justify-center mr-3';
+            } else if (type === 'success') {
+                icon.className = 'fas fa-check-circle text-green-500';
+                iconContainer.className = 'w-10 h-10 rounded-full bg-green-100 flex items-center justify-center mr-3';
+            } else {
+                icon.className = 'fas fa-info-circle text-blue-500';
+                iconContainer.className = 'w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center mr-3';
+            }
+            
+            modal.classList.remove('hidden');
+            setTimeout(() => content.classList.add('scale-100'), 10);
+        }
+
+        function closeAlertModal() {
+            const modal = document.getElementById('alertModal');
+            const content = document.getElementById('alertModalContent');
+            content.classList.remove('scale-100');
+            setTimeout(() => modal.classList.add('hidden'), 300);
+        }
+
+        // Custom Prompt Function
+        function showPrompt(message, title = '输入信息', defaultValue = '') {
+            return new Promise((resolve) => {
+                currentPromptResolver = resolve;
+                
+                const modal = document.getElementById('promptModal');
+                const content = document.getElementById('promptModalContent');
+                const titleEl = document.getElementById('promptTitle');
+                const messageEl = document.getElementById('promptMessage');
+                const input = document.getElementById('promptInput');
+                
+                titleEl.textContent = title;
+                messageEl.textContent = message;
+                input.value = defaultValue;
+                
+                modal.classList.remove('hidden');
+                setTimeout(() => {
+                    content.classList.add('scale-100');
+                    input.focus();
+                }, 10);
+            });
+        }
+
+        function closePromptModal(confirmed) {
+            const modal = document.getElementById('promptModal');
+            const content = document.getElementById('promptModalContent');
+            const input = document.getElementById('promptInput');
+            
+            content.classList.remove('scale-100');
+            setTimeout(() => modal.classList.add('hidden'), 300);
+            
+            if (currentPromptResolver) {
+                currentPromptResolver(confirmed ? input.value : null);
+                currentPromptResolver = null;
+            }
+        }
+
+        // Custom Buy Asset Modal
+        function showBuyAssetModal(isNewAsset = true, ticker = '', type = 'stock', name = '') {
+            return new Promise((resolve) => {
+                currentBuyAssetResolver = resolve;
+                
+                const modal = document.getElementById('buyAssetModal');
+                const content = document.getElementById('buyAssetModalContent');
+                const title = document.getElementById('buyAssetTitle');
+                const tickerInput = document.getElementById('buyTicker');
+                const nameInput = document.getElementById('buyName');
+                const typeSelect = document.getElementById('buyType');
+                const quantityInput = document.getElementById('buyQuantity');
+                const priceInput = document.getElementById('buyPrice');
+                
+                title.textContent = isNewAsset ? '买入资产' : '买入更多';
+                
+                // Pre-fill fields if provided
+                tickerInput.value = ticker;
+                nameInput.value = name;
+                typeSelect.value = type;
+                quantityInput.value = '';
+                priceInput.value = '';
+                
+                // Disable ticker/name/type inputs if buying more of existing asset
+                tickerInput.disabled = !isNewAsset;
+                nameInput.disabled = !isNewAsset;
+                typeSelect.disabled = !isNewAsset;
+                
+                modal.classList.remove('hidden');
+                setTimeout(() => {
+                    content.classList.add('scale-100');
+                    quantityInput.focus();
+                }, 10);
+            });
+        }
+
+        function closeBuyAssetModal(confirmed) {
+            const modal = document.getElementById('buyAssetModal');
+            const content = document.getElementById('buyAssetModalContent');
+            
+            content.classList.remove('scale-100');
+            setTimeout(() => modal.classList.add('hidden'), 300);
+            
+            if (currentBuyAssetResolver) {
+                if (confirmed) {
+                    const ticker = document.getElementById('buyTicker').value.trim();
+                    const name = document.getElementById('buyName').value.trim();
+                    const type = document.getElementById('buyType').value;
+                    const quantity = parseInt(document.getElementById('buyQuantity').value);
+                    const priceInput = document.getElementById('buyPrice').value.trim();
+                    const price = priceInput !== '' ? parseFloat(priceInput) : null;
+                    
+                    currentBuyAssetResolver({
+                        ticker,
+                        name,
+                        type,
+                        quantity,
+                        price
+                    });
+                } else {
+                    currentBuyAssetResolver(null);
+                }
+                currentBuyAssetResolver = null;
+            }
+            
+            // Re-enable all inputs
+            document.getElementById('buyTicker').disabled = false;
+            document.getElementById('buyName').disabled = false;
+            document.getElementById('buyType').disabled = false;
+        }
+
+        // Custom Sell Asset Modal
+        function showSellAssetModal(ticker, maxQuantity) {
+            return new Promise((resolve) => {
+                currentSellAssetResolver = resolve;
+                
+                const modal = document.getElementById('sellAssetModal');
+                const content = document.getElementById('sellAssetModalContent');
+                const tickerDisplay = document.getElementById('sellTickerDisplay');
+                const quantityInput = document.getElementById('sellQuantity');
+                const priceInput = document.getElementById('sellPrice');
+                const maxQuantityText = document.getElementById('sellMaxQuantity');
+                
+                tickerDisplay.textContent = ticker;
+                quantityInput.value = '';
+                priceInput.value = '';
+                quantityInput.max = maxQuantity;
+                maxQuantityText.textContent = `最大可卖出: ${maxQuantity.toLocaleString()}`;
+                
+                modal.classList.remove('hidden');
+                setTimeout(() => {
+                    content.classList.add('scale-100');
+                    quantityInput.focus();
+                }, 10);
+            });
+        }
+
+        function closeSellAssetModal(confirmed) {
+            const modal = document.getElementById('sellAssetModal');
+            const content = document.getElementById('sellAssetModalContent');
+            
+            content.classList.remove('scale-100');
+            setTimeout(() => modal.classList.add('hidden'), 300);
+            
+            if (currentSellAssetResolver) {
+                if (confirmed) {
+                    const quantity = parseInt(document.getElementById('sellQuantity').value);
+                    const priceInput = document.getElementById('sellPrice').value.trim();
+                    const price = priceInput !== '' ? parseFloat(priceInput) : null;
+                    
+                    currentSellAssetResolver({
+                        quantity,
+                        price
+                    });
+                } else {
+                    currentSellAssetResolver(null);
+                }
+                currentSellAssetResolver = null;
+            }
+        }
+
+        // Handle Enter key for modals
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                if (!document.getElementById('promptModal').classList.contains('hidden')) {
+                    closePromptModal(true);
+                } else if (!document.getElementById('buyAssetModal').classList.contains('hidden')) {
+                    closeBuyAssetModal(true);
+                } else if (!document.getElementById('sellAssetModal').classList.contains('hidden')) {
+                    closeSellAssetModal(true);
+                }
+            } else if (e.key === 'Escape') {
+                if (!document.getElementById('alertModal').classList.contains('hidden')) {
+                    closeAlertModal();
+                } else if (!document.getElementById('promptModal').classList.contains('hidden')) {
+                    closePromptModal(false);
+                } else if (!document.getElementById('buyAssetModal').classList.contains('hidden')) {
+                    closeBuyAssetModal(false);
+                } else if (!document.getElementById('sellAssetModal').classList.contains('hidden')) {
+                    closeSellAssetModal(false);
+                }
+            }
+        });
 
         // Use test user ID 2 (which has the generated test data)
         function getCurrentUserId() {
@@ -264,45 +625,37 @@
 
         // 买入新资产
         async function buyAsset() {
-            const ticker = prompt('请输入资产代码：');
-            if (!ticker) return;
-
-            const name = prompt('请输入资产名称：');
-            if (!name) return;
-
-            const type = prompt('请输入资产类型 (stock/bond/fund/gold/currency)：', 'stock');
-            if (!type || !['stock', 'bond', 'fund', 'gold', 'currency'].includes(type)) {
-                alert('资产类型必须是: stock, bond, fund, gold, 或 currency');
-                return;
-            }
-
-            const quantity = parseInt(prompt('请输入买入数量：'));
-            if (!quantity || quantity <= 0) {
-                alert('数量必须是正数');
-                return;
-            }
-
-            const priceInput = prompt('请输入买入价格（留空使用当前市价）：');
-            const price = priceInput && priceInput.trim() !== '' ? parseFloat(priceInput) : null;
-            
-            // Only validate price if it was provided
-            if (price !== null && price <= 0) {
-                alert('价格必须是正数');
-                return;
-            }
-
             try {
+                const assetData = await showBuyAssetModal(true);
+                if (!assetData) return; // User cancelled
+                
+                // Validate inputs
+                if (!assetData.ticker || !assetData.name || !assetData.quantity) {
+                    showAlert('请填写所有必需字段', 'error');
+                    return;
+                }
+                
+                if (assetData.quantity <= 0) {
+                    showAlert('数量必须是正数', 'error');
+                    return;
+                }
+                
+                if (assetData.price !== null && assetData.price <= 0) {
+                    showAlert('价格必须是正数', 'error');
+                    return;
+                }
+
                 const userId = getCurrentUserId();
                 const requestBody = {
-                    ticker: ticker,
-                    type: type,
-                    name: name,
-                    quantity: quantity
+                    ticker: assetData.ticker,
+                    type: assetData.type,
+                    name: assetData.name,
+                    quantity: assetData.quantity
                 };
                 
                 // Only include price if it was provided
-                if (price !== null) {
-                    requestBody.price = price;
+                if (assetData.price !== null) {
+                    requestBody.price = assetData.price;
                 }
 
                 const response = await fetch(`${API_BASE_URL}/holdings/${userId}/buy`, {
@@ -316,46 +669,50 @@
                 const result = await response.json();
                 if (response.ok) {
                     const priceUsed = result.used_price ? ` (价格: ¥${result.used_price.toFixed(2)})` : '';
-                    alert(result.message + priceUsed);
+                    showAlert(result.message + priceUsed, 'success');
                     loadPortfolioData(); // Reload data
                 } else {
-                    alert('买入失败: ' + result.message);
+                    showAlert('买入失败: ' + result.message, 'error');
                 }
             } catch (error) {
                 console.error('Error buying asset:', error);
-                alert('买入时发生错误');
+                showAlert('买入时发生错误', 'error');
             }
         }
 
         // 买入更多现有资产
         async function buyMore(ticker, type, name) {
-            const quantity = parseInt(prompt('请输入买入数量：'));
-            if (!quantity || quantity <= 0) {
-                alert('数量必须是正数');
-                return;
-            }
-
-            const priceInput = prompt('请输入买入价格（留空使用当前市价）：');
-            const price = priceInput && priceInput.trim() !== '' ? parseFloat(priceInput) : null;
-            
-            // Only validate price if it was provided
-            if (price !== null && price <= 0) {
-                alert('价格必须是正数');
-                return;
-            }
-
             try {
+                const assetData = await showBuyAssetModal(false, ticker, type, name);
+                if (!assetData) return; // User cancelled
+                
+                // Validate inputs
+                if (!assetData.quantity) {
+                    showAlert('请填写购买数量', 'error');
+                    return;
+                }
+                
+                if (assetData.quantity <= 0) {
+                    showAlert('数量必须是正数', 'error');
+                    return;
+                }
+                
+                if (assetData.price !== null && assetData.price <= 0) {
+                    showAlert('价格必须是正数', 'error');
+                    return;
+                }
+
                 const userId = getCurrentUserId();
                 const requestBody = {
                     ticker: ticker,
                     type: type,
                     name: name,
-                    quantity: quantity
+                    quantity: assetData.quantity
                 };
                 
                 // Only include price if it was provided
-                if (price !== null) {
-                    requestBody.price = price;
+                if (assetData.price !== null) {
+                    requestBody.price = assetData.price;
                 }
 
                 const response = await fetch(`${API_BASE_URL}/holdings/${userId}/buy`, {
@@ -369,49 +726,53 @@
                 const result = await response.json();
                 if (response.ok) {
                     const priceUsed = result.used_price ? ` (价格: ¥${result.used_price.toFixed(2)})` : '';
-                    alert(`买入成功! ${result.message}${priceUsed}`);
+                    showAlert(`买入成功! ${result.message}${priceUsed}`, 'success');
                     loadPortfolioData(); // Reload data
                 } else {
-                    alert('买入失败: ' + result.message);
+                    showAlert('买入失败: ' + result.message, 'error');
                 }
             } catch (error) {
                 console.error('Error buying more:', error);
-                alert('买入时发生错误');
+                showAlert('买入时发生错误', 'error');
             }
         }
 
         // 卖出资产
         async function sellAsset(ticker, maxQuantity) {
-            const quantity = parseInt(prompt(`请输入卖出数量（最大${maxQuantity}）：`));
-            if (!quantity || quantity <= 0) {
-                alert('数量必须是正数');
-                return;
-            }
-
-            if (quantity > maxQuantity) {
-                alert('卖出数量不能超过持有数量');
-                return;
-            }
-
-            const priceInput = prompt('请输入卖出价格（留空使用当前市价）：');
-            const price = priceInput && priceInput.trim() !== '' ? parseFloat(priceInput) : null;
-            
-            // Only validate price if it was provided
-            if (price !== null && price <= 0) {
-                alert('价格必须是正数');
-                return;
-            }
-
             try {
+                const sellData = await showSellAssetModal(ticker, maxQuantity);
+                if (!sellData) return; // User cancelled
+                
+                // Validate inputs
+                if (!sellData.quantity) {
+                    showAlert('请填写卖出数量', 'error');
+                    return;
+                }
+                
+                if (sellData.quantity <= 0) {
+                    showAlert('数量必须是正数', 'error');
+                    return;
+                }
+
+                if (sellData.quantity > maxQuantity) {
+                    showAlert('卖出数量不能超过持有数量', 'error');
+                    return;
+                }
+                
+                if (sellData.price !== null && sellData.price <= 0) {
+                    showAlert('价格必须是正数', 'error');
+                    return;
+                }
+
                 const userId = getCurrentUserId();
                 const requestBody = {
                     ticker: ticker,
-                    quantity: quantity
+                    quantity: sellData.quantity
                 };
                 
                 // Only include price if it was provided
-                if (price !== null) {
-                    requestBody.price = price;
+                if (sellData.price !== null) {
+                    requestBody.price = sellData.price;
                 }
 
                 const response = await fetch(`${API_BASE_URL}/holdings/${userId}/sell`, {
@@ -426,14 +787,14 @@
                 if (response.ok) {
                     const sellDetails = result.sell_price && result.sell_value ? 
                         ` (价格: ¥${result.sell_price.toFixed(2)}, 总价值: ¥${result.sell_value.toFixed(2)})` : '';
-                    alert(`卖出成功! ${result.message}${sellDetails}`);
+                    showAlert(`卖出成功! ${result.message}${sellDetails}`, 'success');
                     loadPortfolioData(); // Reload data
                 } else {
-                    alert('卖出失败: ' + result.message);
+                    showAlert('卖出失败: ' + result.message, 'error');
                 }
             } catch (error) {
                 console.error('Error selling asset:', error);
-                alert('卖出时发生错误');
+                showAlert('卖出时发生错误', 'error');
             }
         }
 
