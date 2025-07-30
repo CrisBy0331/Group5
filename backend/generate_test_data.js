@@ -27,6 +27,7 @@ db.serialize(() => {
             user_id INTEGER PRIMARY KEY AUTOINCREMENT,
             username TEXT NOT NULL,
             password TEXT NOT NULL,
+            avatar TEXT,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     `);
@@ -46,12 +47,23 @@ db.serialize(() => {
         )
     `);
 
+    db.run(`
+        CREATE TABLE IF NOT EXISTS portfolio_name (
+            stock_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            ticker TEXT NOT NULL,
+            name TEXT NOT NULL,
+            type TEXT CHECK(type IN ('stock', 'bond', 'fund', 'gold', 'currency')) NOT NULL,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (ticker) REFERENCES holding(ticker)
+        )    
+    `);
+
     // Generate user
     const username = 'testuser';
     const password = 'testpassword123';
     const hash = crypto.createHash('sha256').update(password).digest('hex');
 
-    db.run('INSERT INTO users (username, password) VALUES (?, ?)', [username, hash], function(err) {
+    db.run('INSERT INTO users (username, password, avatar) VALUES (?, ?, ?)', [username, hash, null], function(err) {
         if (err) {
             console.error('Error creating user:', err);
             return;

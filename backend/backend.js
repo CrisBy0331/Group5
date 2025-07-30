@@ -472,43 +472,86 @@ app.post('/api/holdings/:user_id/buy', async (req, res) => {
     if (quantity <= 0) {
         return res.status(400).json({ message: 'Quantity must be positive' });
     }
-
-    // --- 自动填充 name 和 type ---
-    // 只有当 type 和 name 都为空时才调用 getTickerInfo，减少 API 调用
-    if ((!type || type.trim() === '') || (!name || name.trim() === '')) {
-        try {
-            const tickerInfo = await getTickerInfo(ticker);
-            if (!type || type.trim() === '') type = tickerInfo.type;
-            if (!name || name.trim() === '') name = tickerInfo.name;
-        } catch (error) {
-            console.warn(`自动检测 ${ticker} 的名称/类型失败，请检查API或手动提供:`, error.message);
-            // 如果获取失败，且前端没有提供 name，则要求手动输入
-            if (!name || name.trim() === '') {
-                 return res.status(400).json({
-                    message: `Unable to auto-detect name for ${ticker}. Please provide the name field manually.`,
-                    error: 'Name detection service unavailable'
+    
+    // Check if we need to fetch both name and type
+    const needsType = !type || (type !== 'gold' && type !== 'currency');
+    const needsName = !name || name.trim() === '';
+    
+    // If user selected currency or gold, don't fetch name or price - just use defaults
+    if (type === 'gold' || type === 'currency') {
+        // For currency/gold, use ticker as name if not provided
+        if (!name || name.trim() === '') {
+            name = ticker;
+        }
+        // For currency/gold, require manual price input
+        if (price === undefined || price === null || price === '' || price === 0) {
+            return res.status(400).json({ 
+                message: 'Price is required for currency and gold transactions. Please provide the price field manually.',
+                error: 'Manual price input required for currency/gold'
+            });
+        }
+    } else {
+        // Only fetch for stock/bond/fund types
+        if (needsType && needsName) {
+            // Fetch both name and type together for efficiency
+            try {
+                const tickerInfo = await getTickerInfo(ticker);
+                name = tickerInfo.name;
+                type = tickerInfo.type;
+            } catch (error) {
+                // If fetching both fails, try to provide fallbacks
+                console.warn(`Failed to fetch ticker info for ${ticker}:`, error.message);
+                if (needsType) {
+                    type = 'stock'; // fallback type
+                }
+                if (needsName) {
+                    console.warn(`Failed to fetch name for ${ticker}, requiring manual input:`, error.message);
+                    return res.status(400).json({ 
+                        message: 'Unable to auto-detect name. Please provide the name field manually.',
+                        error: 'Name detection service unavailable'
+                    });
+                }
+            }
+        } else {
+            // Fetch individually if only one is needed
+            if (needsType) {
+                try {
+                    type = await getCurrentType(ticker);
+                } catch (error) {
+                    console.warn(`Failed to auto-detect type for ${ticker}, defaulting to stock:`, error.message);
+                    type = 'stock';
+                }
+            }
+            
+            if (needsName) {
+                try {
+                    name = await getCurrentName(ticker);
+                } catch (error) {
+                    console.warn(`Failed to fetch name for ${ticker}, requiring manual input:`, error.message);
+                    return res.status(400).json({ 
+                        message: 'Unable to auto-detect name. Please provide the name field manually.',
+                        error: 'Name detection service unavailable'
+                    });
+                }
+            }
+        }
+        
+        // If price is empty, fetch current price (only for non-currency/gold)
+        if (price === undefined || price === null || price === '' || price === 0) {
+            try {
+                price = await getCurrentPrice(ticker);
+            } catch (error) {
+                console.warn(`Failed to fetch price for ${ticker}, requiring manual input:`, error.message);
+                return res.status(400).json({ 
+                    message: 'Unable to auto-detect price. Please provide the price field manually.',
+                    error: 'Price detection service unavailable'
                 });
             }
             // 如果type也未提供，则默认为'stock'
             if (!type || type.trim() === '') type = 'stock';
         }
     }
-
-    // --- 获取价格 ---
-    if (price === undefined || price === null || price === '' || parseFloat(price) === 0) { // 检查 0
-        try {
-            price = await getCurrentPrice(ticker); // 调用我们自己的带缓存的API
-        } catch (error) {
-            console.warn(`自动检测 ${ticker} 的价格失败，请检查API或手动提供:`, error.message);
-            return res.status(400).json({
-                message: `Unable to auto-detect price for ${ticker}. Please provide the price field manually.`,
-                error: 'Price detection service unavailable'
-            });
-        }
-    } else {
-        price = parseFloat(price); // 确保价格是数字
-    }
-
+    
     if (price <= 0) {
         return res.status(400).json({ message: 'Price must be positive' });
     }

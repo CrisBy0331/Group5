@@ -1565,6 +1565,228 @@ describe('Holdings API Tests', () => {
             expect(fetch).toHaveBeenCalled(); // Verify fetch was called (may be called multiple times for type detection)
         });
     });
+
+    describe('Currency and Gold Type Handling', () => {
+        beforeEach(() => {
+            fetch.mockClear();
+        });
+
+        test('should create gold holding without fetching name or price', async () => {
+            const buyData = {
+                ticker: 'GLD',
+                type: 'gold',
+                name: 'Gold ETF',
+                price: 185.50,
+                quantity: 5
+            };
+
+            const response = await request(backendApp)
+                .post('/api/holdings/1/buy')
+                .send(buyData)
+                .expect(201);
+            
+            expect(response.body.message).toBe('New holding created successfully');
+            expect(response.body.quantity).toBe(5);
+            expect(response.body.price).toBe(185.50);
+            expect(response.body.used_price).toBe(185.50);
+            expect(response.body.detected_type).toBe('gold');
+            
+            // Verify no API calls were made
+            expect(fetch).not.toHaveBeenCalled();
+        });
+
+        test('should create currency holding without fetching name or price', async () => {
+            const buyData = {
+                ticker: 'EUR',
+                type: 'currency',
+                name: 'Euro Currency',
+                price: 1.08,
+                quantity: 1000
+            };
+
+            const response = await request(backendApp)
+                .post('/api/holdings/1/buy')
+                .send(buyData)
+                .expect(201);
+            
+            expect(response.body.message).toBe('New holding created successfully');
+            expect(response.body.quantity).toBe(1000);
+            expect(response.body.price).toBe(1.08);
+            expect(response.body.used_price).toBe(1.08);
+            expect(response.body.detected_type).toBe('currency');
+            
+            // Verify no API calls were made
+            expect(fetch).not.toHaveBeenCalled();
+        });
+
+        test('should use ticker as name for gold when name not provided', async () => {
+            const buyData = {
+                ticker: 'GOLD',
+                type: 'gold',
+                price: 2000.00,
+                quantity: 2
+            };
+
+            const response = await request(backendApp)
+                .post('/api/holdings/1/buy')
+                .send(buyData)
+                .expect(201);
+            
+            expect(response.body.message).toBe('New holding created successfully');
+            expect(response.body.quantity).toBe(2);
+            expect(response.body.price).toBe(2000.00);
+            expect(response.body.used_price).toBe(2000.00);
+            expect(response.body.detected_type).toBe('gold');
+            
+            // Verify no API calls were made
+            expect(fetch).not.toHaveBeenCalled();
+        });
+
+        test('should use ticker as name for currency when name not provided', async () => {
+            const buyData = {
+                ticker: 'JPY',
+                type: 'currency',
+                price: 0.0067,
+                quantity: 50000
+            };
+
+            const response = await request(backendApp)
+                .post('/api/holdings/1/buy')
+                .send(buyData)
+                .expect(201);
+            
+            expect(response.body.message).toBe('New holding created successfully');
+            expect(response.body.quantity).toBe(50000);
+            expect(response.body.price).toBe(0.0067);
+            expect(response.body.used_price).toBe(0.0067);
+            expect(response.body.detected_type).toBe('currency');
+            
+            // Verify no API calls were made
+            expect(fetch).not.toHaveBeenCalled();
+        });
+
+        test('should require manual price for gold transactions', async () => {
+            const buyData = {
+                ticker: 'GLD',
+                type: 'gold',
+                name: 'Gold ETF',
+                quantity: 5
+                // price omitted
+            };
+
+            const response = await request(backendApp)
+                .post('/api/holdings/1/buy')
+                .send(buyData)
+                .expect(400);
+            
+            expect(response.body.message).toBe('Price is required for currency and gold transactions. Please provide the price field manually.');
+            expect(response.body.error).toBe('Manual price input required for currency/gold');
+            
+            // Verify no API calls were made
+            expect(fetch).not.toHaveBeenCalled();
+        });
+
+        test('should require manual price for currency transactions', async () => {
+            const buyData = {
+                ticker: 'EUR',
+                type: 'currency',
+                name: 'Euro Currency',
+                quantity: 1000
+                // price omitted
+            };
+
+            const response = await request(backendApp)
+                .post('/api/holdings/1/buy')
+                .send(buyData)
+                .expect(400);
+            
+            expect(response.body.message).toBe('Price is required for currency and gold transactions. Please provide the price field manually.');
+            expect(response.body.error).toBe('Manual price input required for currency/gold');
+            
+            // Verify no API calls were made
+            expect(fetch).not.toHaveBeenCalled();
+        });
+
+        test('should require manual price when price is 0 for gold', async () => {
+            const buyData = {
+                ticker: 'GLD',
+                type: 'gold',
+                name: 'Gold ETF',
+                price: 0,
+                quantity: 5
+            };
+
+            const response = await request(backendApp)
+                .post('/api/holdings/1/buy')
+                .send(buyData)
+                .expect(400);
+            
+            expect(response.body.message).toBe('Price is required for currency and gold transactions. Please provide the price field manually.');
+            expect(response.body.error).toBe('Manual price input required for currency/gold');
+            
+            // Verify no API calls were made
+            expect(fetch).not.toHaveBeenCalled();
+        });
+
+        test('should require manual price when price is empty string for currency', async () => {
+            const buyData = {
+                ticker: 'EUR',
+                type: 'currency',
+                name: 'Euro Currency',
+                price: '',
+                quantity: 1000
+            };
+
+            const response = await request(backendApp)
+                .post('/api/holdings/1/buy')
+                .send(buyData)
+                .expect(400);
+            
+            expect(response.body.message).toBe('Price is required for currency and gold transactions. Please provide the price field manually.');
+            expect(response.body.error).toBe('Manual price input required for currency/gold');
+            
+            // Verify no API calls were made
+            expect(fetch).not.toHaveBeenCalled();
+        });
+
+        test('should update existing gold holding when buying more', async () => {
+            // First, create an initial gold holding
+            const firstBuy = {
+                ticker: 'GOLD',
+                type: 'gold',
+                name: 'Physical Gold',
+                price: 1950.00,
+                quantity: 1
+            };
+
+            await request(backendApp)
+                .post('/api/holdings/1/buy')
+                .send(firstBuy)
+                .expect(201);
+
+            // Buy more of the same gold
+            const secondBuy = {
+                ticker: 'GOLD',
+                type: 'gold',
+                name: 'Physical Gold',
+                price: 2050.00,
+                quantity: 1
+            };
+
+            const response = await request(backendApp)
+                .post('/api/holdings/1/buy')
+                .send(secondBuy)
+                .expect(200);
+            
+            expect(response.body.message).toBe('Holdings updated successfully');
+            expect(response.body.new_quantity).toBe(2);
+            expect(response.body.new_avg_price).toBe(2000.00); // (1*1950 + 1*2050) / 2
+            expect(response.body.used_price).toBe(2050.00);
+            
+            // Verify no API calls were made
+            expect(fetch).not.toHaveBeenCalled();
+        });
+    });
 });
 
 // Simple test runner for manual execution
