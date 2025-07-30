@@ -2,6 +2,7 @@ const sqlite3 = require('sqlite3').verbose();
 const express = require('express');
 const crypto = require('crypto');
 const dotenv = require('dotenv');
+const path = require('path');
 
 dotenv.config();
 const PORT = 3000;
@@ -53,6 +54,7 @@ db.serialize(() => {
 const app = express();
 
 app.use(express.json());
+app.use(express.static(path.join(__dirname, '..', 'public')));
 
 // Add CORS middleware
 app.use((req, res, next) => {
@@ -63,7 +65,8 @@ app.use((req, res, next) => {
 });
 
 app.get('/', (req, res) => {
-    res.send('Hello World');
+    // res.send('Hello World');
+    res.sendFile(__dirname, '..', 'public', 'index.html');
 });
 
 app.get('/api/users', (req, res) => {
