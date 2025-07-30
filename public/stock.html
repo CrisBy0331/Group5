@@ -120,7 +120,7 @@
         return;
       }
       timer = setTimeout(async () => {
-        const url = `https://api.twelvedata.com/symbol_search?symbol=${encodeURIComponent(val)}&apikey=d1c361e9f14e4900961253e214f4ea7e`;
+        const url = `https://api.twelvedata.com/symbol_search?symbol=${encodeURIComponent(val)}&apikey=30860e660a9e49b697b24a9bb38e8a58`;
         try {
           const res = await fetch(url);
           const data = await res.json();
@@ -483,7 +483,7 @@
       let timeSeriesData = getCachedData('timeSeries', cacheKey);
 
       if (!timeSeriesData) {
-        const kUrl = `https://api.twelvedata.com/time_series?symbol=${encodeURIComponent(symbol)}&interval=${interval}&outputsize=${outputsize}&apikey=d1c361e9f14e4900961253e214f4ea7e`;
+        const kUrl = `https://api.twelvedata.com/time_series?symbol=${encodeURIComponent(symbol)}&interval=${interval}&outputsize=${outputsize}&apikey=30860e660a9e49b697b24a9bb38e8a58`;
         try {
           console.log('Fetching time series for:', symbol, 'Interval:', interval, 'Size:', outputsize);
           const res = await fetch(kUrl);
@@ -673,7 +673,7 @@
     // API状态检查
     async function checkAPIStatus() {
       try {
-        const testUrl = `https://api.twelvedata.com/quote?symbol=AAPL&apikey=d1c361e9f14e4900961253e214f4ea7e`;
+        const testUrl = `https://api.twelvedata.com/quote?symbol=AAPL&apikey=30860e660a9e49b697b24a9bb38e8a58`;
         const response = await fetch(testUrl);
         const data = await response.json();
 
@@ -1005,7 +1005,7 @@
       let data = getCachedData('search', query);
 
       if (!data) {
-        const searchUrl = `https://api.twelvedata.com/symbol_search?symbol=${encodeURIComponent(query)}&apikey=d1c361e9f14e4900961253e214f4ea7e`;
+        const searchUrl = `https://api.twelvedata.com/symbol_search?symbol=${encodeURIComponent(query)}&apikey=30860e660a9e49b697b24a9bb38e8a58`;
         try {
           console.log('Searching for:', query, 'URL:', searchUrl);
           const res = await fetch(searchUrl);
@@ -1050,7 +1050,7 @@
       let quoteData = getCachedData('quote', symbol);
 
       if (!quoteData) {
-        const quoteUrl = `https://api.twelvedata.com/quote?symbol=${encodeURIComponent(symbol)}&apikey=d1c361e9f14e4900961253e214f4ea7e`;
+        const quoteUrl = `https://api.twelvedata.com/quote?symbol=${encodeURIComponent(symbol)}&apikey=30860e660a9e49b697b24a9bb38e8a58`;
         try {
           console.log('Fetching quote for:', symbol, 'URL:', quoteUrl);
           const res = await fetch(quoteUrl);

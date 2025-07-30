@@ -91,6 +91,19 @@
       box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
       transform: translateY(-3px);
     }
+
+    /* 价格更新动画 */
+    @keyframes priceFlash {
+      0% { background-color: rgba(59, 130, 246, 0.3); }
+      50% { background-color: rgba(59, 130, 246, 0.6); }
+      100% { background-color: transparent; }
+    }
+
+    .price-updated {
+      animation: priceFlash 1s ease-in-out;
+      border-radius: 4px;
+      padding: 2px 4px;
+    }
   </style>
 </head>
 
@@ -171,7 +184,7 @@
             return;
           }
           timer = setTimeout(async () => {
-            const url = `https://api.twelvedata.com/symbol_search?symbol=${encodeURIComponent(val)}&apikey=d1c361e9f14e4900961253e214f4ea7e`;
+            const url = `https://api.twelvedata.com/symbol_search?symbol=${encodeURIComponent(val)}&apikey=30860e660a9e49b697b24a9bb38e8a58`;
             try {
               const res = await fetch(url);
               const data = await res.json();
@@ -232,8 +245,22 @@
       <section id="dashboard">
         <!-- 实时行情滚动条 -->
         <div id="marketTicker" class="overflow-hidden whitespace-nowrap bg-white rounded shadow mb-6 h-10 flex items-center">
-          <div id="tickerContent" class="animate-marquee text-blue-500 text-base font-semibold px-4"></div>
+          <div id="tickerContent" class="animate-marquee text-blue-500 text-base font-semibold px-4">
+            <span class="text-gray-500 text-xs">●</span>
+            <span class="mx-6">Loading market data...</span>
+          </div>
         </div>
+
+        <!-- 全局加载状态 -->
+        <div id="globalLoading" class="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <div class="flex items-center justify-center">
+            <div class="text-blue-500 text-lg mr-3">
+              <i class="fas fa-spinner fa-spin"></i>
+            </div>
+            <span class="text-blue-700 font-medium">Loading portfolio data...</span>
+          </div>
+        </div>
+
         <h2 class="text-2xl font-bold text-gray-700 mb-4" data-i18n="portfolioOverview">Portfolio Overview</h2>
         <!-- 优化后的卡片布局 -->
          <!-- 投资组合概览统计卡片 -->
@@ -349,50 +376,13 @@
           <div class="asset-card p-6 flex flex-col justify-center">
             <h3 class="text-lg font-bold mb-3" data-i18n="assetAllocationDetail">Asset Allocation Details</h3>
             <ul class="space-y-3 text-sm">
-              <li class="flex items-center justify-between">
-                <span class="text-blue-500 w-16">● Stock</span>
-                <div class="flex-1 mx-3">
-                  <div class="bg-gray-200 rounded-full h-2">
-                    <div class="bg-blue-500 h-2 rounded-full" style="width: 42.6%"></div>
+              <li class="flex items-center justify-center py-8">
+                <div class="text-center">
+                  <div class="text-gray-400 text-4xl mb-2">
+                    <i class="fas fa-spinner fa-spin"></i>
                   </div>
+                  <span class="text-gray-500 text-sm">Loading asset allocation...</span>
                 </div>
-                <span class="w-12 text-right">42.6%</span>
-              </li>
-              <li class="flex items-center justify-between">
-                <span class="text-indigo-500 w-16">● Gold</span>
-                <div class="flex-1 mx-3">
-                  <div class="bg-gray-200 rounded-full h-2">
-                    <div class="bg-indigo-500 h-2 rounded-full" style="width: 20.3%"></div>
-                  </div>
-                </div>
-                <span class="w-12 text-right">20.3%</span>
-              </li>
-              <li class="flex items-center justify-between">
-                <span class="text-green-500 w-16">● Fund</span>
-                <div class="flex-1 mx-3">
-                  <div class="bg-gray-200 rounded-full h-2">
-                    <div class="bg-green-500 h-2 rounded-full" style="width: 15.2%"></div>
-                  </div>
-                </div>
-                <span class="w-12 text-right">15.2%</span>
-              </li>
-              <li class="flex items-center justify-between">
-                <span class="text-yellow-500 w-16">● Bond</span>
-                <div class="flex-1 mx-3">
-                  <div class="bg-gray-200 rounded-full h-2">
-                    <div class="bg-yellow-500 h-2 rounded-full" style="width: 12.4%"></div>
-                  </div>
-                </div>
-                <span class="w-12 text-right">12.4%</span>
-              </li>
-              <li class="flex items-center justify-between">
-                <span class="text-pink-500 w-16">● CCY</span>
-                <div class="flex-1 mx-3">
-                  <div class="bg-gray-200 rounded-full h-2">
-                    <div class="bg-pink-500 h-2 rounded-full" style="width: 9.5%"></div>
-                  </div>
-                </div>
-                <span class="w-12 text-right">9.5%</span>
               </li>
             </ul>
             <p class="text-gray-600 mt-4 text-sm" data-i18n="allocationTip">
@@ -408,185 +398,22 @@
 
         <!-- 持仓列表 -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="positionsList">
-          <!-- 持仓项1 -->
-          <!-- <div class="bg-white rounded-xl shadow-md overflow-hidden transition-all duration-300 hover:shadow-xl transform hover:-translate-y-1 flex flex-col">
-            <div class="p-4 flex flex-col gap-2">
-              <div class="flex justify-between items-center mb-2">
-                <div>
-                  <h3 class="font-bold text-lg" data-i18n="apple">Apple Inc.</h3>
-                  <span class="text-gray-400 text-xs font-mono">AAPL</span>
-                </div>
-                <div class="bg-green-100 text-green-600 px-2 py-1 rounded text-xs font-medium">+2.45%</div>
-              </div>
-              <div class="grid grid-cols-3 gap-x-2 mb-2">
-                <div>
-                  <div class="text-gray-500 text-xs" data-i18n="holdingAmount">Holding</div>
-                  <div class="font-bold text-base">120</div>
-                </div>
-                <div>
-                  <div class="text-gray-500 text-xs" data-i18n="currentPrice">Price</div>
-                  <div class="font-bold text-base">￥1,420.50</div>
-                </div>
-                <div>
-                  <div class="text-gray-500 text-xs" data-i18n="marketValue">Value</div>
-                  <div class="font-bold text-base">￥170,460</div>
-                </div>
-              </div>
-              <div class="flex justify-between items-center text-xs text-gray-500 mt-2">
-                <span data-i18n="sector">Sector: Tech</span>
-                <span data-i18n="days">Days: 365</span>
-                <span data-i18n="type">Type: Stock</span>
-              </div>
+          <div class="col-span-full text-center py-12">
+            <div class="text-gray-400 text-6xl mb-4">
+              <i class="fas fa-spinner fa-spin"></i>
             </div>
-            <div class="bg-gray-50 px-4 py-2">
-              <div class="text-gray-500 text-sm" data-i18n="proportion">Proportion 13.7%</div>
-            </div>
-          </div> -->
-          <!-- 持仓项2 -->
-            <!-- <div class="bg-white rounded-xl shadow-md overflow-hidden transition-all duration-300 hover:shadow-xl transform hover:-translate-y-1 flex flex-col">
-              <div class="p-4 flex flex-col gap-2">
-                <div class="flex justify-between items-center mb-2">
-                  <div>
-                    <h3 class="font-bold text-lg" data-i18n="microsoft">Microsoft</h3>
-                    <span class="text-gray-400 text-xs font-mono">MSFT</span>
-                  </div>
-                  <div class="bg-red-100 text-red-600 px-2 py-1 rounded text-xs font-medium">-1.23%</div>
-              </div>
-              <div class="grid grid-cols-3 gap-x-2 mb-2">
-                <div>
-                  <div class="text-gray-500 text-xs" data-i18n="holdingAmount">Holding</div>
-                  <div class="font-bold text-base">85</div>
-                </div>
-                <div>
-                  <div class="text-gray-500 text-xs" data-i18n="currentPrice">Price</div>
-                  <div class="font-bold text-base">￥2,340.00</div>
-                </div>
-                <div>
-                  <div class="text-gray-500 text-xs" data-i18n="marketValue">Value</div>
-                  <div class="font-bold text-base">￥198,900</div>
-                </div>
-              </div>
-              <div class="flex justify-between items-center text-xs text-gray-500 mt-2">
-                <span data-i18n="sector">Sector: Software</span>
-                <span data-i18n="days">Days: 210</span>
-                <span data-i18n="type">Type: Stock</span>
-              </div>
-            </div>
-            <div class="bg-gray-50 px-4 py-2">
-              <div class="text-gray-500 text-sm" data-i18n="proportion">Proportion 15.9%</div>
-            </div>
-          </div> -->
-          <!-- 持仓项3 -->
-          <!-- <div class="bg-white rounded-xl shadow-md overflow-hidden transition-all duration-300 hover:shadow-xl transform hover:-translate-y-1 flex flex-col">
-            <div class="p-4 flex flex-col gap-2">
-              <div class="flex justify-between items-center mb-2">
-                <div>
-                  <h3 class="font-bold text-lg" data-i18n="tesla">Tesla</h3>
-                  <span class="text-gray-400 text-xs font-mono">TSLA</span>
-                </div>
-                <div class="bg-green-100 text-green-600 px-2 py-1 rounded text-xs font-medium">+3.12%</div>
-              </div>
-              <div class="grid grid-cols-3 gap-x-2 mb-2">
-                <div>
-                  <div class="text-gray-500 text-xs" data-i18n="holdingAmount">Holding</div>
-                  <div class="font-bold text-base">50</div>
-                </div>
-                <div>
-                  <div class="text-gray-500 text-xs" data-i18n="currentPrice">Price</div>
-                  <div class="font-bold text-base">￥785.30</div>
-                </div>
-                <div>
-                  <div class="text-gray-500 text-xs" data-i18n="marketValue">Value</div>
-                  <div class="font-bold text-base">￥39,265</div>
-                </div>
-              </div>
-              <div class="flex justify-between items-center text-xs text-gray-500 mt-2">
-                <span data-i18n="sector">Sector: Automotive</span>
-                <span data-i18n="days">Days: 90</span>
-                <span data-i18n="type">Type: Stock</span>
-              </div>
-            </div>
-            <div class="bg-gray-50 px-4 py-2">
-              <div class="text-gray-500 text-sm" data-i18n="proportion">Proportion 3.2%</div>
-            </div>
-          </div> -->
-          <!-- 持仓项4 -->
-          <!-- <div class="bg-white rounded-xl shadow-md overflow-hidden transition-all duration-300 hover:shadow-xl transform hover:-translate-y-1 flex flex-col">
-            <div class="p-4 flex flex-col gap-2">
-              <div class="flex justify-between items-center mb-2">
-                <div>
-                  <h3 class="font-bold text-lg" data-i18n="amazon">Amazon</h3>
-                  <span class="text-gray-400 text-xs font-mono">AMZN</span>
-                </div>
-                <div class="bg-green-100 text-green-600 px-2 py-1 rounded text-xs font-medium">+0.87%</div>
-              </div>
-              <div class="grid grid-cols-3 gap-x-2 mb-2">
-                <div>
-                  <div class="text-gray-500 text-xs" data-i18n="holdingAmount">Holding</div>
-                  <div class="font-bold text-base">35</div>
-                </div>
-                <div>
-                  <div class="text-gray-500 text-xs" data-i18n="currentPrice">Price</div>
-                  <div class="font-bold text-base">￥1,876.20</div>
-                </div>
-                <div>
-                  <div class="text-gray-500 text-xs" data-i18n="marketValue">Value</div>
-                  <div class="font-bold text-base">￥65,667</div>
-                </div>
-              </div>
-              <div class="flex justify-between items-center text-xs text-gray-500 mt-2">
-                <span data-i18n="sector">Sector: E-Commerce</span>
-                <span data-i18n="days">Days: 180</span>
-                <span data-i18n="type">Type: Stock</span>
-              </div>
-            </div>
-            <div class="bg-gray-50 px-4 py-2">
-              <div class="text-gray-500 text-sm" data-i18n="proportion">Proportion 5.3%</div>
-            </div>
-          </div> -->
-          <!-- 持仓项5 -->
-          <!-- <div class="bg-white rounded-xl shadow-md overflow-hidden transition-all duration-300 hover:shadow-xl transform hover:-translate-y-1 flex flex-col">
-            <div class="p-4 flex flex-col gap-2">
-              <div class="flex justify-between items-center mb-2">
-                <div>
-                  <h3 class="font-bold text-lg" data-i18n="alibaba">Alibaba</h3>
-                  <span class="text-gray-400 text-xs font-mono">BABA</span>
-                </div>
-                <div class="bg-red-100 text-red-600 px-2 py-1 rounded text-xs font-medium">-2.35%</div>
-              </div>
-              <div class="grid grid-cols-3 gap-x-2 mb-2">
-                <div>
-                  <div class="text-gray-500 text-xs" data-i18n="holdingAmount">Holding</div>
-                  <div class="font-bold text-base">100</div>
-                </div>
-                <div>
-                  <div class="text-gray-500 text-xs" data-i18n="currentPrice">Price</div>
-                  <div class="font-bold text-base">￥89.65</div>
-                </div>
-                <div>
-                  <div class="text-gray-500 text-xs" data-i18n="marketValue">Value</div>
-                  <div class="font-bold text-base">￥8,965</div>
-                </div>
-              </div>
-              <div class="flex justify-between items-center text-xs text-gray-500 mt-2">
-                <span data-i18n="sector">Sector: E-Commerce</span>
-                <span data-i18n="days">Days: 60</span>
-                <span data-i18n="type">Type: Stock</span>
-              </div>
-            </div>
-            <div class="bg-gray-50 px-4 py-2">
-              <div class="text-gray-500 text-sm" data-i18n="proportion">Proportion 0.7%</div>
-            </div>
+            <h3 class="text-gray-600 font-medium mb-2">Loading Holdings</h3>
+            <p class="text-gray-500 text-sm">Please wait while we fetch your portfolio data...</p>
           </div>
-        </div> -->
+        </div>
 
         <!-- 显示更多按钮 -->
-        <div class="mt-8 text-center">
+        <!-- <div class="mt-8 text-center">
           <button id="showMoreBtn" onclick="window.location.href='detail.html'"
             class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg font-medium transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50" data-i18n="showMore">
             Show More <i class="fa fa-chevron-right ml-1"></i>
           </button>
-        </div>
+        </div> -->
       </section>
 
       <!-- 弹窗组件 -->
@@ -594,7 +421,7 @@
         <div class="bg-white rounded-xl shadow-lg p-8 w-full max-w-md relative">
           <button onclick="closeModal()"
             class="absolute top-2 right-2 text-gray-400 hover:text-gray-700 text-2xl">&times;</button>
-          <div id="modalContent">
+          <div id="modalContent"> 
             <!-- 动态内容区域 -->
           </div>
         </div>
@@ -646,7 +473,7 @@
             return;
           }
 
-          const apiKey = 'd1c361e9f14e4900961253e214f4ea7e';
+          const apiKey = '30860e660a9e49b697b24a9bb38e8a58';
           const symbols = ['AAPL', 'MSFT', 'TSLA', 'GOOGL', 'AMZN'];
 
           try {
@@ -772,6 +599,8 @@
               console.error('Failed to load portfolio data, status:', response.status);
               portfolioData = [];
               updatePortfolioSummaryFallback(); // 显示默认数据
+              showErrorState('Failed to load portfolio data from server');
+              return;
             }
 
             // 旧的计算逻辑已移除，现在使用 updatePortfolioSummary() 函数
@@ -780,6 +609,7 @@
             console.error('Error loading portfolio data:', error);
             portfolioData = [];
             updatePortfolioSummaryFallback(); // 显示默认数据
+            showErrorState('Network error: Unable to connect to server');
           }
         }
 
@@ -788,6 +618,7 @@
           try {
             let totalValue = 0;
             let totalCost = 0;
+            let assetAllocation = {}; // 用于图表的资产分配数据
 
             // 计算总价值和总成本
             for (const holding of portfolioData) {
@@ -806,12 +637,27 @@
 
                 totalValue += holdingValue;
                 totalCost += holdingCost;
+
+                // 按资产类型累计价值
+                const assetType = holding.type || 'other';
+                if (!assetAllocation[assetType]) {
+                  assetAllocation[assetType] = 0;
+                }
+                assetAllocation[assetType] += holdingValue;
+
               } catch (error) {
                 console.warn(`Failed to get price for ${holding.ticker}:`, error);
                 // 使用买入价作为后备
                 const holdingValue = holding.buyin_price * holding.quantity;
                 totalValue += holdingValue;
                 totalCost += holdingValue;
+
+                // 按资产类型累计价值
+                const assetType = holding.type || 'other';
+                if (!assetAllocation[assetType]) {
+                  assetAllocation[assetType] = 0;
+                }
+                assetAllocation[assetType] += holdingValue;
               }
             }
 
@@ -850,6 +696,15 @@
 
             document.getElementById('totalValueChange').innerHTML = '<i class="fa fa-refresh mr-1"></i> Updated';
 
+            // 更新图表数据
+            updateChartData(assetAllocation, totalValue);
+
+            // 更新持仓列表
+            updatePositionsList();
+
+            // 隐藏全局加载状态
+            hideGlobalLoading();
+
           } catch (error) {
             console.error('Error updating portfolio summary:', error);
             updatePortfolioSummaryFallback();
@@ -865,6 +720,282 @@
           document.getElementById('totalValueChange').innerHTML = '<i class="fa fa-minus mr-1"></i> No Data';
           document.getElementById('totalGainChange').innerHTML = '<i class="fa fa-minus mr-1"></i> No Data';
           document.getElementById('annualReturnChange').innerHTML = '<i class="fa fa-minus mr-1"></i> No Data';
+
+          // 重置图表为默认数据
+          updateChartData({}, 0);
+
+          // 重置持仓列表
+          updatePositionsList();
+
+          // 隐藏全局加载状态
+          hideGlobalLoading();
+        }
+
+        // 全局图表变量
+        let assetAllocationChart = null;
+        let chartInitialized = false;
+
+        // 隐藏全局加载状态
+        function hideGlobalLoading() {
+          const loadingElement = document.getElementById('globalLoading');
+          if (loadingElement) {
+            loadingElement.style.display = 'none';
+          }
+        }
+
+        // 显示全局加载状态
+        function showGlobalLoading() {
+          const loadingElement = document.getElementById('globalLoading');
+          if (loadingElement) {
+            loadingElement.style.display = 'block';
+          }
+        }
+
+        // 显示错误状态
+        function showErrorState(message = 'Failed to load data') {
+          const loadingElement = document.getElementById('globalLoading');
+          if (loadingElement) {
+            loadingElement.innerHTML = `
+              <div class="flex items-center justify-center">
+                <div class="text-red-500 text-lg mr-3">
+                  <i class="fas fa-exclamation-triangle"></i>
+                </div>
+                <span class="text-red-700 font-medium">${message}</span>
+                <button onclick="location.reload()" class="ml-4 px-3 py-1 bg-red-500 text-white rounded text-sm hover:bg-red-600">
+                  Retry
+                </button>
+              </div>
+            `;
+            loadingElement.className = 'mb-6 bg-red-50 border border-red-200 rounded-lg p-4';
+          }
+        }
+
+        // 更新图表数据的函数
+        function updateChartData(assetAllocation, totalValue) {
+          console.log('Updating chart data:', assetAllocation, 'Total value:', totalValue);
+
+          // 如果图表还没初始化，等待一下再尝试
+          if (!chartInitialized) {
+            console.log('Chart not initialized yet, waiting...');
+            setTimeout(() => updateChartData(assetAllocation, totalValue), 500);
+            return;
+          }
+
+          // 资产类型映射和颜色配置
+          const assetTypeMap = {
+            'stock': { label: 'Stocks', color: 'rgba(54, 162, 235, 0.8)', borderColor: 'rgba(54, 162, 235, 1)' },
+            'fund': { label: 'Funds', color: 'rgba(75, 192, 192, 0.8)', borderColor: 'rgba(75, 192, 192, 1)' },
+            'bond': { label: 'Bonds', color: 'rgba(255, 205, 86, 0.8)', borderColor: 'rgba(255, 205, 86, 1)' },
+            'gold': { label: 'Gold', color: 'rgba(153, 102, 255, 0.8)', borderColor: 'rgba(153, 102, 255, 1)' },
+            'currency': { label: 'Currency', color: 'rgba(255, 99, 132, 0.8)', borderColor: 'rgba(255, 99, 132, 1)' },
+            'other': { label: 'Others', color: 'rgba(201, 203, 207, 0.8)', borderColor: 'rgba(201, 203, 207, 1)' }
+          };
+
+          let labels = [];
+          let data = [];
+          let backgroundColors = [];
+          let borderColors = [];
+          let hoverBackgroundColors = [];
+
+          if (totalValue > 0) {
+            // 使用真实数据
+            Object.keys(assetAllocation).forEach(assetType => {
+              const value = assetAllocation[assetType];
+              const percentage = ((value / totalValue) * 100).toFixed(1);
+
+              const config = assetTypeMap[assetType] || assetTypeMap['other'];
+              labels.push(config.label);
+              data.push(parseFloat(percentage));
+              backgroundColors.push(config.color);
+              borderColors.push(config.borderColor);
+              hoverBackgroundColors.push(config.borderColor);
+            });
+          } else {
+            // 使用默认数据
+            labels = ['No Data'];
+            data = [100];
+            backgroundColors = ['rgba(201, 203, 207, 0.8)'];
+            borderColors = ['rgba(201, 203, 207, 1)'];
+            hoverBackgroundColors = ['rgba(201, 203, 207, 1)'];
+          }
+
+          // 更新图表
+          if (assetAllocationChart) {
+            assetAllocationChart.data.labels = labels;
+            assetAllocationChart.data.datasets[0].data = data;
+            assetAllocationChart.data.datasets[0].backgroundColor = backgroundColors;
+            assetAllocationChart.data.datasets[0].borderColor = borderColors;
+            assetAllocationChart.data.datasets[0].hoverBackgroundColor = hoverBackgroundColors;
+            assetAllocationChart.update();
+            console.log('Chart updated with real data');
+          }
+
+          // 同时更新右侧的资产分配详情列表
+          updateAssetAllocationDetails(labels, data, backgroundColors);
+        }
+
+        // 更新资产分配详情列表
+        function updateAssetAllocationDetails(labels, data, colors) {
+          const detailsContainer = document.querySelector('.asset-card ul');
+          if (!detailsContainer) return;
+
+          let detailsHTML = '';
+
+          if (labels.length === 1 && labels[0] === 'No Data') {
+            detailsHTML = `
+              <li class="flex items-center justify-center py-8">
+                <span class="text-gray-500">No portfolio data available</span>
+              </li>
+            `;
+          } else {
+            labels.forEach((label, index) => {
+              const percentage = data[index];
+              const color = colors[index];
+
+              // 从rgba颜色提取RGB值用于CSS
+              const rgbMatch = color.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
+              const rgbColor = rgbMatch ? `rgb(${rgbMatch[1]}, ${rgbMatch[2]}, ${rgbMatch[3]})` : color;
+
+              detailsHTML += `
+                <li class="flex items-center justify-between">
+                  <span class="w-16" style="color: ${rgbColor}">● ${label}</span>
+                  <div class="flex-1 mx-3">
+                    <div class="bg-gray-200 rounded-full h-2">
+                      <div class="h-2 rounded-full" style="width: ${percentage}%; background-color: ${rgbColor}"></div>
+                    </div>
+                  </div>
+                  <span class="w-12 text-right">${percentage}%</span>
+                </li>
+              `;
+            });
+          }
+
+          detailsContainer.innerHTML = detailsHTML;
+        }
+
+        // 更新持仓列表（显示前6个最大持仓）
+        async function updatePositionsList() {
+          const positionsContainer = document.getElementById('positionsList');
+          if (!positionsContainer || !portfolioData || portfolioData.length === 0) {
+            if (positionsContainer) {
+              positionsContainer.innerHTML = `
+                <div class="col-span-full text-center py-12">
+                  <div class="text-gray-400 text-6xl mb-4">
+                    <i class="fas fa-chart-pie"></i>
+                  </div>
+                  <h3 class="text-gray-600 font-medium mb-2">No Holdings Found</h3>
+                  <p class="text-gray-500 text-sm">Start building your portfolio by adding some investments</p>
+                </div>
+              `;
+            }
+            return;
+          }
+
+          // 计算每个持仓的当前价值并排序
+          const enrichedHoldings = [];
+
+          for (const holding of portfolioData) {
+            try {
+              // 获取当前价格
+              const priceResponse = await fetch(`${API_BASE_URL}/stock/price/${holding.ticker}`);
+              let currentPrice = holding.buyin_price;
+
+              if (priceResponse.ok) {
+                const priceData = await priceResponse.json();
+                currentPrice = parseFloat(priceData.price) || holding.buyin_price;
+              }
+
+              const currentValue = currentPrice * holding.quantity;
+              const totalCost = holding.buyin_price * holding.quantity;
+              const profit = currentValue - totalCost;
+              const profitPercent = totalCost > 0 ? ((profit / totalCost) * 100) : 0;
+
+              enrichedHoldings.push({
+                ...holding,
+                currentPrice,
+                currentValue,
+                profit,
+                profitPercent
+              });
+            } catch (error) {
+              console.warn(`Failed to get price for ${holding.ticker}:`, error);
+              const currentValue = holding.buyin_price * holding.quantity;
+              enrichedHoldings.push({
+                ...holding,
+                currentPrice: holding.buyin_price,
+                currentValue,
+                profit: 0,
+                profitPercent: 0
+              });
+            }
+          }
+
+          // 按当前价值排序，取前6个
+          const topHoldings = enrichedHoldings
+            .sort((a, b) => b.currentValue - a.currentValue)
+            .slice(0, 6);
+
+          let positionsHTML = '';
+
+          topHoldings.forEach(holding => {
+            const profitColor = holding.profit >= 0 ? 'text-green-600' : 'text-red-600';
+            const profitIcon = holding.profit >= 0 ? 'fa-arrow-up' : 'fa-arrow-down';
+            const profitSign = holding.profit >= 0 ? '+' : '';
+
+            // 资产类型颜色映射
+            const typeColors = {
+              'stock': 'bg-blue-100 text-blue-800',
+              'fund': 'bg-green-100 text-green-800',
+              'bond': 'bg-yellow-100 text-yellow-800',
+              'gold': 'bg-purple-100 text-purple-800',
+              'currency': 'bg-pink-100 text-pink-800'
+            };
+            const typeColorClass = typeColors[holding.type] || 'bg-gray-100 text-gray-800';
+
+            positionsHTML += `
+              <div class="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border-l-4 border-blue-500">
+                <div class="flex justify-between items-start mb-4">
+                  <div>
+                    <h3 class="text-lg font-bold text-gray-900 mb-1">${holding.name}</h3>
+                    <div class="flex items-center space-x-2">
+                      <span class="text-sm font-mono text-gray-600 bg-gray-100 px-2 py-1 rounded">${holding.ticker}</span>
+                      <span class="px-2 py-1 rounded-full text-xs font-semibold ${typeColorClass}">
+                        ${holding.type.charAt(0).toUpperCase() + holding.type.slice(1)}
+                      </span>
+                    </div>
+                  </div>
+                  <div class="text-right">
+                    <div class="text-lg font-bold text-gray-900">$${holding.currentValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+                    <div class="${profitColor} text-sm font-medium flex items-center justify-end">
+                      <i class="fas ${profitIcon} mr-1"></i>
+                      ${profitSign}${holding.profitPercent.toFixed(2)}%
+                    </div>
+                  </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4 text-sm text-gray-600">
+                  <div>
+                    <span class="font-medium">Quantity:</span>
+                    <span class="text-gray-900">${holding.quantity.toLocaleString()}</span>
+                  </div>
+                  <div>
+                    <span class="font-medium">Avg Price:</span>
+                    <span class="text-gray-900">$${holding.buyin_price.toFixed(2)}</span>
+                  </div>
+                  <div>
+                    <span class="font-medium">Current:</span>
+                    <span class="text-gray-900 current-price" data-ticker="${holding.ticker}">$${holding.currentPrice.toFixed(2)}</span>
+                  </div>
+                  <div>
+                    <span class="font-medium">P&L:</span>
+                    <span class="${profitColor} profit-loss" data-ticker="${holding.ticker}">${profitSign}$${Math.abs(holding.profit).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                  </div>
+                </div>
+              </div>
+            `;
+          });
+
+          positionsContainer.innerHTML = positionsHTML;
         }
 
         // 旧的后备数据函数已被 updatePortfolioSummaryFallback 替代
@@ -1001,51 +1132,153 @@
           return parseFloat(totalValueText.replace(/[$,]/g, '')) || 1;
         }
 
+        // 实时更新Current Positions的价格数据（不重新渲染整个列表）
+        async function updateCurrentPositionsPrices() {
+          if (!portfolioData || portfolioData.length === 0) {
+            return;
+          }
+
+          console.log('🔄 更新Current Positions实时价格...');
+
+          try {
+            // 获取前6个最大持仓
+            const enrichedHoldings = [];
+
+            for (const holding of portfolioData) {
+              try {
+                // 获取当前价格
+                const priceResponse = await fetch(`${API_BASE_URL}/stock/price/${holding.ticker}`);
+                let currentPrice = holding.buyin_price;
+
+                if (priceResponse.ok) {
+                  const priceData = await priceResponse.json();
+                  currentPrice = parseFloat(priceData.price) || holding.buyin_price;
+                }
+
+                const currentValue = currentPrice * holding.quantity;
+                const totalCost = holding.buyin_price * holding.quantity;
+                const profit = currentValue - totalCost;
+                const profitPercent = totalCost > 0 ? ((profit / totalCost) * 100) : 0;
+
+                enrichedHoldings.push({
+                  ...holding,
+                  currentPrice,
+                  currentValue,
+                  profit,
+                  profitPercent
+                });
+              } catch (error) {
+                console.warn(`Failed to get price for ${holding.ticker}:`, error);
+                const currentValue = holding.buyin_price * holding.quantity;
+                enrichedHoldings.push({
+                  ...holding,
+                  currentPrice: holding.buyin_price,
+                  currentValue,
+                  profit: 0,
+                  profitPercent: 0
+                });
+              }
+            }
+
+            // 按当前价值排序，取前6个
+            const topHoldings = enrichedHoldings
+              .sort((a, b) => b.currentValue - a.currentValue)
+              .slice(0, 6);
+
+            // 更新页面上的价格显示
+            topHoldings.forEach(holding => {
+              const currentPriceElement = document.querySelector(`[data-ticker="${holding.ticker}"] .current-price`);
+              const profitLossElement = document.querySelector(`[data-ticker="${holding.ticker}"] .profit-loss`);
+
+              if (currentPriceElement) {
+                const oldPrice = parseFloat(currentPriceElement.textContent.replace('$', ''));
+                currentPriceElement.textContent = `$${holding.currentPrice.toFixed(2)}`;
+
+                // 如果价格有变化，添加闪烁效果
+                if (Math.abs(oldPrice - holding.currentPrice) > 0.01) {
+                  currentPriceElement.classList.add('price-updated');
+                  setTimeout(() => {
+                    currentPriceElement.classList.remove('price-updated');
+                  }, 1000);
+                }
+              }
+
+              if (profitLossElement) {
+                const profitSign = holding.profit >= 0 ? '+' : '';
+                const profitColor = holding.profit >= 0 ? 'text-green-600' : 'text-red-600';
+                profitLossElement.textContent = `${profitSign}$${Math.abs(holding.profit).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+                profitLossElement.className = `${profitColor} profit-loss`;
+                profitLossElement.setAttribute('data-ticker', holding.ticker);
+              }
+            });
+
+            console.log('✅ Current Positions价格更新完成');
+          } catch (error) {
+            console.error('❌ Current Positions价格更新失败:', error);
+          }
+        }
+
         // showLoadingState 函数已移除，使用 management.html 的加载逻辑
 
         // 页面加载时调用
         document.addEventListener('DOMContentLoaded', function() {
           console.log('页面加载完成，开始初始化...');
-          checkLoginStatus(); // 先检查登录状态
+
+          // 确保显示加载状态
+          showGlobalLoading();
+
+          // 临时跳过登录检查用于开发测试
+          // checkLoginStatus(); // 先检查登录状态
+
+          // 设置默认用户信息用于测试
+          localStorage.setItem('isLoggedIn', 'true');
+          localStorage.setItem('userToken', 'test-token');
+          localStorage.setItem('userAccount', 'demo');
+          localStorage.setItem('currentUserId', '1');
+          updateUserArea();
+
           console.log('开始加载投资组合数据...');
           loadPortfolioData(); // 然后加载投资组合数据
+
+          // 启动定时更新机制
+          // 每2分钟完整更新一次所有数据
+          setInterval(async () => {
+            console.log('定时完整更新投资组合数据...');
+            try {
+              await updatePortfolioSummary(); // 更新统计数据和持仓列表
+            } catch (error) {
+              console.error('定时完整更新失败:', error);
+            }
+          }, 120000); // 2分钟 = 120000毫秒
+
+          // 每30秒更新一次Current Positions的价格（轻量级更新）
+          setInterval(async () => {
+            try {
+              await updateCurrentPositionsPrices();
+            } catch (error) {
+              console.error('Current Positions价格更新失败:', error);
+            }
+          }, 30000); // 30秒 = 30000毫秒
         });
 
         // 绘制资产分配饼状图
         document.addEventListener('DOMContentLoaded', function () {
           const ctx = document.getElementById('assetAllocationChart').getContext('2d');
           const connectionLayer = document.getElementById('connectionLayer');
-          let myChart;
           let currentConnection = null;
-          
+
           // 选中变大功能
           let activeIndex = null;
+
+          // 初始默认数据（将被真实数据替换）
           const assetData = {
-            labels: ['Stock', 'Gold', 'Fund', 'Bond', 'CCY'],
+            labels: ['Loading...'],
             datasets: [{
-              data: [42.6, 20.3, 15.2, 12.4, 9.5],
-              backgroundColor: [
-                'rgba(54, 162, 235, 0.8)',
-                'rgba(153, 102, 255, 0.8)',
-                'rgba(75, 192, 192, 0.8)',
-                'rgba(255, 205, 86, 0.8)',
-                'rgba(255, 99, 132, 0.8)'
-              ],
-              borderColor: [
-                'rgba(54, 162, 235, 1)',
-                'rgba(153, 102, 255, 1)',
-                'rgba(75, 192, 192, 1)',
-                'rgba(255, 205, 86, 1)',
-                'rgba(255, 99, 132, 1)'
-              ],
+              data: [100],
+              backgroundColor: ['rgba(201, 203, 207, 0.8)'],
+              borderColor: ['rgba(201, 203, 207, 1)'],
               borderWidth: 2,
-              hoverBackgroundColor: [
-                'rgba(54, 162, 235, 1)',
-                'rgba(153, 102, 255, 1)',
-                'rgba(75, 192, 192, 1)',
-                'rgba(255, 205, 86, 1)',
-                'rgba(255, 99, 132, 1)'
-              ],
+              hoverBackgroundColor: ['rgba(201, 203, 207, 1)'],
               hoverOffset: 15
             }]
           };
@@ -1055,7 +1288,8 @@
           chartContainer.style.height = '340px';
           document.getElementById('assetAllocationChart').height = 340;
 
-          myChart = new Chart(ctx, {
+          // 创建图表并保存到全局变量
+          assetAllocationChart = new Chart(ctx, {
             type: 'pie',
             data: assetData,
             options: {
@@ -1112,7 +1346,8 @@
 
           // 等待图表渲染完成后初始化
           setTimeout(() => {
-            // 初始化完成
+            chartInitialized = true;
+            console.log('Chart initialized, ready for data updates');
           }, 500);
 
           // 显示高亮和虚折线函数
@@ -1123,12 +1358,13 @@
             const chartArea = chart.chartArea;
             
             // 计算饼图扇形中心角度
-            const total = assetData.datasets[0].data.reduce((a, b) => a + b, 0);
+            const chartData = chart.data.datasets[0].data;
+            const total = chartData.reduce((a, b) => a + b, 0);
             let currentAngle = -Math.PI / 2; // 从12点钟方向开始
             for (let i = 0; i < index; i++) {
-              currentAngle += (assetData.datasets[0].data[i] / total) * 2 * Math.PI;
+              currentAngle += (chartData[i] / total) * 2 * Math.PI;
             }
-            const sliceAngle = (assetData.datasets[0].data[index] / total) * 2 * Math.PI;
+            const sliceAngle = (chartData[index] / total) * 2 * Math.PI;
             const midAngle = currentAngle + sliceAngle / 2;
             
             // 计算饼图中心点
@@ -1203,7 +1439,7 @@
             // 创建SVG折线
             const polyline = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
             polyline.setAttribute('points', points);
-            polyline.setAttribute('stroke', assetData.datasets[0].borderColor[index]); // 使用更深的边框颜色
+            polyline.setAttribute('stroke', chart.data.datasets[0].borderColor[index]); // 使用更深的边框颜色
             polyline.setAttribute('stroke-width', '2'); // 减小线条宽度
             polyline.setAttribute('stroke-dasharray', 'none'); // 改为实线
             polyline.setAttribute('fill', 'none');
@@ -1230,8 +1466,8 @@
             text.setAttribute('font-family', 'Arial, sans-serif');
             text.setAttribute('font-size', '16');
             text.setAttribute('font-weight', 'bold');
-            text.setAttribute('fill', assetData.datasets[0].backgroundColor[index]);
-            text.textContent = `${assetData.datasets[0].data[index]}%`;
+            text.setAttribute('fill', chart.data.datasets[0].backgroundColor[index]);
+            text.textContent = `${chart.data.labels[index]}: ${chart.data.datasets[0].data[index]}%`;
             text.id = 'highlight-text';
             text.style.opacity = '0';
             text.style.transition = 'opacity 0.4s ease-in-out';

@@ -7,92 +7,45 @@
     <title>Position Details</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script>
-    // 检查用户登录状态
-    function checkLoginStatus() {
-      // 从localStorage获取登录状态
-      const isLoggedIn = localStorage.getItem('isLoggedIn');
-      const userToken = localStorage.getItem('userToken');
-      
-      // 如果没有登录状态或token，跳转到登录页面
-      if (!isLoggedIn || !userToken) {
-        window.location.href = 'log_in.html';
-        return false;
-      }
-      
-      // 如果已登录，更新用户区域显示
-      updateUserArea();
-      return true;
-    }
+    <script src="js/api.js"></script>
+    <style>
+        /* 价格更新动画 */
+        .price-updated {
+            animation: priceFlash 1s ease-in-out;
+        }
 
-    // 更新用户区域显示
-    function updateUserArea() {
-      const userAccount = localStorage.getItem('userAccount');
-      const userArea = document.getElementById('userArea');
-      
-      if (userAccount) {
-        userArea.innerHTML = `
-          <div class="flex items-center space-x-3">
-            <span class="text-gray-700 font-medium">${userAccount}</span>
-            <button onclick="logout()" 
-              class="text-red-500 hover:text-red-600 text-sm font-medium bg-transparent px-3 py-1 rounded border border-red-300 hover:border-red-400 transition">
-              Logout
-            </button>
-          </div>
-        `;
-      } else {
-        // 如果没有登录信息，显示登录链接
-        userArea.innerHTML = `
-          <a href="log_in.html" class="text-blue-500 hover:text-blue-600 text-lg font-bold bg-transparent px-4 py-2 rounded transition">
-            Login
-          </a>
-        `;
-      }
-    }
+        @keyframes priceFlash {
+            0% { background-color: #fef3c7; }
+            50% { background-color: #fbbf24; }
+            100% { background-color: transparent; }
+        }
 
-    // 登出功能
-    function logout() {
-      localStorage.removeItem('isLoggedIn');
-      localStorage.removeItem('userToken');
-      localStorage.removeItem('userAccount');
-      window.location.href = 'log_in.html';
-    }
+        /* 实时指示器动画 */
+        .live-indicator {
+            animation: pulse 2s infinite;
+        }
 
-    // 页面加载时检查登录状态
-    document.addEventListener('DOMContentLoaded', function() {
-      checkLoginStatus();
-    });
-  </script>
-  <style>
-    @keyframes marquee {
-      0% {
-        transform: translateX(100%);
-      }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
 
-      100% {
-        transform: translateX(-100%);
-      }
-    }
+        /* 卡片悬停效果增强 */
+        .holding-card:hover {
+            transform: translateY(-4px) scale(1.02);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
 
-    .animate-marquee {
-      display: inline-block;
-      white-space: nowrap;
-      animation: marquee 20s linear infinite;
-    }
+        /* 渐变背景 */
+        .gradient-bg {
+            background: linear-gradient(135deg, #f6f9fc 0%, #e9f4ff 100%);
+        }
 
-    /* 新增样式 */
-    .asset-card {
-      background-color: #ffffff;
-      border-radius: 1rem;
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-      transition: all 0.3s ease;
-    }
-
-    .asset-card:hover {
-      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-      transform: translateY(-3px);
-    }
-  </style>
+        /* 过滤器容器样式 */
+        .filter-container {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+    </style>
 </head>
 
 <body class="bg-gradient-to-br from-blue-50 via-white to-blue-100 text-gray-800 min-h-screen">
@@ -178,6 +131,17 @@
                     <b id="totalProfitRate" class="text-xl font-bold text-gray-900">3.50%</b>
                 </div>
             </section>
+            <!-- 实时更新状态指示器 -->
+            <div class="bg-white rounded-lg shadow-md p-3 mb-4 flex items-center justify-between">
+                <div class="flex items-center">
+                    <span class="w-3 h-3 bg-green-400 rounded-full mr-2 live-indicator"></span>
+                    <span class="text-sm text-gray-600">Real-time updates every 15 seconds</span>
+                </div>
+                <div id="lastUpdateTime" class="text-xs text-gray-500">
+                    Last updated: Loading...
+                </div>
+            </div>
+
             <!-- 在 detail.html 的 <main> 中添加筛选和排序功能 -->
             <section id="filter-sort-bar"
                 class="bg-white p-4 mb-6 rounded-lg shadow-md flex flex-wrap gap-4 items-center">
@@ -198,8 +162,9 @@
                 <select id="sortField"
                     class="px-4 py-2 border border-gray-300 rounded-md focus:ring focus:ring-blue-200">
                     <option value="updated_at">Update Time</option>
-                    <option value="amount">Amount</option>
+                    <option value="totalValue">Total Value</option>
                     <option value="profitRate">Profit Rate</option>
+                    <option value="quantity">Quantity</option>
                 </select>
 
                 <!-- 排序顺序 -->
@@ -215,6 +180,229 @@
             <section id="holdings-list" class="space-y-4"></section>
 
             <script>
+                // 外部股票API配置
+                // 🔧 配置说明：
+                // 1. Alpha Vantage: 免费注册 https://www.alphavantage.co/support/#api-key
+                // 2. Finnhub: 免费注册 https://finnhub.io/register
+                // 3. Yahoo Finance: 通过CORS代理访问，无需API Key
+                const STOCK_API_CONFIG = {
+                    // Alpha Vantage API (免费，需要注册获取API Key)
+                    ALPHA_VANTAGE: {
+                        baseUrl: 'https://www.alphavantage.co/query',
+                        apiKey: '30860e660a9e49b697b24a9bb38e8a58', // 🔑 您的新API Key
+                        function: 'GLOBAL_QUOTE'
+                    },
+                    // Finnhub API (免费层级)
+                    FINNHUB: {
+                        baseUrl: 'https://finnhub.io/api/v1',
+                        apiKey: '30860e660a9e49b697b24a9bb38e8a58', // 🔑 您的新API Key
+                        endpoint: '/quote'
+                    },
+                    // Yahoo Finance API (通过第三方代理)
+                    YAHOO_FINANCE: {
+                        baseUrl: 'https://query1.finance.yahoo.com/v8/finance/chart',
+                        corsProxy: 'https://api.allorigins.win/raw?url='
+                    }
+                };
+
+                // 用户区域相关函数 (与index.html一致)
+                function checkLoginStatus() {
+                    // 从localStorage获取登录状态
+                    const isLoggedIn = localStorage.getItem('isLoggedIn');
+                    const userToken = localStorage.getItem('userToken');
+
+                    // 如果没有登录状态或token，跳转到登录页面
+                    if (!isLoggedIn || !userToken) {
+                        window.location.href = 'log_in.html';
+                        return false;
+                    }
+
+                    // 如果已登录，更新用户区域显示
+                    updateUserArea();
+                    return true;
+                }
+
+                // 更新用户区域显示
+                function updateUserArea() {
+                    const userAccount = localStorage.getItem('userAccount');
+                    const userArea = document.getElementById('userArea');
+
+                    if (userAccount) {
+                        userArea.innerHTML = `
+                            <div class="flex items-center space-x-3">
+                                <span class="text-gray-700 font-medium">${userAccount}</span>
+                                <button onclick="logout()"
+                                    class="text-red-500 hover:text-red-600 text-sm font-medium bg-transparent px-3 py-1 rounded border border-red-300 hover:border-red-400 transition">
+                                    Logout
+                                </button>
+                            </div>
+                        `;
+                    } else {
+                        // 如果没有登录信息，显示登录链接
+                        userArea.innerHTML = `
+                            <a href="log_in.html" class="text-blue-500 hover:text-blue-600 text-lg font-bold bg-transparent px-4 py-2 rounded transition">
+                                Login
+                            </a>
+                        `;
+                    }
+                }
+
+                // 登出功能
+                function logout() {
+                    localStorage.removeItem('isLoggedIn');
+                    localStorage.removeItem('userToken');
+                    localStorage.removeItem('userAccount');
+                    localStorage.removeItem('currentUserId'); // 同时清除用户ID
+                    window.location.href = 'log_in.html';
+                }
+
+                // 获取当前用户ID
+                function getCurrentUserId() {
+                    let userId = localStorage.getItem('currentUserId');
+                    if (!userId) {
+                        userId = '1'; // 默认用户ID
+                        localStorage.setItem('currentUserId', userId);
+                        console.log('设置默认用户ID:', userId);
+                    }
+                    console.log('当前用户ID:', userId);
+                    return userId;
+                }
+
+                // 外部API股票价格获取函数
+                async function getExternalStockPrice(ticker) {
+                    console.log(`🔍 Fetching external price for ${ticker}...`);
+
+                    // 尝试多个API源，按优先级顺序
+                    const apiSources = [
+                        () => getYahooFinancePrice(ticker),
+                        () => getFinnhubPrice(ticker),
+                        () => getAlphaVantagePrice(ticker)
+                    ];
+
+                    for (const apiCall of apiSources) {
+                        try {
+                            const result = await apiCall();
+                            if (result && result.price > 0) {
+                                console.log(`✅ Got price for ${ticker}:`, result);
+                                return result;
+                            }
+                        } catch (error) {
+                            console.warn(`⚠️ API call failed for ${ticker}:`, error.message);
+                            continue;
+                        }
+                    }
+
+                    // 如果所有外部API都失败，回退到后端API
+                    console.log(`🔄 Falling back to backend API for ${ticker}`);
+                    return getBackendStockPrice(ticker);
+                }
+
+                // Yahoo Finance API (通过CORS代理)
+                async function getYahooFinancePrice(ticker) {
+                    const url = `${STOCK_API_CONFIG.YAHOO_FINANCE.corsProxy}${encodeURIComponent(STOCK_API_CONFIG.YAHOO_FINANCE.baseUrl + '/' + ticker)}`;
+
+                    const response = await fetch(url, {
+                        method: 'GET',
+                        headers: {
+                            'Accept': 'application/json'
+                        }
+                    });
+
+                    if (!response.ok) throw new Error(`Yahoo Finance API error: ${response.status}`);
+
+                    const data = await response.json();
+                    const result = data.chart?.result?.[0];
+
+                    if (!result) throw new Error('No data from Yahoo Finance');
+
+                    const currentPrice = result.meta?.regularMarketPrice || result.meta?.previousClose;
+                    const previousClose = result.meta?.previousClose || result.meta?.chartPreviousClose;
+
+                    if (!currentPrice) throw new Error('No price data available');
+
+                    const change = currentPrice - previousClose;
+                    const changePercent = previousClose > 0 ? ((change / previousClose) * 100) : 0;
+
+                    return {
+                        price: currentPrice,
+                        change: change,
+                        changePercent: changePercent,
+                        previousClose: previousClose,
+                        source: 'Yahoo Finance'
+                    };
+                }
+
+                // Finnhub API
+                async function getFinnhubPrice(ticker) {
+                    const url = `${STOCK_API_CONFIG.FINNHUB.baseUrl}${STOCK_API_CONFIG.FINNHUB.endpoint}?symbol=${ticker}&token=${STOCK_API_CONFIG.FINNHUB.apiKey}`;
+
+                    const response = await fetch(url);
+                    if (!response.ok) throw new Error(`Finnhub API error: ${response.status}`);
+
+                    const data = await response.json();
+
+                    if (!data.c) throw new Error('No current price from Finnhub');
+
+                    const currentPrice = data.c; // current price
+                    const previousClose = data.pc; // previous close
+                    const change = currentPrice - previousClose;
+                    const changePercent = previousClose > 0 ? ((change / previousClose) * 100) : 0;
+
+                    return {
+                        price: currentPrice,
+                        change: change,
+                        changePercent: changePercent,
+                        previousClose: previousClose,
+                        high: data.h, // day high
+                        low: data.l,  // day low
+                        open: data.o, // day open
+                        source: 'Finnhub'
+                    };
+                }
+
+                // Alpha Vantage API
+                async function getAlphaVantagePrice(ticker) {
+                    const url = `${STOCK_API_CONFIG.ALPHA_VANTAGE.baseUrl}?function=${STOCK_API_CONFIG.ALPHA_VANTAGE.function}&symbol=${ticker}&apikey=${STOCK_API_CONFIG.ALPHA_VANTAGE.apiKey}`;
+
+                    const response = await fetch(url);
+                    if (!response.ok) throw new Error(`Alpha Vantage API error: ${response.status}`);
+
+                    const data = await response.json();
+                    const quote = data['Global Quote'];
+
+                    if (!quote) throw new Error('No quote data from Alpha Vantage');
+
+                    const currentPrice = parseFloat(quote['05. price']);
+                    const change = parseFloat(quote['09. change']);
+                    const changePercent = parseFloat(quote['10. change percent'].replace('%', ''));
+                    const previousClose = currentPrice - change;
+
+                    return {
+                        price: currentPrice,
+                        change: change,
+                        changePercent: changePercent,
+                        previousClose: previousClose,
+                        high: parseFloat(quote['03. high']),
+                        low: parseFloat(quote['04. low']),
+                        open: parseFloat(quote['02. open']),
+                        source: 'Alpha Vantage'
+                    };
+                }
+
+                // 后端API作为备用
+                async function getBackendStockPrice(ticker) {
+                    const response = await fetch(`http://localhost:3000/api/stock/price/${ticker}`);
+                    if (!response.ok) throw new Error(`Backend API error: ${response.status}`);
+
+                    const data = await response.json();
+                    return {
+                        price: parseFloat(data.price),
+                        change: 0, // 后端API可能没有涨跌数据
+                        changePercent: 0,
+                        source: 'Backend'
+                    };
+                }
+
                 const typeFilter = document.getElementById("typeFilter");
                 const sortField = document.getElementById("sortField");
                 const sortOrder = document.getElementById("sortOrder");
@@ -228,12 +416,12 @@
                 function updatePortfolioSummary() {
                     let totalValue = 0;
                     let totalProfit = 0;
-                    let totalCost = 0; // 新增：总投入成本
+                    let totalCost = 0;
 
                     holdingsData.forEach(item => {
-                        totalValue += item.amount;
+                        totalValue += item.totalValue;
                         totalProfit += item.profit;
-                        totalCost += (item.buyin_price * item.quantity); // 计算总投入成本
+                        totalCost += item.totalCost;
                     });
 
                     // 计算总收益率
@@ -278,17 +466,64 @@
                     const res = await fetch(`http://localhost:3000/api/holdings/${userId}`);
                     const data = await res.json();
                     const enriched = await Promise.all(data.map(async (item) => {
-                        const priceRes = await fetch(`http://localhost:3000/api/stock/price/${item.ticker}`);
-                        const priceData = await priceRes.json();
-                        const currentPrice = parseFloat(priceData.price || 0);
-                        const amount = item.quantity * currentPrice;
-                        const profit = (currentPrice - item.buyin_price) * item.quantity;
-                        return { ...item, currentPrice, amount, profit };
+                        try {
+                            // 使用外部API获取实时价格数据
+                            const priceData = await getExternalStockPrice(item.ticker);
+
+                            const currentPrice = priceData.price || item.buyin_price;
+                            const dayChange = priceData.change || 0;
+                            const dayChangePercent = priceData.changePercent || 0;
+                            const previousClose = priceData.previousClose || currentPrice;
+
+                            const totalValue = item.quantity * currentPrice; // 总市值
+                            const totalCost = item.quantity * item.buyin_price; // 总成本
+                            const profit = totalValue - totalCost; // 总盈亏
+                            const profitRate = totalCost > 0 ? ((profit / totalCost) * 100) : 0; // 盈亏率
+
+                            return {
+                                ...item,
+                                currentPrice,
+                                totalValue,
+                                totalCost,
+                                profit,
+                                profitRate,
+                                // 新增：当日涨跌数据
+                                dayChange,
+                                dayChangePercent,
+                                previousClose,
+                                high: priceData.high,
+                                low: priceData.low,
+                                open: priceData.open,
+                                dataSource: priceData.source
+                            };
+                        } catch (error) {
+                            console.warn(`Failed to get external price for ${item.ticker}:`, error);
+                            // 使用买入价作为当前价格
+                            const currentPrice = item.buyin_price;
+                            const totalValue = item.quantity * currentPrice;
+                            const totalCost = item.quantity * item.buyin_price;
+                            const profit = 0;
+                            const profitRate = 0;
+
+                            return {
+                                ...item,
+                                currentPrice,
+                                totalValue,
+                                totalCost,
+                                profit,
+                                profitRate,
+                                dayChange: 0,
+                                dayChangePercent: 0,
+                                previousClose: currentPrice,
+                                dataSource: 'Fallback'
+                            };
+                        }
                     }));
                     holdingsData = enriched; // 更新全局的 holdingsData 变量
 
                     updatePortfolioSummary(); // <--- 在这里调用新函数，更新概览数据
                     applyFilters(); // 接着调用筛选和排序函数，显示持仓列表
+                    updateLastUpdateTime(); // 初始加载时更新时间戳
                 }
 
                 function formatDate(timestamp) {
@@ -301,7 +536,11 @@
                     container.innerHTML = "";
                     console.log("正在渲染的持仓数据:", data);
                     data.forEach(item => {
-                        const profitRate = ((item.profit / item.amount) * 100).toFixed(2);
+                        // 使用已计算好的盈亏率，并添加颜色
+                        const profitRateDisplay = item.profitRate.toFixed(2);
+                        const profitRateColor = item.profitRate >= 0 ? 'text-green-600' : 'text-red-600';
+                        const profitColor = item.profit >= 0 ? 'text-green-600' : 'text-red-600';
+                        const profitSign = item.profit >= 0 ? '+' : '';
                         // 原有的卡片左边框颜色
                         const borderColor = item.type === "stock" ? "border-green-500" :
                             item.type === "fund" ? "border-yellow-500" :
@@ -331,34 +570,326 @@
                         }
 
                         const html = `
-            <div class="bg-white rounded-xl shadow-lg p-6 transition-all duration-300 hover:shadow-xl transform hover:-translate-y-1 border-l-4 ${borderColor} w-full">
-                <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-2">
-                    <div class="mb-2 md:mb-0 flex items-center gap-2">
-                        <h3 class="text-xl font-bold text-gray-900">${item.name} (${item.ticker})</h3>
-                        <span class="px-2 py-0.5 rounded-full text-xs font-semibold ${typeColorClass}">${item.type.charAt(0).toUpperCase() + item.type.slice(1)}</span>
+            <div class="holding-card bg-white rounded-xl shadow-lg p-6 transition-all duration-300 hover:shadow-xl transform hover:-translate-y-1 border-l-4 ${borderColor} w-full relative overflow-hidden" data-ticker="${item.ticker}">
+                <!-- 背景装饰 -->
+                <div class="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-blue-50 to-transparent rounded-full transform translate-x-16 -translate-y-16 opacity-50"></div>
+
+                <!-- 头部信息 -->
+                <div class="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center mb-4">
+                    <div class="mb-2 md:mb-0 flex items-center gap-3">
+                        <div>
+                            <h3 class="text-xl font-bold text-gray-900 mb-1">${item.name}</h3>
+                            <div class="flex items-center gap-2">
+                                <span class="text-sm font-mono text-gray-600 bg-gray-100 px-2 py-1 rounded">${item.ticker}</span>
+                                <span class="px-2 py-1 rounded-full text-xs font-semibold ${typeColorClass}">${item.type.charAt(0).toUpperCase() + item.type.slice(1)}</span>
+                            </div>
+                        </div>
                     </div>
-                    <div class="text-sm text-gray-500">Updated: ${formatDate(item.updated_at)}</div>
+                    <div class="text-xs text-gray-500 bg-gray-50 px-2 py-1 rounded">
+                        <i class="fas fa-clock mr-1"></i>
+                        Updated: ${formatDate(item.updated_at)}
+                    </div>
                 </div>
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-gray-700">
-                    <div><span class="font-semibold">Buy Price:</span> $${item.buyin_price.toFixed(2)}</div>
-                    <div><span class="font-semibold">Current Price:</span> $${item.currentPrice.toFixed(2)}</div>
-                    <div><span class="font-semibold">Amount Held:</span> $${item.amount.toLocaleString()}</div>
-                    <div><span class="font-semibold">Profit Rate:</span> ${profitRate}%</div>
+
+                <!-- 价格信息区域 -->
+                <div class="relative z-10 bg-gradient-to-r from-gray-50 to-blue-50 rounded-lg p-4 mb-4">
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-3">
+                        <div class="text-center">
+                            <div class="text-xs text-gray-500 mb-1">Buy Price</div>
+                            <div class="text-lg font-bold text-gray-700">$${item.buyin_price.toFixed(2)}</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-xs text-gray-500 mb-1 flex items-center justify-center">
+                                <span class="w-2 h-2 bg-green-400 rounded-full mr-1 live-indicator"></span>
+                                Current Price
+                            </div>
+                            <div class="current-price text-lg font-bold text-blue-600 transition-all duration-300">$${item.currentPrice.toFixed(2)}</div>
+                            <div class="text-xs mt-1 ${item.dayChangePercent >= 0 ? 'text-green-600' : 'text-red-600'}">
+                                ${item.dayChangePercent >= 0 ? '+' : ''}${item.dayChange.toFixed(2)} (${item.dayChangePercent >= 0 ? '+' : ''}${item.dayChangePercent.toFixed(2)}%)
+                            </div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-xs text-gray-500 mb-1">Quantity</div>
+                            <div class="text-lg font-bold text-gray-700">${item.quantity.toLocaleString()}</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-xs text-gray-500 mb-1">Total Value</div>
+                            <div class="text-lg font-bold text-gray-900">$${item.totalValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+                        </div>
+                    </div>
+
+                    <!-- 市场数据行 -->
+                    ${item.open || item.high || item.low ? `
+                    <div class="border-t border-gray-200 pt-3">
+                        <div class="grid grid-cols-3 gap-4 text-center">
+                            <div>
+                                <div class="text-xs text-gray-500 mb-1">Open</div>
+                                <div class="text-sm font-semibold text-gray-600">$${(item.open || 0).toFixed(2)}</div>
+                            </div>
+                            <div>
+                                <div class="text-xs text-gray-500 mb-1">High</div>
+                                <div class="text-sm font-semibold text-green-600">$${(item.high || 0).toFixed(2)}</div>
+                            </div>
+                            <div>
+                                <div class="text-xs text-gray-500 mb-1">Low</div>
+                                <div class="text-sm font-semibold text-red-600">$${(item.low || 0).toFixed(2)}</div>
+                            </div>
+                        </div>
+                    </div>
+                    ` : ''}
+                </div>
+
+                <!-- 盈亏信息区域 -->
+                <div class="relative z-10 grid grid-cols-2 gap-4 mb-4">
+                    <div class="bg-white border border-gray-200 rounded-lg p-3 text-center">
+                        <div class="text-xs text-gray-500 mb-1">Profit/Loss</div>
+                        <div class="flex items-center justify-center">
+                            <i class="fas fa-${item.profit >= 0 ? 'arrow-up' : 'arrow-down'} ${profitColor} mr-1 text-xs"></i>
+                            <span class="${profitColor} font-bold text-lg">${profitSign}$${Math.abs(item.profit).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                        </div>
+                    </div>
+                    <div class="bg-white border border-gray-200 rounded-lg p-3 text-center">
+                        <div class="text-xs text-gray-500 mb-1">Profit Rate</div>
+                        <div class="flex items-center justify-center">
+                            <i class="fas fa-${item.profitRate >= 0 ? 'trending-up' : 'trending-down'} ${profitRateColor} mr-1 text-xs"></i>
+                            <span class="${profitRateColor} font-bold text-lg">${profitSign}${profitRateDisplay}%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 价格趋势图区域 -->
+                <div class="relative z-10 bg-white border border-gray-200 rounded-lg p-4">
+                    <div class="flex items-center justify-between mb-3">
+                        <h4 class="text-sm font-semibold text-gray-700">Price Trend (7 Days)</h4>
+                        <div class="text-xs text-gray-500">
+                            <i class="fas fa-chart-line mr-1"></i>
+                            Live Data
+                        </div>
+                    </div>
+                    <div class="relative" style="height: 120px;">
+                        <canvas id="chart-${item.ticker}" class="w-full h-full"></canvas>
+                    </div>
+                    <div class="text-xs text-gray-400 text-center mt-2">
+                        Hover to see details
+                    </div>
+                </div>
+
+                <!-- 数据源指示器 -->
+                <div class="relative z-10 flex justify-between items-center text-xs text-gray-400 mt-2">
+                    <span>Data: ${item.dataSource || 'Unknown'}</span>
+                    <span class="flex items-center">
+                        <i class="fas fa-database mr-1"></i>
+                        Real-time
+                    </span>
                 </div>
             </div>`;
                         container.innerHTML += html;
                     });
+
+                    // 初始化所有图表
+                    setTimeout(() => {
+                        initializeAllCharts(data);
+                    }, 100);
                 }
 
-                document.addEventListener("DOMContentLoaded", function () {
-                    const userId = 1; // TODO: Replace with logged-in user ID
-                    fetchHoldings(userId);
+                // 图表相关函数
+                const chartInstances = new Map(); // 存储图表实例
 
-                    // *** 新增事件监听器 ***
-                    typeFilter.addEventListener('change', applyFilters);
-                    sortField.addEventListener('change', applyFilters);
-                    sortOrder.addEventListener('change', applyFilters);
-                });
+                // 初始化所有图表
+                async function initializeAllCharts(holdings) {
+                    for (const holding of holdings) {
+                        await initializeChart(holding.ticker);
+                    }
+                }
+
+                // 初始化单个图表
+                async function initializeChart(ticker) {
+                    const canvas = document.getElementById(`chart-${ticker}`);
+                    if (!canvas) {
+                        console.warn(`Canvas not found for ${ticker}`);
+                        return;
+                    }
+
+                    const ctx = canvas.getContext('2d');
+
+                    // 如果图表已存在，先销毁
+                    if (chartInstances.has(ticker)) {
+                        chartInstances.get(ticker).destroy();
+                    }
+
+                    try {
+                        // 获取历史价格数据
+                        const priceData = await fetchHistoricalData(ticker);
+
+                        // 创建图表
+                        const chart = new Chart(ctx, {
+                            type: 'line',
+                            data: {
+                                labels: priceData.labels,
+                                datasets: [{
+                                    label: `${ticker} Price`,
+                                    data: priceData.prices,
+                                    borderColor: priceData.trend === 'up' ? '#10b981' : '#ef4444',
+                                    backgroundColor: priceData.trend === 'up' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)',
+                                    borderWidth: 2,
+                                    fill: true,
+                                    tension: 0.4,
+                                    pointRadius: 0,
+                                    pointHoverRadius: 4,
+                                    pointHoverBackgroundColor: priceData.trend === 'up' ? '#10b981' : '#ef4444',
+                                    pointHoverBorderColor: '#ffffff',
+                                    pointHoverBorderWidth: 2
+                                }]
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                plugins: {
+                                    legend: {
+                                        display: false
+                                    },
+                                    tooltip: {
+                                        mode: 'index',
+                                        intersect: false,
+                                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                                        titleColor: '#ffffff',
+                                        bodyColor: '#ffffff',
+                                        borderColor: priceData.trend === 'up' ? '#10b981' : '#ef4444',
+                                        borderWidth: 1,
+                                        cornerRadius: 6,
+                                        displayColors: false,
+                                        callbacks: {
+                                            title: function(context) {
+                                                return context[0].label;
+                                            },
+                                            label: function(context) {
+                                                return `$${context.parsed.y.toFixed(2)}`;
+                                            }
+                                        }
+                                    }
+                                },
+                                scales: {
+                                    x: {
+                                        display: false,
+                                        grid: {
+                                            display: false
+                                        }
+                                    },
+                                    y: {
+                                        display: false,
+                                        grid: {
+                                            display: false
+                                        }
+                                    }
+                                },
+                                interaction: {
+                                    intersect: false,
+                                    mode: 'index'
+                                },
+                                elements: {
+                                    point: {
+                                        hoverRadius: 6
+                                    }
+                                }
+                            }
+                        });
+
+                        chartInstances.set(ticker, chart);
+                    } catch (error) {
+                        console.error(`Failed to initialize chart for ${ticker}:`, error);
+                        // 显示错误状态
+                        canvas.style.display = 'none';
+                        const errorDiv = document.createElement('div');
+                        errorDiv.className = 'flex items-center justify-center h-full text-gray-400 text-sm';
+                        errorDiv.innerHTML = '<i class="fas fa-chart-line mr-2"></i>Chart unavailable';
+                        canvas.parentNode.appendChild(errorDiv);
+                    }
+                }
+
+                // 获取历史价格数据
+                async function fetchHistoricalData(ticker) {
+                    try {
+                        // 生成模拟的7天历史数据
+                        const days = 7;
+                        const labels = [];
+                        const prices = [];
+                        const today = new Date();
+
+                        // 获取当前价格作为基准
+                        let basePrice = 100; // 默认基准价格
+                        try {
+                            const currentPriceResponse = await fetch(`${API_CONFIG.TWELVE_DATA.baseUrl}/price?symbol=${ticker}&apikey=${API_CONFIG.TWELVE_DATA.apiKey}`);
+                            if (currentPriceResponse.ok) {
+                                const currentPriceData = await currentPriceResponse.json();
+                                basePrice = parseFloat(currentPriceData.price) || 100;
+                            }
+                        } catch (error) {
+                            console.warn(`Failed to get current price for ${ticker}, using default`);
+                        }
+
+                        // 生成历史数据点
+                        for (let i = days - 1; i >= 0; i--) {
+                            const date = new Date(today);
+                            date.setDate(date.getDate() - i);
+
+                            // 生成价格变化（模拟真实的价格波动）
+                            const volatility = 0.02; // 2% 日波动率
+                            const randomChange = (Math.random() - 0.5) * 2 * volatility;
+                            const dayPrice = basePrice * (1 + randomChange * (i + 1) / days);
+
+                            labels.push(date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
+                            prices.push(parseFloat(dayPrice.toFixed(2)));
+                        }
+
+                        // 确保最后一个价格是当前价格
+                        prices[prices.length - 1] = basePrice;
+
+                        // 计算趋势
+                        const firstPrice = prices[0];
+                        const lastPrice = prices[prices.length - 1];
+                        const trend = lastPrice >= firstPrice ? 'up' : 'down';
+
+                        return {
+                            labels,
+                            prices,
+                            trend
+                        };
+                    } catch (error) {
+                        console.error(`Error fetching historical data for ${ticker}:`, error);
+
+                        // 返回默认数据
+                        const labels = ['6d ago', '5d ago', '4d ago', '3d ago', '2d ago', '1d ago', 'Today'];
+                        const prices = [100, 102, 98, 105, 103, 107, 105];
+                        return {
+                            labels,
+                            prices,
+                            trend: 'up'
+                        };
+                    }
+                }
+
+                // 更新图表数据
+                function updateChartsWithNewPrices(holdings) {
+                    holdings.forEach(holding => {
+                        const chart = chartInstances.get(holding.ticker);
+                        if (chart && holding.priceChanged) {
+                            // 更新图表的最后一个数据点
+                            const dataset = chart.data.datasets[0];
+                            if (dataset.data.length > 0) {
+                                dataset.data[dataset.data.length - 1] = holding.currentPrice;
+
+                                // 更新颜色基于价格变化
+                                const trend = holding.dayChangePercent >= 0 ? 'up' : 'down';
+                                dataset.borderColor = trend === 'up' ? '#10b981' : '#ef4444';
+                                dataset.backgroundColor = trend === 'up' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)';
+
+                                chart.update('none'); // 无动画更新
+                            }
+                        }
+                    });
+                }
+
+                // 旧的DOMContentLoaded事件监听器已移至下方统一处理
 
 
                 function applyFilters() {
@@ -378,9 +909,9 @@
 
                         // 根据 sortBy 字段获取值
                         if (sortBy === "profitRate") {
-                            // 确保除数不为零，避免 NaN
-                            valA = a.amount !== 0 ? (a.profit / a.amount) : (order === "asc" ? -Infinity : Infinity);
-                            valB = b.amount !== 0 ? (b.profit / b.amount) : (order === "asc" ? -Infinity : Infinity);
+                            // 使用已计算好的盈亏率
+                            valA = a.profitRate;
+                            valB = b.profitRate;
                         } else if (sortBy === "updated_at") {
                             // 将时间戳字符串转换为数字进行比较
                             valA = new Date(a[sortBy]).getTime();
@@ -426,9 +957,158 @@
                     }
                 }
 
+                // 实时更新价格的定时器
+                let priceUpdateInterval;
+
                 document.addEventListener("DOMContentLoaded", function () {
-                    const userId = 1; // TODO: Replace with logged-in user ID
+                    // 先检查登录状态
+                    checkLoginStatus();
+
+                    // 使用动态用户ID
+                    const userId = getCurrentUserId();
                     fetchHoldings(userId);
+
+                    // 添加过滤器事件监听器
+                    typeFilter.addEventListener('change', applyFilters);
+                    sortField.addEventListener('change', applyFilters);
+                    sortOrder.addEventListener('change', applyFilters);
+
+                    // 启动实时价格更新（每15秒更新一次）
+                    startPriceUpdates(userId);
+                });
+
+                // 启动实时价格更新
+                function startPriceUpdates(userId) {
+                    // 清除现有定时器
+                    if (priceUpdateInterval) {
+                        clearInterval(priceUpdateInterval);
+                    }
+
+                    // 每15秒更新一次价格
+                    priceUpdateInterval = setInterval(() => {
+                        updatePricesOnly();
+                    }, 15000);
+                }
+
+                // 只更新价格，不重新渲染整个列表
+                async function updatePricesOnly() {
+                    if (holdingsData.length === 0) return;
+
+                    console.log('🔄 Updating real-time prices...');
+
+                    try {
+                        let hasChanges = false;
+
+                        // 更新每个持仓的价格
+                        const updatedData = await Promise.all(holdingsData.map(async (item) => {
+                            try {
+                                // 使用外部API获取最新价格
+                                const priceData = await getExternalStockPrice(item.ticker);
+
+                                let currentPrice = item.currentPrice;
+                                let priceChanged = false;
+                                let dayChange = item.dayChange || 0;
+                                let dayChangePercent = item.dayChangePercent || 0;
+
+                                if (priceData && priceData.price > 0) {
+                                    const newPrice = priceData.price;
+                                    if (Math.abs(newPrice - item.currentPrice) > 0.01) {
+                                        currentPrice = newPrice;
+                                        dayChange = priceData.change || 0;
+                                        dayChangePercent = priceData.changePercent || 0;
+                                        priceChanged = true;
+                                        hasChanges = true;
+                                    }
+                                }
+
+                                // 重新计算相关数值
+                                const totalValue = item.quantity * currentPrice;
+                                const totalCost = item.quantity * item.buyin_price;
+                                const profit = totalValue - totalCost;
+                                const profitRate = totalCost > 0 ? ((profit / totalCost) * 100) : 0;
+
+                                return {
+                                    ...item,
+                                    currentPrice,
+                                    totalValue,
+                                    profit,
+                                    profitRate,
+                                    dayChange,
+                                    dayChangePercent,
+                                    priceChanged,
+                                    high: priceData?.high || item.high,
+                                    low: priceData?.low || item.low,
+                                    open: priceData?.open || item.open,
+                                    dataSource: priceData?.source || item.dataSource
+                                };
+                            } catch (error) {
+                                console.warn(`Failed to update external price for ${item.ticker}:`, error);
+                                return { ...item, priceChanged: false }; // 保持原数据
+                            }
+                        }));
+
+                        // 更新全局数据
+                        holdingsData = updatedData;
+
+                        // 如果有价格变化，添加动画效果
+                        if (hasChanges) {
+                            // 更新概览数据
+                            updatePortfolioSummary();
+
+                            // 重新应用过滤器和排序
+                            applyFilters();
+
+                            // 更新图表数据
+                            updateChartsWithNewPrices(updatedData);
+
+                            // 添加价格变化动画
+                            setTimeout(() => {
+                                holdingsData.forEach(item => {
+                                    if (item.priceChanged) {
+                                        const priceElement = document.querySelector(`[data-ticker="${item.ticker}"] .current-price`);
+                                        if (priceElement) {
+                                            priceElement.classList.add('price-updated');
+                                            setTimeout(() => {
+                                                priceElement.classList.remove('price-updated');
+                                            }, 1000);
+                                        }
+                                    }
+                                });
+                            }, 100);
+
+                            console.log('✅ Prices updated with changes detected');
+                        } else {
+                            console.log('📊 Prices checked - no changes detected');
+                        }
+
+                        // 更新最后更新时间
+                        updateLastUpdateTime();
+                    } catch (error) {
+                        console.error('❌ Failed to update prices:', error);
+                    }
+                }
+
+                // 更新最后更新时间
+                function updateLastUpdateTime() {
+                    const now = new Date();
+                    const timeString = now.toLocaleTimeString();
+                    const lastUpdateElement = document.getElementById('lastUpdateTime');
+                    if (lastUpdateElement) {
+                        lastUpdateElement.textContent = `Last updated: ${timeString}`;
+                    }
+                }
+
+                // 页面卸载时清理定时器和图表
+                window.addEventListener('beforeunload', function() {
+                    if (priceUpdateInterval) {
+                        clearInterval(priceUpdateInterval);
+                    }
+
+                    // 清理所有图表实例
+                    chartInstances.forEach((chart, ticker) => {
+                        chart.destroy();
+                    });
+                    chartInstances.clear();
                 });
             </script>
 

@@ -2,7 +2,10 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Login · Portfolio Management System</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Login · Future Assets</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
     :root {
       --primary: #005ce6;
@@ -20,99 +23,59 @@
 
     body {
       font-family: var(--font);
-      background: var(--bg);
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
     }
 
-    /* 顶部导航 */
-    .navbar {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 12px 32px;
-      background: #fff;
-      box-shadow: 0 1px 4px rgba(0, 0, 0, .08);
-    }
-    .navbar strong {
-      font-size: 18px;
-      color: var(--primary);
-    }
-    .user-info {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-weight: 500;
-    }
-    .user-info img {
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      object-fit: cover;
+    /* 自定义样式 */
+    .hero-bg {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     }
 
-    /* 遮罩层 */
-    #overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(0, 0, 0, .45);
-      z-index: 998;
+    .glass-effect {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
     }
 
-    /* 登录弹窗 */
-    #loginModal {
-      position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      background: #fff;
-      padding: 40px 48px;
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      z-index: 999;
-      min-width: 320px;
+    .floating-animation {
+      animation: float 6s ease-in-out infinite;
     }
-    #loginModal h3 {
-      margin-bottom: 24px;
-      text-align: center;
-      font-weight: 600;
-      color: #222;
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-20px); }
     }
-    #loginModal input {
-      width: 100%;
-      padding: 12px 14px;
-      margin-bottom: 16px;
-      border: 1px solid #d0d7e4;
-      border-radius: var(--radius);
-      font-size: 15px;
+
+    /* 登录表单样式 */
+    .login-form {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      box-shadow: 0 25px 45px rgba(0, 0, 0, 0.1);
     }
-    #loginModal input:focus {
-      border-color: var(--primary);
-      outline: none;
+
+    .input-group {
+      position: relative;
     }
-    #loginModal button {
-      width: 100%;
-      padding: 12px;
-      border: none;
-      border-radius: var(--radius);
-      background: var(--primary);
-      color: #fff;
-      font-size: 15px;
-      cursor: pointer;
-      transition: background .2s;
+
+    .input-group input {
+      transition: all 0.3s ease;
     }
-    #loginModal button:hover {
-      background: #004bb5;
+
+    .input-group input:focus {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
     }
-    #loginModal p {
-      margin-top: 16px;
-      text-align: center;
-      font-size: 14px;
+
+    .btn-primary {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      transition: all 0.3s ease;
     }
-    #loginModal a {
-      color: var(--primary);
-      text-decoration: none;
-    }
-    #loginModal a:hover {
-      text-decoration: underline;
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
     }
 
     
@@ -120,98 +83,127 @@
   </style>
 </head>
 
-<body>
-  <header class="navbar">
-    <strong>Portfolio Management System</strong>
-    <div id="authArea">
-        <!-- Default: show login button -->
-        <button onclick="showLoginModal()">Login / Register</button>
-    </div>
+<body class="hero-bg min-h-screen">
+  <!-- 顶部导航栏 -->
+  <header class="bg-white/10 backdrop-blur-md border-b border-white/20 h-16 px-6 flex justify-between items-center sticky top-0 z-50">
+    <a href="index.html" class="flex items-center space-x-4 group cursor-pointer select-none">
+      <svg class="w-9 h-9 text-white group-hover:text-blue-200 transition" fill="none" stroke="currentColor"
+        stroke-width="2" viewBox="0 0 32 32">
+        <circle cx="16" cy="16" r="13" stroke="currentColor" stroke-width="2" fill="rgba(255,255,255,0.1)" />
+        <path d="M12 8l8 8-8 8" stroke="currentColor" stroke-width="2" fill="none" />
+        <circle cx="16" cy="16" r="3" fill="currentColor" />
+      </svg>
+      <span class="text-2xl font-extrabold text-white group-hover:text-blue-200 tracking-wide transition leading-none"
+        style="letter-spacing: 1px;">Future Assets</span>
+    </a>
   </header>
 
-  <div id="overlay"></div>
-  <div id="loginModal">
-    <h3>Login</h3>
-    <div id="errorMessage"></div>
-    <div class="form-group">
-      <input type="text" id="loginAccount" placeholder="Email or Phone" required />
-    </div>
-    <div class="form-group">
-      <input type="password" id="loginPassword" placeholder="Password" required />
-    </div>
-    <div class="form-group" style="display: flex; align-items: center; justify-content: flex-start; gap: 4px; margin-bottom: 20px;">
-      <input type="checkbox" id="rememberMe" style="width: 16px; height: 16px; accent-color: #005ce6; margin: 0;" />
-      <label for="rememberMe" style="font-size: 14px; font-weight: 500; cursor: pointer;">Remember Me</label>
-    </div>
+  <!-- 主要内容区域 -->
+  <div class="flex items-center justify-center min-h-screen p-6">
+    <div class="w-full max-w-6xl grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
 
-    <button onclick="handleLogin()">Login</button>
-    <p>No account? <a href="/register">Register</a></p>
+      <!-- 左侧：品牌介绍 -->
+      <div class="text-white space-y-8">
+        <div class="floating-animation">
+          <h1 class="text-5xl lg:text-6xl font-bold mb-6 leading-tight">
+            Welcome to
+            <span class="bg-gradient-to-r from-blue-200 to-purple-200 bg-clip-text text-transparent">
+              Future Assets
+            </span>
+          </h1>
+          <p class="text-xl lg:text-2xl text-blue-100 mb-8 leading-relaxed">
+            Your intelligent portfolio management platform for the digital age
+          </p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="glass-effect rounded-xl p-6">
+            <div class="w-12 h-12 bg-blue-500 rounded-lg flex items-center justify-center mb-4">
+              <i class="fas fa-chart-line text-white text-xl"></i>
+            </div>
+            <h3 class="text-lg font-semibold text-gray-800 mb-2">Real-time Analytics</h3>
+            <p class="text-gray-600 text-sm">Track your investments with live market data and advanced analytics</p>
+          </div>
+
+          <div class="glass-effect rounded-xl p-6">
+            <div class="w-12 h-12 bg-purple-500 rounded-lg flex items-center justify-center mb-4">
+              <i class="fas fa-shield-alt text-white text-xl"></i>
+            </div>
+            <h3 class="text-lg font-semibold text-gray-800 mb-2">Secure Platform</h3>
+            <p class="text-gray-600 text-sm">Bank-level security to protect your financial information</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- 右侧：登录表单 -->
+      <div class="w-full max-w-md mx-auto">
+        <div class="login-form rounded-2xl p-8 shadow-2xl">
+          <div class="text-center mb-8">
+            <div class="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
+              <i class="fas fa-user text-white text-2xl"></i>
+            </div>
+            <h2 class="text-3xl font-bold text-gray-800 mb-2">Welcome Back</h2>
+            <p class="text-gray-600">Sign in to your account</p>
+          </div>
+
+          <div id="errorMessage" class="mb-4 text-red-500 text-sm text-center"></div>
+
+          <form class="space-y-6">
+            <div class="input-group">
+              <label class="block text-sm font-medium text-gray-700 mb-2">Username</label>
+              <input type="text" id="loginAccount"
+                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300"
+                placeholder="Enter your username" required />
+            </div>
+
+            <div class="input-group">
+              <label class="block text-sm font-medium text-gray-700 mb-2">Password</label>
+              <input type="password" id="loginPassword"
+                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300"
+                placeholder="Enter your password" required />
+            </div>
+
+            <div class="flex items-center justify-between">
+              <div class="flex items-center">
+                <input type="checkbox" id="rememberMe" class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500" />
+                <label for="rememberMe" class="ml-2 text-sm text-gray-600">Remember me</label>
+              </div>
+              <a href="#" class="text-sm text-blue-600 hover:text-blue-500">Forgot password?</a>
+            </div>
+
+            <button type="button" onclick="handleLogin()"
+              class="btn-primary w-full py-3 px-4 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transition-all duration-300">
+              Sign In
+            </button>
+          </form>
+
+          <div class="mt-8 text-center">
+            <p class="text-gray-600">
+              Don't have an account?
+              <a href="register.html" class="text-blue-600 hover:text-blue-500 font-semibold">Create one</a>
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 
   <script>
-    const loginModal = document.getElementById('loginModal');
-    const overlay = document.getElementById('overlay');
-    const authArea = document.getElementById('authArea');
     const errorMessage = document.getElementById('errorMessage');
     const loginAccountInput = document.getElementById('loginAccount');
     const rememberMeCheckbox = document.getElementById('rememberMe');
 
-    // --- Inactivity timeout ---
-    let inactivityTimer;
-    const INACTIVITY_TIMEOUT = 1 * 60 * 1000;
-    const userActivityEvents = ['mousemove', 'mousedown', 'keydown', 'scroll', 'touchstart'];
-
-    function logoutDueToInactivity() {
-      authArea.innerHTML = `<button onclick="showLoginModal()">Login / Register</button>`;
-      errorMessage.textContent = 'You have been inactive for a long time. Please log in again.';
-      document.getElementById('loginPassword').value = '';
-      showLoginModal();
-      userActivityEvents.forEach(event => {
-        window.removeEventListener(event, resetInactivityTimer, true);
-      });
-      if (!rememberMeCheckbox.checked) {
-        loginAccountInput.value = '';
-        document.getElementById('loginPassword').value = '';
-      }
-    }
-
-    function resetInactivityTimer() {
-      clearTimeout(inactivityTimer);
-      inactivityTimer = setTimeout(logoutDueToInactivity, INACTIVITY_TIMEOUT);
-    }
-
-    function startWatchingInactivity() {
-      userActivityEvents.forEach(event => {
-        window.addEventListener(event, resetInactivityTimer, true);
-      });
-      resetInactivityTimer();
-    }
+    // 移除了不活跃超时逻辑，因为这是登录页面
 
     // --- 页面加载逻辑 ---
     window.onload = () => {
-        // 修改点：检查本地存储中是否有记住的账号
+        // 检查本地存储中是否有记住的账号
         const savedAccount = localStorage.getItem('rememberedAccount');
         if (savedAccount) {
             loginAccountInput.value = savedAccount;
             rememberMeCheckbox.checked = true;
         }
-
-        showLoginModal();
     };
-
-
-    function showLoginModal() {
-        loginModal.style.display = 'block';
-        overlay.style.display = 'block';
-    }
-
-    function hideLoginModal() {
-        loginModal.style.display = 'none';
-        overlay.style.display = 'none';
-        errorMessage.textContent = '';
-    }
-    
-    overlay.onclick = hideLoginModal;
 
 
     async function handleLogin() {
@@ -235,18 +227,25 @@
         const data = await res.json();
 
         if (res.ok && data.user) {
-          hideLoginModal();
-          authArea.innerHTML = `
-            <div class="user-info">
-              <span>Welcome, ${data.user.account}</span>
-              <img src="${data.user.avatar}" alt="avatar" />
-            </div>`;
+          // 设置登录状态到localStorage
+          localStorage.setItem('isLoggedIn', 'true');
+          localStorage.setItem('userToken', 'logged-in-token'); // 简单的token
+          localStorage.setItem('userAccount', data.user.username);
+          localStorage.setItem('currentUserId', data.user.user_id.toString());
+
           if (rememberMe) {
             localStorage.setItem('rememberedAccount', account);
           } else {
             localStorage.removeItem('rememberedAccount');
           }
-          startWatchingInactivity();
+
+          // 显示成功消息
+          errorMessage.innerHTML = '<span class="text-green-600"><i class="fas fa-check-circle mr-2"></i>Login successful! Redirecting...</span>';
+
+          // 登录成功后跳转到主页
+          setTimeout(() => {
+            window.location.href = 'index.html';
+          }, 1500);
         } else {
           errorMessage.textContent = data.message;
         }
