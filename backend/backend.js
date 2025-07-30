@@ -6,7 +6,7 @@ const dotenv = require('dotenv');
 dotenv.config();
 const PORT = 3000;
 
-console.log(process.env.TWELVE_DATA_API_KEY);
+// console.log(process.env.TWELVE_DATA_API_KEY);
 
 // Create database connection
 const db = new sqlite3.Database('database.db');
@@ -203,7 +203,7 @@ app.get('/api/stock/price/:ticker', (req, res) => {
     });
 });
 
-app.get('api/stock/quote/:ticker', (req, res) => {
+app.get('/api/stock/quote/:ticker', (req, res) => {
     const ticker = req.params.ticker;
     const url = `https://api.twelvedata.com/quote?symbol=${ticker}&apikey=${process.env.TWELVE_DATA_API_KEY}`;
     fetch(url).then(response => response.json()).then(data => {
@@ -216,7 +216,7 @@ app.get('api/stock/quote/:ticker', (req, res) => {
 // Helper function to fetch current stock price
 async function getCurrentPrice(ticker) {
     try {
-        const url = `https://api.twelvedata.com/price?symbol\=${ticker}&apikey\=${process.env.TWELVE_DATA_API_KEY}`;
+        const url = `https://api.twelvedata.com/price?symbol=${ticker}&apikey=${process.env.TWELVE_DATA_API_KEY}`;
         const response = await fetch(url);
         const data = await response.json();
         
@@ -230,17 +230,81 @@ async function getCurrentPrice(ticker) {
     }
 }
 
+async function getCurrentName(ticker) {
+    try {
+        const url = `https://api.twelvedata.com/quote?symbol=${ticker}&apikey=${process.env.TWELVE_DATA_API_KEY}`;
+        const response = await fetch(url);
+        const data = await response.json();
+        
+        if (data.name) {
+            return data.name;
+        } else {
+            throw new Error('Name not available');
+        }
+    } catch (error) {
+        throw new Error(`Failed to fetch current name: ${error.message}`);
+    }
+}
+
+async function getCurrentType(ticker) {
+    try {
+        const url = `https://api.twelvedata.com/symbol_search?symbol=${ticker}&apikey=${process.env.TWELVE_DATA_API_KEY}`;
+        const response = await fetch(url);
+        const data = await response.json();
+        
+        if (data.data && data.data.length > 0) {
+            const instrumentType = data.data[0].instrument_type;
+            
+            if (instrumentType) {
+                const typeStr = instrumentType.toLowerCase();
+                if (typeStr.includes('bond')) {
+                    return 'bond';
+                } else if (typeStr.includes('stock') || typeStr.includes('common stock')) {
+                    return 'stock';
+                } else if (typeStr.includes('fund') || typeStr.includes('etf')) {
+                    return 'fund';
+                }
+            }
+        }
+        
+        // Default to stock if type cannot be determined
+        return 'stock';
+    } catch (error) {
+        throw new Error(`Failed to fetch current type: ${error.message}`);
+    }
+}
+
 // Buy holdings - increase quantity or create new holding
 app.post('/api/holdings/:user_id/buy', async (req, res) => {
     const user_id = req.params.user_id;
     let { ticker, type, name, price, quantity } = req.body;
     
-    if (!ticker || !type || !name || quantity === undefined || quantity === null) {
-        return res.status(400).json({ message: 'Ticker, type, name, and quantity are required' });
+    if (!ticker || quantity === undefined || quantity === null) {
+        return res.status(400).json({ message: 'Ticker and quantity are required' });
     }
     
     if (quantity <= 0) {
         return res.status(400).json({ message: 'Quantity must be positive' });
+    }
+    
+    // If type is not gold or currency, automatically detect type
+    if (!type || (type !== 'gold' && type !== 'currency')) {
+        try {
+            type = await getCurrentType(ticker);
+        } catch (error) {
+            // If auto-detection fails, default to stock
+            console.warn(`Failed to auto-detect type for ${ticker}, defaulting to stock:`, error.message);
+            type = 'stock';
+        }
+    }
+    
+    // If name is empty, fetch current name
+    if (!name || name.trim() === '') {
+        try {
+            name = await getCurrentName(ticker);
+        } catch (error) {
+            return res.status(500).json({ message: 'Unable to fetch current name', error: error.message });
+        }
     }
     
     // If price is empty, fetch current price
@@ -278,7 +342,8 @@ app.post('/api/holdings/:user_id/buy', async (req, res) => {
                         record_id: row.record_id,
                         new_quantity: newQuantity,
                         new_avg_price: newAvgPrice,
-                        used_price: price
+                        used_price: price,
+                        detected_type: type
                     });
                 }
             });
@@ -294,7 +359,8 @@ app.post('/api/holdings/:user_id/buy', async (req, res) => {
                         record_id: this.lastID,
                         quantity: quantity,
                         price: price,
-                        used_price: price
+                        used_price: price,
+                        detected_type: type
                     });
                 }
             });
