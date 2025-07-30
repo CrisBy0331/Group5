@@ -6,6 +6,9 @@
   <title>Stock Details</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/trading.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
   <style>
     /* 价格变化动画 */
     @keyframes priceUp {
@@ -250,7 +253,7 @@
                 <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
                 </svg>
-                BUY STOCK
+                BUY
               </span>
               <div class="absolute inset-0 bg-gradient-to-r from-green-600 to-emerald-700 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></div>
             </button>
@@ -260,7 +263,7 @@
                 <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"></path>
                 </svg>
-                SELL STOCK
+                SOLD
               </span>
               <div class="absolute inset-0 bg-gradient-to-r from-red-600 to-red-700 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></div>
             </button>
@@ -269,6 +272,105 @@
       </div>
     </main>
   </div>
+
+  <!-- 买入弹窗 -->
+  <div id="buyModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+    <div class="bg-white rounded-lg shadow-xl max-w-lg w-full mx-4 transform transition-all duration-300 scale-95" id="buyModalContent">
+      <div class="p-6">
+        <div class="flex items-center mb-6">
+          <div class="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center mr-3">
+            <i class="fas fa-plus text-green-500 text-lg"></i>
+          </div>
+          <h3 id="buyModalTitle" class="text-xl font-semibold text-gray-800">买入资产</h3>
+        </div>
+
+        <div class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">资产代码</label>
+            <input type="text" id="buyModalTicker" readonly class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-600" />
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">资产名称 <span class="text-gray-500 text-sm">(留空自动获取)</span></label>
+            <input type="text" id="buyModalName" placeholder="例如: Apple Inc. (可留空)" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">资产类型 <span class="text-gray-500 text-sm">(自动检测，除非选择黄金或货币)</span></label>
+            <select id="buyModalType" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+              <option value="auto">自动检测 (Auto-Detect)</option>
+              <option value="stock">股票 (Stock)</option>
+              <option value="bond">债券 (Bond)</option>
+              <option value="fund">基金 (Fund)</option>
+              <option value="gold">黄金 (Gold)</option>
+              <option value="currency">货币 (Currency)</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">购买数量</label>
+            <input type="number" id="buyModalQuantity" placeholder="输入数量" min="1" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">购买价格 <span class="text-gray-500 text-sm">(留空使用当前市价)</span></label>
+            <input type="number" id="buyModalPrice" placeholder="输入价格或留空" step="0.01" min="0" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+          </div>
+        </div>
+
+        <div class="flex justify-end space-x-3 mt-8">
+          <button onclick="closeBuyModal()" class="bg-gray-300 hover:bg-gray-400 text-gray-700 px-6 py-2 rounded-lg font-medium transition duration-200">
+            取消
+          </button>
+          <button onclick="confirmBuy()" class="bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded-lg font-medium transition duration-200">
+            确认买入
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 卖出弹窗 -->
+  <div id="sellModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+    <div class="bg-white rounded-lg shadow-xl max-w-lg w-full mx-4 transform transition-all duration-300 scale-95" id="sellModalContent">
+      <div class="p-6">
+        <div class="flex items-center mb-6">
+          <div class="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center mr-3">
+            <i class="fas fa-minus text-red-500 text-lg"></i>
+          </div>
+          <h3 class="text-xl font-semibold text-gray-800">卖出资产</h3>
+        </div>
+
+        <div class="space-y-4">
+          <div class="bg-gray-50 p-4 rounded-lg">
+            <p class="text-sm text-gray-600">资产代码</p>
+            <p id="sellModalTicker" class="text-lg font-semibold text-gray-800"></p>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">卖出数量</label>
+            <input type="number" id="sellModalQuantity" placeholder="输入数量" min="1" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+            <p id="sellModalMaxQuantity" class="text-sm text-gray-500 mt-1"></p>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">卖出价格 <span class="text-gray-500 text-sm">(留空使用当前市价)</span></label>
+            <input type="number" id="sellModalPrice" placeholder="输入价格或留空" step="0.01" min="0" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+          </div>
+        </div>
+
+        <div class="flex justify-end space-x-3 mt-8">
+          <button onclick="closeSellModal()" class="bg-gray-300 hover:bg-gray-400 text-gray-700 px-6 py-2 rounded-lg font-medium transition duration-200">
+            取消
+          </button>
+          <button onclick="confirmSell()" class="bg-red-500 hover:bg-red-600 text-white px-6 py-2 rounded-lg font-medium transition duration-200">
+            确认卖出
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script>
     // 登录状态检查（与index.html一致）
     function checkLoginStatus() {
@@ -301,6 +403,7 @@
       localStorage.removeItem('isLoggedIn');
       localStorage.removeItem('userToken');
       localStorage.removeItem('userAccount');
+      localStorage.removeItem('currentUserId'); // 同时清除用户ID
       window.location.href = 'log_in.html';
     }
     // 数据缓存机制
@@ -622,25 +725,271 @@
       }
     });
     // 处理BUY/SOLD按钮状态
-    function updateBuySoldBtn(symbol) {
-      const bought = localStorage.getItem('bought_' + symbol);
-      document.getElementById('buyBtn').classList.toggle('hidden', !!bought);
-      document.getElementById('soldBtn').classList.toggle('hidden', !bought);
+    async function updateBuySoldBtn(symbol) {
+      try {
+        const userId = getCurrentUserId();
+        if (!userId) {
+          // 未登录时使用原有逻辑
+          const bought = localStorage.getItem('bought_' + symbol);
+          document.getElementById('buyBtn').classList.remove('hidden');
+          document.getElementById('soldBtn').classList.toggle('hidden', !bought);
+          return;
+        }
+
+        // 获取用户持仓
+        const holdings = await HoldingsAPI.getUserHoldings(userId);
+        const holding = holdings.find(h => h.ticker === symbol);
+
+        const buyBtn = document.getElementById('buyBtn');
+        const soldBtn = document.getElementById('soldBtn');
+
+        if (holding) {
+          // 用户持有该股票 - 显示BUY和SOLD两个按钮
+          buyBtn.classList.remove('hidden');
+          soldBtn.classList.remove('hidden');
+
+          // 更新按钮文本为简单的BUY和SOLD
+          const buyBtnText = buyBtn.querySelector('span');
+          const soldBtnText = soldBtn.querySelector('span');
+
+          if (buyBtnText) {
+            buyBtnText.innerHTML = `
+              <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+              </svg>
+              BUY
+            `;
+          }
+
+          if (soldBtnText) {
+            soldBtnText.innerHTML = `
+              <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"></path>
+              </svg>
+              SOLD
+            `;
+          }
+        } else {
+          // 用户未持有该股票 - 只显示BUY按钮
+          buyBtn.classList.remove('hidden');
+          soldBtn.classList.add('hidden');
+
+          // 设置按钮文本为简单的BUY
+          const buyBtnText = buyBtn.querySelector('span');
+          if (buyBtnText) {
+            buyBtnText.innerHTML = `
+              <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+              </svg>
+              BUY
+            `;
+          }
+        }
+
+      } catch (error) {
+        console.error('Failed to update buy/sell buttons:', error);
+        // 出错时使用原有逻辑
+        const bought = localStorage.getItem('bought_' + symbol);
+        document.getElementById('buyBtn').classList.remove('hidden');
+        document.getElementById('soldBtn').classList.toggle('hidden', !bought);
+      }
     }
     document.getElementById('buyBtn').onclick = function() {
       const symbol = window.currentSymbol;
-      if (symbol) {
-        localStorage.setItem('bought_' + symbol, '1');
-        updateBuySoldBtn(symbol);
-      }
+      if (!symbol) return;
+      showBuyModal(symbol);
     };
-    document.getElementById('soldBtn').onclick = function() {
+
+    document.getElementById('soldBtn').onclick = async function() {
       const symbol = window.currentSymbol;
-      if (symbol) {
+      if (!symbol) return;
+
+      try {
+        const userId = getCurrentUserId();
+        if (!userId) {
+          alert('请先登录');
+          return;
+        }
+
+        const holdings = await HoldingsAPI.getUserHoldings(userId);
+        const holding = holdings.find(h => h.ticker === symbol);
+
+        if (!holding) {
+          alert('您没有持有该股票');
+          return;
+        }
+
+        showSellModal(symbol, holding);
+
+      } catch (error) {
+        console.error('Failed to get holdings:', error);
+        // 出错时使用原有逻辑
         localStorage.removeItem('bought_' + symbol);
         updateBuySoldBtn(symbol);
       }
     };
+
+    // 获取当前用户ID
+    function getCurrentUserId() {
+      let userId = localStorage.getItem('currentUserId');
+      if (!userId) {
+        userId = '1'; // 默认用户ID
+        localStorage.setItem('currentUserId', userId);
+        console.log('设置默认用户ID:', userId);
+      }
+      console.log('当前用户ID:', userId);
+      return userId;
+    }
+
+    // 弹窗相关函数
+    function showBuyModal(symbol) {
+      const modal = document.getElementById('buyModal');
+      const content = document.getElementById('buyModalContent');
+
+      document.getElementById('buyModalTicker').value = symbol;
+      document.getElementById('buyModalName').value = '';
+      document.getElementById('buyModalType').value = 'auto';
+      document.getElementById('buyModalQuantity').value = '';
+      document.getElementById('buyModalPrice').value = '';
+
+      modal.classList.remove('hidden');
+      setTimeout(() => {
+        content.classList.add('scale-100');
+        document.getElementById('buyModalQuantity').focus();
+      }, 10);
+    }
+
+    function closeBuyModal() {
+      const modal = document.getElementById('buyModal');
+      const content = document.getElementById('buyModalContent');
+
+      content.classList.remove('scale-100');
+      setTimeout(() => modal.classList.add('hidden'), 300);
+    }
+
+    function showSellModal(symbol, holding) {
+      const modal = document.getElementById('sellModal');
+      const content = document.getElementById('sellModalContent');
+
+      document.getElementById('sellModalTicker').textContent = symbol;
+      document.getElementById('sellModalQuantity').value = '';
+      document.getElementById('sellModalPrice').value = '';
+      document.getElementById('sellModalQuantity').max = holding.quantity;
+      document.getElementById('sellModalMaxQuantity').textContent = `最大可卖出: ${holding.quantity.toLocaleString()}`;
+
+      modal.classList.remove('hidden');
+      setTimeout(() => {
+        content.classList.add('scale-100');
+        document.getElementById('sellModalQuantity').focus();
+      }, 10);
+    }
+
+    function closeSellModal() {
+      const modal = document.getElementById('sellModal');
+      const content = document.getElementById('sellModalContent');
+
+      content.classList.remove('scale-100');
+      setTimeout(() => modal.classList.add('hidden'), 300);
+    }
+
+    async function confirmBuy() {
+      const symbol = document.getElementById('buyModalTicker').value;
+      const name = document.getElementById('buyModalName').value.trim();
+      const type = document.getElementById('buyModalType').value;
+      const quantity = document.getElementById('buyModalQuantity').value;
+      const price = document.getElementById('buyModalPrice').value;
+
+      if (!quantity || isNaN(quantity) || parseFloat(quantity) <= 0) {
+        alert('请输入有效的购买数量');
+        return;
+      }
+
+      if (price && (isNaN(price) || parseFloat(price) <= 0)) {
+        alert('请输入有效的价格');
+        return;
+      }
+
+      try {
+        // 准备买入数据
+        const buyData = {
+          ticker: symbol,
+          quantity: parseFloat(quantity)
+        };
+
+        // 添加可选字段
+        if (price) buyData.price = parseFloat(price);
+        if (name) buyData.name = name;
+        if (type && type !== 'auto') buyData.type = type;
+
+        await buyStock(symbol, quantity, price || null, type !== 'auto' ? type : null, name || null);
+        closeBuyModal();
+        updateBuySoldBtn(symbol);
+        loadStockInfo();
+      } catch (error) {
+        console.error('Buy failed:', error);
+      }
+    }
+
+    async function confirmSell() {
+      const symbol = document.getElementById('sellModalTicker').value;
+      const quantity = document.getElementById('sellModalQuantity').value;
+      const price = document.getElementById('sellModalPrice').value;
+      const maxQuantity = parseFloat(document.getElementById('sellModalQuantity').max);
+
+      if (!quantity || isNaN(quantity) || parseFloat(quantity) <= 0) {
+        alert('请输入有效的卖出数量');
+        return;
+      }
+
+      if (parseFloat(quantity) > maxQuantity) {
+        alert(`卖出数量不能超过持有数量 ${maxQuantity}`);
+        return;
+      }
+
+      if (price && (isNaN(price) || parseFloat(price) <= 0)) {
+        alert('请输入有效的价格');
+        return;
+      }
+
+      try {
+        await sellStock(symbol, quantity, price || null);
+        closeSellModal();
+        updateBuySoldBtn(symbol);
+        loadStockInfo();
+      } catch (error) {
+        console.error('Sell failed:', error);
+      }
+    }
+
+    // 点击弹窗外部关闭弹窗
+    document.getElementById('buyModal').onclick = function(e) {
+      if (e.target === this) {
+        closeBuyModal();
+      }
+    };
+
+    document.getElementById('sellModal').onclick = function(e) {
+      if (e.target === this) {
+        closeSellModal();
+      }
+    };
+
+    // 键盘事件处理
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') {
+        if (!document.getElementById('buyModal').classList.contains('hidden')) {
+          confirmBuy();
+        } else if (!document.getElementById('sellModal').classList.contains('hidden')) {
+          confirmSell();
+        }
+      } else if (e.key === 'Escape') {
+        if (!document.getElementById('buyModal').classList.contains('hidden')) {
+          closeBuyModal();
+        } else if (!document.getElementById('sellModal').classList.contains('hidden')) {
+          closeSellModal();
+        }
+      }
+    });
 
     // 加载股票信息
     async function loadStockInfo() {
