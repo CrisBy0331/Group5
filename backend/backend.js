@@ -37,6 +37,17 @@ db.serialize(() => {
             FOREIGN KEY (user_id) REFERENCES users(user_id)
         )
     `);
+
+    db.run(`
+        CREATE TABLE IF NOT EXISTS portfolio_name (
+            stock_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            ticker TEXT NOT NULL,
+            name TEXT NOT NULL,
+            type TEXT CHECK(type IN ('stock', 'bond', 'fund', 'gold', 'currency')) NOT NULL,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (ticker) REFERENCES holding(ticker)
+        )    
+    `)
 });
 
 const app = express();
@@ -230,17 +241,111 @@ async function getCurrentPrice(ticker) {
     }
 }
 
+// Helper function to get cached ticker info from database
+async function getCachedTickerInfo(ticker) {
+    return new Promise((resolve, reject) => {
+        db.get('SELECT * FROM portfolio_name WHERE ticker = ?', [ticker], (err, row) => {
+            if (err) {
+                reject(err);
+            } else {
+                resolve(row);
+            }
+        });
+    });
+}
+
+// Helper function to save/update ticker info in cache
+async function saveCachedTickerInfo(ticker, name, type) {
+    return new Promise((resolve, reject) => {
+        // First try to update existing record
+        db.run('UPDATE portfolio_name SET name = ?, type = ?, updated_at = CURRENT_TIMESTAMP WHERE ticker = ?', 
+            [name, type, ticker], function(err) {
+            if (err) {
+                reject(err);
+            } else if (this.changes === 0) {
+                // No existing record, insert new one
+                db.run('INSERT INTO portfolio_name (ticker, name, type, updated_at) VALUES (?, ?, ?, CURRENT_TIMESTAMP)',
+                    [ticker, name, type], function(insertErr) {
+                    if (insertErr) {
+                        reject(insertErr);
+                    } else {
+                        resolve({ inserted: true, id: this.lastID });
+                    }
+                });
+            } else {
+                resolve({ updated: true });
+            }
+        });
+    });
+}
+
+// Helper function to fetch ticker info from API
+async function fetchTickerInfoFromAPI(ticker) {
+    try {
+        // Use quote endpoint to get both name and instrument type
+        const quoteUrl = `https://api.twelvedata.com/quote?symbol=${ticker}&apikey=${process.env.TWELVE_DATA_API_KEY}`;
+        const quoteResponse = await fetch(quoteUrl);
+        const quoteData = await quoteResponse.json();
+        
+        let name = null;
+        let type = 'stock'; // default fallback
+        
+        // Get name from quote data
+        if (quoteData.name) {
+            name = quoteData.name;
+        }
+        
+        // Get type from symbol search for better type detection
+        try {
+            const searchUrl = `https://api.twelvedata.com/symbol_search?symbol=${ticker}&apikey=${process.env.TWELVE_DATA_API_KEY}`;
+            const searchResponse = await fetch(searchUrl);
+            const searchData = await searchResponse.json();
+            
+            if (searchData.data && searchData.data.length > 0) {
+                const instrumentType = searchData.data[0].instrument_type;
+                
+                if (instrumentType) {
+                    const typeStr = instrumentType.toLowerCase();
+                    if (typeStr.includes('bond')) {
+                        type = 'bond';
+                    } else if (typeStr.includes('stock') || typeStr.includes('common stock')) {
+                        type = 'stock';
+                    } else if (typeStr.includes('fund') || typeStr.includes('etf')) {
+                        type = 'fund';
+                    }
+                }
+            }
+        } catch (typeError) {
+            console.warn(`Failed to get type for ${ticker}, using default 'stock':`, typeError.message);
+        }
+        
+        if (!name) {
+            throw new Error('Name not available from API');
+        }
+        
+        return { name, type };
+    } catch (error) {
+        throw new Error(`Failed to fetch ticker info from API: ${error.message}`);
+    }
+}
+
 async function getCurrentName(ticker) {
     try {
-        const url = `https://api.twelvedata.com/quote?symbol=${ticker}&apikey=${process.env.TWELVE_DATA_API_KEY}`;
-        const response = await fetch(url);
-        const data = await response.json();
+        ticker = ticker.toUpperCase(); // Normalize ticker case
         
-        if (data.name) {
-            return data.name;
-        } else {
-            throw new Error('Name not available');
+        // First check cache
+        const cached = await getCachedTickerInfo(ticker);
+        if (cached) {
+            return cached.name;
         }
+        
+        // Not in cache, fetch from API
+        const apiData = await fetchTickerInfoFromAPI(ticker);
+        
+        // Save to cache
+        await saveCachedTickerInfo(ticker, apiData.name, apiData.type);
+        
+        return apiData.name;
     } catch (error) {
         throw new Error(`Failed to fetch current name: ${error.message}`);
     }
@@ -248,29 +353,49 @@ async function getCurrentName(ticker) {
 
 async function getCurrentType(ticker) {
     try {
-        const url = `https://api.twelvedata.com/symbol_search?symbol=${ticker}&apikey=${process.env.TWELVE_DATA_API_KEY}`;
-        const response = await fetch(url);
-        const data = await response.json();
+        ticker = ticker.toUpperCase(); // Normalize ticker case
         
-        if (data.data && data.data.length > 0) {
-            const instrumentType = data.data[0].instrument_type;
-            
-            if (instrumentType) {
-                const typeStr = instrumentType.toLowerCase();
-                if (typeStr.includes('bond')) {
-                    return 'bond';
-                } else if (typeStr.includes('stock') || typeStr.includes('common stock')) {
-                    return 'stock';
-                } else if (typeStr.includes('fund') || typeStr.includes('etf')) {
-                    return 'fund';
-                }
-            }
+        // First check cache
+        const cached = await getCachedTickerInfo(ticker);
+        if (cached) {
+            return cached.type;
         }
         
-        // Default to stock if type cannot be determined
-        return 'stock';
+        // Not in cache, fetch from API
+        const apiData = await fetchTickerInfoFromAPI(ticker);
+        
+        // Save to cache
+        await saveCachedTickerInfo(ticker, apiData.name, apiData.type);
+        
+        return apiData.type;
     } catch (error) {
         throw new Error(`Failed to fetch current type: ${error.message}`);
+    }
+}
+
+// Combined function to get both name and type efficiently
+// This reduces API calls by fetching both pieces of info in one go
+async function getTickerInfo(ticker) {
+    try {
+        ticker = ticker.toUpperCase(); // Normalize ticker case
+        
+        // First check cache - no API call needed if data exists
+        const cached = await getCachedTickerInfo(ticker);
+        if (cached) {
+            console.log(`Using cached data for ${ticker}`);
+            return { name: cached.name, type: cached.type };
+        }
+        
+        // Not in cache, fetch from API and cache the result
+        console.log(`Fetching new data for ${ticker} from API`);
+        const apiData = await fetchTickerInfoFromAPI(ticker);
+        
+        // Save to cache for future requests
+        await saveCachedTickerInfo(ticker, apiData.name, apiData.type);
+        
+        return apiData;
+    } catch (error) {
+        throw new Error(`Failed to fetch ticker info: ${error.message}`);
     }
 }
 
@@ -283,27 +408,50 @@ app.post('/api/holdings/:user_id/buy', async (req, res) => {
         return res.status(400).json({ message: 'Ticker and quantity are required' });
     }
     
+    // Normalize ticker to uppercase for consistency
+    ticker = ticker.toUpperCase();
+    
     if (quantity <= 0) {
         return res.status(400).json({ message: 'Quantity must be positive' });
     }
     
-    // If type is not gold or currency, automatically detect type
-    if (!type || (type !== 'gold' && type !== 'currency')) {
-        try {
-            type = await getCurrentType(ticker);
-        } catch (error) {
-            // If auto-detection fails, default to stock
-            console.warn(`Failed to auto-detect type for ${ticker}, defaulting to stock:`, error.message);
-            type = 'stock';
-        }
-    }
+    // Check if we need to fetch both name and type
+    const needsType = !type || (type !== 'gold' && type !== 'currency');
+    const needsName = !name || name.trim() === '';
     
-    // If name is empty, fetch current name
-    if (!name || name.trim() === '') {
+    if (needsType && needsName) {
+        // Fetch both name and type together for efficiency
         try {
-            name = await getCurrentName(ticker);
+            const tickerInfo = await getTickerInfo(ticker);
+            name = tickerInfo.name;
+            type = tickerInfo.type;
         } catch (error) {
-            return res.status(500).json({ message: 'Unable to fetch current name', error: error.message });
+            // If fetching both fails, try to provide fallbacks
+            console.warn(`Failed to fetch ticker info for ${ticker}:`, error.message);
+            if (needsType) {
+                type = 'stock'; // fallback type
+            }
+            if (needsName) {
+                return res.status(500).json({ message: 'Unable to fetch current name', error: error.message });
+            }
+        }
+    } else {
+        // Fetch individually if only one is needed
+        if (needsType) {
+            try {
+                type = await getCurrentType(ticker);
+            } catch (error) {
+                console.warn(`Failed to auto-detect type for ${ticker}, defaulting to stock:`, error.message);
+                type = 'stock';
+            }
+        }
+        
+        if (needsName) {
+            try {
+                name = await getCurrentName(ticker);
+            } catch (error) {
+                return res.status(500).json({ message: 'Unable to fetch current name', error: error.message });
+            }
         }
     }
     
@@ -442,6 +590,43 @@ app.post('/api/holdings/:user_id/sell', async (req, res) => {
                         sell_value: sellValue
                     });
                 }
+            });
+        }
+    });
+});
+
+// Endpoint to refresh cached ticker info (useful for admin or when data is stale)
+app.post('/api/cache/refresh/:ticker', async (req, res) => {
+    const ticker = req.params.ticker.toUpperCase();
+    
+    try {
+        console.log(`Manually refreshing cache for ${ticker}`);
+        const apiData = await fetchTickerInfoFromAPI(ticker);
+        
+        await saveCachedTickerInfo(ticker, apiData.name, apiData.type);
+        
+        res.status(200).json({ 
+            message: `Cache refreshed successfully for ${ticker}`,
+            data: apiData
+        });
+    } catch (error) {
+        res.status(500).json({ 
+            message: 'Failed to refresh cache', 
+            error: error.message 
+        });
+    }
+});
+
+// Endpoint to get cache status
+app.get('/api/cache/status', (req, res) => {
+    db.all('SELECT ticker, name, type, updated_at FROM portfolio_name ORDER BY updated_at DESC', (err, rows) => {
+        if (err) {
+            res.status(500).json({ message: 'Database error', error: err.message });
+        } else {
+            res.json({
+                message: 'Cache status retrieved successfully',
+                cached_tickers: rows.length,
+                data: rows
             });
         }
     });
