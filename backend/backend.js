@@ -1,4 +1,4 @@
-const sqlite3 = require('sqlite3').verbose();
+const sqlite3 = require('sqlite3');
 const express = require('express');
 const crypto = require('crypto');
 const dotenv = require('dotenv');
