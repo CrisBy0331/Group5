@@ -80,18 +80,18 @@ app.get('/api/users', (req, res) => {
     });
 });
 
-app.get('/api/users/:user_id', (req, res) => {
-    const user_id = req.params.user_id;
-    db.get('SELECT * FROM users WHERE user_id = ?', [user_id], (err, row) => {
-        if (err) {
-            res.status(500).json({ message: 'Database error', error: err.message });
-        } else if (!row) {
-            res.status(404).json({ message: 'User not found' });
-        } else {
-            res.json(row);
-        }
-    });
-});
+// app.get('/api/users/:user_id', (req, res) => {
+//     const user_id = req.params.user_id;
+//     db.get('SELECT * FROM users WHERE user_id = ?', [user_id], (err, row) => {
+//         if (err) {
+//             res.status(500).json({ message: 'Database error', error: err.message });
+//         } else if (!row) {
+//             res.status(404).json({ message: 'User not found' });
+//         } else {
+//             res.json(row);
+//         }
+//     });
+// });
 
 // Create a new user
 app.post('/api/users/', (req, res) => {
