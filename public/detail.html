@@ -1,116 +1,351 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Position Details</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script>
-        // 检查用户登录状态
-        function checkLoginStatus() {
-            const isLoggedIn = localStorage.getItem('isLoggedIn');
-            const userToken = localStorage.getItem('userToken');
-            if (!isLoggedIn || !userToken) {
-                window.location.href = 'log_in.html';
-                return false;
-            }
-            updateUserArea();
-            return true;
-        }
-        // 更新用户区域显示
-        function updateUserArea() {
-            const userAccount = localStorage.getItem('userAccount');
-            const userArea = document.getElementById('userArea');
-            if (userAccount) {
-                userArea.innerHTML = `
-                    <div class="flex items-center space-x-3">
-                        <span class="text-gray-700 font-medium">${userAccount}</span>
-                        <button onclick="logout()" class="text-red-500 hover:text-red-600 text-sm font-medium bg-transparent px-3 py-1 rounded border border-red-300 hover:border-red-400 transition">Logout</button>
-                    </div>
-                `;
-            } else {
-                userArea.innerHTML = `
-                    <a href="log_in.html" class="text-blue-500 hover:text-blue-600 text-lg font-bold bg-transparent px-4 py-2 rounded transition">Login</a>
-                `;
-            }
-        }
-        // 登出功能
-        function logout() {
-            localStorage.removeItem('isLoggedIn');
-            localStorage.removeItem('userToken');
-            localStorage.removeItem('userAccount');
-            window.location.href = 'log_in.html';
-        }
-        // 侧边栏切换功能
-        function toggleSidebar() {
-            const sidebar = document.getElementById('sidebar');
-            const mainContent = document.getElementById('mainContent');
-            const toggleIcon = document.getElementById('sidebarToggleIcon');
-            if (sidebar.classList.contains('w-48')) {
-                sidebar.classList.remove('w-48');
-                sidebar.classList.add('w-16');
-                mainContent.classList.remove('md:ml-48');
-                mainContent.classList.add('md:ml-16');
-                toggleIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7" />';
-            } else {
-                sidebar.classList.remove('w-16');
-                sidebar.classList.add('w-48');
-                mainContent.classList.remove('md:ml-16');
-                mainContent.classList.add('md:ml-48');
-                toggleIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 12H5" />';
-            }
-        }
-        document.addEventListener('DOMContentLoaded', function() {
-            checkLoginStatus();
-        });
-    </script>
 </head>
+
 <body class="bg-gradient-to-br from-blue-50 via-white to-blue-100 text-gray-800 min-h-screen">
-    <!-- 顶部导航 -->
+    <!-- 顶部导航栏 -->
     <header class="bg-white shadow h-16 px-6 flex justify-between items-center sticky top-0 z-50">
         <a href="index.html" class="flex items-center space-x-4 group cursor-pointer select-none">
-            <svg class="w-9 h-9 text-blue-400 group-hover:text-blue-600 transition" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 32 32">
+            <svg class="w-9 h-9 text-blue-400 group-hover:text-blue-600 transition" fill="none" stroke="currentColor"
+                stroke-width="2" viewBox="0 0 32 32">
                 <circle cx="16" cy="16" r="13" stroke="currentColor" stroke-width="2" fill="#e0f2fe" />
                 <path d="M10 20c2-4 10-4 12 0" stroke="#38bdf8" stroke-width="2" fill="none" />
                 <path d="M16 10v8" stroke="#2563eb" stroke-width="2" stroke-linecap="round" />
                 <circle cx="16" cy="10" r="2" fill="#2563eb" />
             </svg>
-            <span class="text-2xl font-extrabold text-blue-400 group-hover:text-blue-600 tracking-wide transition leading-none" style="letter-spacing: 1px;">Future Assets</span>
+            <span
+                class="text-2xl font-extrabold text-blue-400 group-hover:text-blue-600 tracking-wide transition leading-none"
+                style="letter-spacing: 1px;">Future Assets</span>
         </a>
         <div class="flex items-center space-x-4">
             <div id="userArea"></div>
         </div>
     </header>
+
+    <!-- 页面主体结构 -->
     <div class="flex">
-        <!-- 左侧导航栏 -->
-        <aside id="sidebar" class="w-48 bg-white shadow min-h-screen p-3 flex flex-col items-center transition-all duration-300 hidden md:flex fixed top-16 left-0 z-40">
-            <button id="sidebarToggle" class="mb-6 p-2 rounded hover:bg-blue-100 transition self-end" onclick="toggleSidebar()">
-                <svg id="sidebarToggleIcon" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 12H5" /></svg>
+        <!-- 左侧边栏 -->
+        <aside id="sidebar"
+            class="w-48 bg-white shadow min-h-screen p-3 flex flex-col items-center transition-all duration-300 hidden md:flex fixed top-16 left-0 z-40">
+            <button id="sidebarToggle" class="mb-6 p-2 rounded hover:bg-blue-100 transition self-end"
+                onclick="toggleSidebar()">
+                <svg id="sidebarToggleIcon" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-500" fill="none"
+                    viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 12H5" />
+                </svg>
             </button>
             <nav class="space-y-4 flex flex-col items-center w-full mt-20">
-                <a href="index.html" class="flex flex-col items-center justify-center px-2 py-2 rounded hover:bg-blue-50 transition text-gray-700 hover:text-blue-500 sidebar-link" data-i18n="dashboard">
-                    <svg class="w-6 h-6 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8v-10h-8v10zm0-18v6h8V3h-8z"/></svg>
+                <a href="index.html"
+                    class="flex flex-col items-center justify-center px-2 py-2 rounded hover:bg-blue-50 transition text-gray-700 hover:text-blue-500 sidebar-link"
+                    data-i18n="dashboard">
+                    <svg class="w-6 h-6 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2"
+                        viewBox="0 0 24 24">
+                        <path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8v-10h-8v10zm0-18v6h8V3h-8z" />
+                    </svg>
                     <span class="sidebar-text mt-1 text-center">Dashboard</span>
                 </a>
-                <a href="detail.html" class="flex flex-col items-center justify-center px-2 py-2 rounded hover:bg-blue-50 transition text-blue-500 font-semibold sidebar-link" data-i18n="allocation">
-                    <svg class="w-6 h-6 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 2v10l6 6"/></svg>
+                <a href="detail.html"
+                    class="flex flex-col items-center justify-center px-2 py-2 rounded hover:bg-blue-50 transition text-blue-500 font-semibold sidebar-link"
+                    data-i18n="allocation">
+                    <svg class="w-6 h-6 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2"
+                        viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="10" />
+                        <path d="M12 2v10l6 6" />
+                    </svg>
                     <span class="sidebar-text mt-1 text-center">Position Details</span>
                 </a>
-                <a href="management.html" class="flex flex-col items-center justify-center px-2 py-2 rounded hover:bg-blue-50 transition text-gray-700 hover:text-blue-500 sidebar-link" data-i18n="positions">
-                    <svg class="w-6 h-6 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M16 3v4M8 3v4"/></svg>
+                <a href="management.html"
+                    class="flex flex-col items-center justify-center px-2 py-2 rounded hover:bg-blue-50 transition text-gray-700 hover:text-blue-500 sidebar-link"
+                    data-i18n="positions">
+                    <svg class="w-6 h-6 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2"
+                        viewBox="0 0 24 24">
+                        <rect x="3" y="7" width="18" height="13" rx="2" />
+                        <path d="M16 3v4M8 3v4" />
+                    </svg>
                     <span class="sidebar-text mt-1 text-center">Position Management</span>
                 </a>
             </nav>
         </aside>
+
         <!-- 右侧内容区域 -->
         <main id="mainContent" class="flex-1 p-6 pt-6 md:ml-48 transition-all duration-300">
-            <h1 id="page-title"></h1>
-            <div id="portfolio-summary"></div>
-            <div id="portfolio-filter"></div>
-            <div id="holdings-list"></div>
-        </main>
-    </div>
-    <script src="js/detail.js"></script>
+            <h1 id="page-title" class="text-2xl font-bold text-gray-800 mb-6">Position Details</h1>
+            <section id="portfolio-summary"
+                class="bg-white p-5 rounded-lg shadow mb-6 flex flex-wrap gap-10 items-center shadow-lg">
+                <div class="flex items-center gap-2">
+                    <span class="text-gray-700 font-medium">Total Portfolio Value:</span>
+                    <b id="totalPortfolioValue" class="text-xl font-bold text-gray-900">$100,000.00</b>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="text-gray-700 font-medium">Total Profit:</span>
+                    <b id="totalProfit" class="text-xl font-bold text-green-600">$3,500.00</b>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="text-gray-700 font-medium">Total Profit Rate:</span>
+                    <b id="totalProfitRate" class="text-xl font-bold text-gray-900">3.50%</b>
+                </div>
+            </section>
+            <!-- 在 detail.html 的 <main> 中添加筛选和排序功能 -->
+            <section id="filter-sort-bar"
+                class="bg-white p-4 mb-6 rounded-lg shadow-md flex flex-wrap gap-4 items-center">
+                <!-- 筛选产品种类 -->
+                <label for="typeFilter" class="text-gray-700 font-medium">Product Type:</label>
+                <select id="typeFilter"
+                    class="px-4 py-2 border border-gray-300 rounded-md focus:ring focus:ring-blue-200">
+                    <option value="all">All</option>
+                    <option value="stock">Stock</option>
+                    <option value="fund">Fund</option>
+                    <option value="bond">Bond</option>
+                    <option value="gold">Gold</option>
+                    <option value="currency">Currency</option>
+                </select>
+
+                <!-- 排序字段 -->
+                <label for="sortField" class="text-gray-700 font-medium ml-4">Sort by:</label>
+                <select id="sortField"
+                    class="px-4 py-2 border border-gray-300 rounded-md focus:ring focus:ring-blue-200">
+                    <option value="updated_at">Update Time</option>
+                    <option value="amount">Amount</option>
+                    <option value="profitRate">Profit Rate</option>
+                </select>
+
+                <!-- 排序顺序 -->
+                <label for="sortOrder" class="text-gray-700 font-medium ml-4">Order:</label>
+                <select id="sortOrder"
+                    class="px-4 py-2 border border-gray-300 rounded-md focus:ring focus:ring-blue-200">
+                    <option value="asc">Ascending</option>
+                    <option value="desc" selected>Descending</option>
+                </select>
+            </section>
+
+            <!-- 卡片容器 -->
+            <section id="holdings-list" class="space-y-4"></section>
+
+            <script>
+                const typeFilter = document.getElementById("typeFilter");
+                const sortField = document.getElementById("sortField");
+                const sortOrder = document.getElementById("sortOrder");
+                let holdingsData = [];
+
+                const totalPortfolioValueElement = document.getElementById("totalPortfolioValue");
+                const totalProfitElement = document.getElementById("totalProfit");
+                const totalProfitRateElement = document.getElementById("totalProfitRate"); // 新增
+
+                // 更新投资组合概览
+                function updatePortfolioSummary() {
+                    let totalValue = 0;
+                    let totalProfit = 0;
+                    let totalCost = 0; // 新增：总投入成本
+
+                    holdingsData.forEach(item => {
+                        totalValue += item.amount;
+                        totalProfit += item.profit;
+                        totalCost += (item.buyin_price * item.quantity); // 计算总投入成本
+                    });
+
+                    // 计算总收益率
+                    let totalProfitRate = 0;
+                    if (totalCost > 0) { // 避免除以零
+                        totalProfitRate = (totalProfit / totalCost) * 100;
+                    }
+
+                    // 更新总价值显示
+                    totalPortfolioValueElement.textContent = `$${totalValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+                    // 更新总利润显示，并根据盈亏设置颜色
+                    if (totalProfit >= 0) {
+                        totalProfitElement.classList.remove('text-red-600');
+                        totalProfitElement.classList.add('text-green-600');
+                    } else {
+                        totalProfitElement.classList.remove('text-green-600');
+                        totalProfitElement.classList.add('text-red-600');
+                    }
+                    totalProfitElement.textContent = `$${totalProfit.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+                    // *** 新增：更新总收益率显示，并根据盈亏设置颜色 ***
+                    if (totalProfitRate >= 0) {
+                        totalProfitRateElement.classList.remove('text-red-600');
+                        totalProfitRateElement.classList.add('text-green-600');
+                    } else {
+                        totalProfitRateElement.classList.remove('text-green-600');
+                        totalProfitRateElement.classList.add('text-red-600');
+                    }
+                    totalProfitRateElement.textContent = `${totalProfitRate.toFixed(2)}%`; // 格式化为两位小数并加上百分号
+                    // 如果总成本为0，可以考虑显示 "--" 或 "0.00%"
+                    if (totalCost === 0) {
+                        totalProfitRateElement.textContent = "--";
+                        totalProfitRateElement.classList.remove('text-green-600', 'text-red-600'); // 清除颜色
+                        totalProfitRateElement.classList.add('text-gray-900'); // 设为默认色
+                    }
+                }
+
+
+                // 修改 fetchHoldings 函数，在数据加载并处理完成后调用 updatePortfolioSummary
+                async function fetchHoldings(userId) {
+                    const res = await fetch(`http://localhost:3000/api/holdings/${userId}`);
+                    const data = await res.json();
+                    const enriched = await Promise.all(data.map(async (item) => {
+                        const priceRes = await fetch(`http://localhost:3000/api/stock/price/${item.ticker}`);
+                        const priceData = await priceRes.json();
+                        const currentPrice = parseFloat(priceData.price || 0);
+                        const amount = item.quantity * currentPrice;
+                        const profit = (currentPrice - item.buyin_price) * item.quantity;
+                        return { ...item, currentPrice, amount, profit };
+                    }));
+                    holdingsData = enriched; // 更新全局的 holdingsData 变量
+
+                    updatePortfolioSummary(); // <--- 在这里调用新函数，更新概览数据
+                    applyFilters(); // 接着调用筛选和排序函数，显示持仓列表
+                }
+
+                function formatDate(timestamp) {
+                    const date = new Date(timestamp);
+                    return date.toLocaleString();
+                }
+
+                function renderHoldings(data) {
+                    const container = document.getElementById("holdings-list");
+                    container.innerHTML = "";
+                    console.log("正在渲染的持仓数据:", data);
+                    data.forEach(item => {
+                        const profitRate = ((item.profit / item.amount) * 100).toFixed(2);
+                        // 原有的卡片左边框颜色
+                        const borderColor = item.type === "stock" ? "border-green-500" :
+                            item.type === "fund" ? "border-yellow-500" :
+                                item.type === "bond" ? "border-blue-500" :
+                                    item.type === "gold" ? "border-amber-500" : "border-gray-400";
+
+                        // *** 新增：根据类型定义不同的颜色标签类 ***
+                        let typeColorClass = '';
+                        switch (item.type) {
+                            case 'stock':
+                                typeColorClass = 'bg-green-100 text-green-800'; // 股票绿色
+                                break;
+                            case 'fund':
+                                typeColorClass = 'bg-yellow-100 text-yellow-800'; // 基金黄色
+                                break;
+                            case 'bond':
+                                typeColorClass = 'bg-blue-100 text-blue-800'; // 债券蓝色
+                                break;
+                            case 'gold':
+                                typeColorClass = 'bg-amber-100 text-amber-800'; // 黄金琥珀色
+                                break;
+                            case 'currency':
+                                typeColorClass = 'bg-purple-100 text-purple-800'; // 货币紫色
+                                break;
+                            default:
+                                typeColorClass = 'bg-gray-100 text-gray-800'; // 默认灰色
+                        }
+
+                        const html = `
+            <div class="bg-white rounded-xl shadow-lg p-6 transition-all duration-300 hover:shadow-xl transform hover:-translate-y-1 border-l-4 ${borderColor} w-full">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-2">
+                    <div class="mb-2 md:mb-0 flex items-center gap-2">
+                        <h3 class="text-xl font-bold text-gray-900">${item.name} (${item.ticker})</h3>
+                        <span class="px-2 py-0.5 rounded-full text-xs font-semibold ${typeColorClass}">${item.type.charAt(0).toUpperCase() + item.type.slice(1)}</span>
+                    </div>
+                    <div class="text-sm text-gray-500">Updated: ${formatDate(item.updated_at)}</div>
+                </div>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-gray-700">
+                    <div><span class="font-semibold">Buy Price:</span> $${item.buyin_price.toFixed(2)}</div>
+                    <div><span class="font-semibold">Current Price:</span> $${item.currentPrice.toFixed(2)}</div>
+                    <div><span class="font-semibold">Amount Held:</span> $${item.amount.toLocaleString()}</div>
+                    <div><span class="font-semibold">Profit Rate:</span> ${profitRate}%</div>
+                </div>
+            </div>`;
+                        container.innerHTML += html;
+                    });
+                }
+
+                document.addEventListener("DOMContentLoaded", function () {
+                    const userId = 1; // TODO: Replace with logged-in user ID
+                    fetchHoldings(userId);
+
+                    // *** 新增事件监听器 ***
+                    typeFilter.addEventListener('change', applyFilters);
+                    sortField.addEventListener('change', applyFilters);
+                    sortOrder.addEventListener('change', applyFilters);
+                });
+
+
+                function applyFilters() {
+                    const type = typeFilter.value;
+                    const sortBy = sortField.value;
+                    const order = sortOrder.value;
+                    let filtered = [...holdingsData];
+
+                    // 筛选
+                    if (type !== "all") {
+                        filtered = filtered.filter(item => item.type === type);
+                    }
+
+                    // 排序
+                    filtered.sort((a, b) => {
+                        let valA, valB;
+
+                        // 根据 sortBy 字段获取值
+                        if (sortBy === "profitRate") {
+                            // 确保除数不为零，避免 NaN
+                            valA = a.amount !== 0 ? (a.profit / a.amount) : (order === "asc" ? -Infinity : Infinity);
+                            valB = b.amount !== 0 ? (b.profit / b.amount) : (order === "asc" ? -Infinity : Infinity);
+                        } else if (sortBy === "updated_at") {
+                            // 将时间戳字符串转换为数字进行比较
+                            valA = new Date(a[sortBy]).getTime();
+                            valB = new Date(b[sortBy]).getTime();
+                        } else {
+                            valA = a[sortBy];
+                            valB = b[sortBy];
+                        }
+
+                        // 处理非数字值的比较（如果 sortBy 字段是字符串，例如 name）
+                        if (typeof valA === 'string' && typeof valB === 'string') {
+                            return order === "asc" ? valA.localeCompare(valB) : valB.localeCompare(valA);
+                        }
+
+                        // 数字比较
+                        return order === "asc" ? valA - valB : valB - valA;
+                    });
+
+                    renderHoldings(filtered);
+                }
+
+                // 侧边栏收起/展开功能
+                let sidebarCollapsed = false;
+                function toggleSidebar() {
+                    sidebarCollapsed = !sidebarCollapsed;
+                    const sidebar = document.getElementById('sidebar');
+                    const main = document.getElementById('mainContent');
+                    const texts = sidebar.querySelectorAll('.sidebar-text');
+                    if (sidebarCollapsed) {
+                        sidebar.classList.remove('w-48');
+                        sidebar.classList.add('w-16');
+                        main.classList.remove('md:ml-48');
+                        main.classList.add('md:ml-16');
+                        texts.forEach(t => t.classList.add('hidden'));
+                        document.getElementById('sidebarToggleIcon').innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />';
+                    } else {
+                        sidebar.classList.remove('w-16');
+                        sidebar.classList.add('w-48');
+                        main.classList.remove('md:ml-16');
+                        main.classList.add('md:ml-48');
+                        texts.forEach(t => t.classList.remove('hidden'));
+                        document.getElementById('sidebarToggleIcon').innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 12H5" />';
+                    }
+                }
+
+                document.addEventListener("DOMContentLoaded", function () {
+                    const userId = 1; // TODO: Replace with logged-in user ID
+                    fetchHoldings(userId);
+                });
+            </script>
+
 </body>
+
 </html>
