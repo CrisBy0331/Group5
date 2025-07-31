@@ -344,47 +344,47 @@
           <div class="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center mr-3">
             <i class="fas fa-plus text-green-500 text-lg"></i>
           </div>
-          <h3 id="buyModalTitle" class="text-xl font-semibold text-gray-800">买入资产</h3>
+          <h3 id="buyModalTitle" class="text-xl font-semibold text-gray-800">Buy Assets</h3>
         </div>
 
         <div class="space-y-4">
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">资产代码</label>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Asset Code</label>
             <input type="text" id="buyModalTicker" readonly
               class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-600" />
           </div>
 
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">资产名称 <span
-                class="text-gray-500 text-sm">(留空自动获取)</span></label>
-            <input type="text" id="buyModalName" placeholder="例如: Apple Inc. (可留空)"
+            <label class="block text-sm font-medium text-gray-700 mb-2">Asset Name <span
+                class="text-gray-500 text-sm">(Leave it blank to obtain automatically)</span></label>
+            <input type="text" id="buyModalName" placeholder="e.g.: Apple Inc. (can be left blank)"
               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
           </div>
 
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">资产类型 <span
-                class="text-gray-500 text-sm">(自动检测，除非选择黄金或货币)</span></label>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Asset Type <span
+                class="text-gray-500 text-sm">(Automatically detect, unless gold or currency is selected)</span></label>
             <select id="buyModalType"
               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-              <option value="auto">自动检测 (Auto-Detect)</option>
-              <option value="stock">股票 (Stock)</option>
-              <option value="bond">债券 (Bond)</option>
-              <option value="fund">基金 (Fund)</option>
-              <option value="gold">黄金 (Gold)</option>
-              <option value="currency">货币 (Currency)</option>
+              <option value="auto">Auto-Detect</option>
+              <option value="stock">Stock</option>
+              <option value="bond">Bond</option>
+              <option value="fund">Fund</option>
+              <option value="gold">Gold</option>
+              <option value="currency">Currency</option>
             </select>
           </div>
 
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">购买数量</label>
-            <input type="number" id="buyModalQuantity" placeholder="输入数量" min="1"
+            <label class="block text-sm font-medium text-gray-700 mb-2">Purchase Quantity</label>
+            <input type="number" id="buyModalQuantity" placeholder="Enter quantity" min="1"
               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
           </div>
 
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">购买价格 <span
-                class="text-gray-500 text-sm">(留空使用当前市价)</span></label>
-            <input type="number" id="buyModalPrice" placeholder="输入价格或留空" step="0.01" min="0"
+            <label class="block text-sm font-medium text-gray-700 mb-2">Purchase Price <span
+                class="text-gray-500 text-sm">(Leave it blank to use the current market price)</span></label>
+            <input type="number" id="buyModalPrice" placeholder="Enter price or leave blank" step="0.01" min="0"
               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
           </div>
         </div>
@@ -392,11 +392,11 @@
         <div class="flex justify-end space-x-3 mt-8">
           <button onclick="closeBuyModal()"
             class="bg-gray-300 hover:bg-gray-400 text-gray-700 px-6 py-2 rounded-lg font-medium transition duration-200">
-            取消
+            Cancel
           </button>
           <button onclick="confirmBuy()"
             class="bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded-lg font-medium transition duration-200">
-            确认买入
+            Confirm Buy
           </button>
         </div>
       </div>
@@ -412,26 +412,26 @@
           <div class="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center mr-3">
             <i class="fas fa-minus text-red-500 text-lg"></i>
           </div>
-          <h3 class="text-xl font-semibold text-gray-800">卖出资产</h3>
+          <h3 class="text-xl font-semibold text-gray-800">Sell Asset</h3>
         </div>
 
         <div class="space-y-4">
           <div class="bg-gray-50 p-4 rounded-lg">
-            <p class="text-sm text-gray-600">资产代码</p>
+            <p class="text-sm text-gray-600">Asset Code</p>
             <p id="sellModalTicker" class="text-lg font-semibold text-gray-800"></p>
           </div>
 
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">卖出数量</label>
-            <input type="number" id="sellModalQuantity" placeholder="输入数量" min="1"
+            <label class="block text-sm font-medium text-gray-700 mb-2">Sell Quantity</label>
+            <input type="number" id="sellModalQuantity" placeholder="Enter quantity" min="1"
               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
             <p id="sellModalMaxQuantity" class="text-sm text-gray-500 mt-1"></p>
           </div>
 
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">卖出价格 <span
-                class="text-gray-500 text-sm">(留空使用当前市价)</span></label>
-            <input type="number" id="sellModalPrice" placeholder="输入价格或留空" step="0.01" min="0"
+            <label class="block text-sm font-medium text-gray-700 mb-2">Selling Price <span
+                class="text-gray-500 text-sm">(Leave it blank to use the current market price)</span></label>
+            <input type="number" id="sellModalPrice" placeholder="Enter price or leave blank" step="0.01" min="0"
               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
           </div>
         </div>
@@ -439,11 +439,11 @@
         <div class="flex justify-end space-x-3 mt-8">
           <button onclick="closeSellModal()"
             class="bg-gray-300 hover:bg-gray-400 text-gray-700 px-6 py-2 rounded-lg font-medium transition duration-200">
-            取消
+            Cancel
           </button>
           <button onclick="confirmSell()"
             class="bg-red-500 hover:bg-red-600 text-white px-6 py-2 rounded-lg font-medium transition duration-200">
-            确认卖出
+            Confirm Sell
           </button>
         </div>
       </div>
@@ -886,7 +886,7 @@
       try {
         const userId = getCurrentUserId();
         if (!userId) {
-          alert('请先登录');
+          alert('Please log in first');
           return;
         }
 
@@ -894,7 +894,7 @@
         const holding = holdings.find(h => h.ticker === symbol);
 
         if (!holding) {
-          alert('您没有持有该股票');
+          alert('You do not hold this stock');
           return;
         }
 
@@ -914,9 +914,9 @@
       if (!userId) {
         userId = '1'; // 默认用户ID
         localStorage.setItem('currentUserId', userId);
-        console.log('设置默认用户ID:', userId);
+        console.log('Set the default user ID:', userId);
       }
-      console.log('当前用户ID:', userId);
+      console.log('Current user ID:', userId);
       return userId;
     }
 
@@ -954,7 +954,7 @@
       document.getElementById('sellModalQuantity').value = '';
       document.getElementById('sellModalPrice').value = '';
       document.getElementById('sellModalQuantity').max = holding.quantity;
-      document.getElementById('sellModalMaxQuantity').textContent = `最大可卖出: ${holding.quantity.toLocaleString()}`;
+      document.getElementById('sellModalMaxQuantity').textContent = `Max Sellable: ${holding.quantity.toLocaleString()}`;
 
       modal.classList.remove('hidden');
       setTimeout(() => {
@@ -979,12 +979,12 @@
       const price = document.getElementById('buyModalPrice').value;
 
       if (!quantity || isNaN(quantity) || parseFloat(quantity) <= 0) {
-        alert('请输入有效的购买数量');
+        alert('Please enter a valid purchase quantity');
         return;
       }
 
       if (price && (isNaN(price) || parseFloat(price) <= 0)) {
-        alert('请输入有效的价格');
+        alert('Please enter a valid price');
         return;
       }
 
@@ -1016,17 +1016,17 @@
       const maxQuantity = parseFloat(document.getElementById('sellModalQuantity').max);
 
       if (!quantity || isNaN(quantity) || parseFloat(quantity) <= 0) {
-        alert('请输入有效的卖出数量');
+        alert('Please enter a valid sell quantity');
         return;
       }
 
       if (parseFloat(quantity) > maxQuantity) {
-        alert(`卖出数量不能超过持有数量 ${maxQuantity}`);
+        alert(`Sell quantity cannot exceed holding quantity ${maxQuantity}`);
         return;
       }
 
       if (price && (isNaN(price) || parseFloat(price) <= 0)) {
-        alert('请输入有效的价格');
+        alert('Please enter a valid price');
         return;
       }
 
@@ -1456,13 +1456,13 @@
     // 买入股票
     async function buyStock(ticker, quantity, price = null, type = null, name = null) {
       try {
-        console.log('开始买入操作:', { ticker, quantity, price, type, name });
+        console.log('Start the buying operation:', { ticker, quantity, price, type, name });
 
         const userId = getCurrentUserId();
         if (!userId) {
-          throw new Error('请先登录');
+          throw new Error('Please log in first');
         }
-        console.log('用户ID:', userId);
+        console.log('Current user ID:', userId);
 
         // 准备买入数据
         const buyData = {
@@ -1481,18 +1481,18 @@
           buyData.name = name;
         }
 
-        console.log('买入数据:', buyData);
+        console.log('Buying data:', buyData);
 
         // 显示加载状态
-        showLoadingMessage('正在处理买入订单...');
+        showLoadingMessage('Processing buy order...');
 
         // 调用买入API
-        console.log('调用API: /api/holdings/' + userId + '/buy');
+        console.log('Calling API: /api/holdings/' + userId + '/buy');
         const result = await HoldingsAPI.buyStock(userId, buyData);
-        console.log('API返回结果:', result);
+        console.log('API response:', result);
 
         // 显示成功消息
-        showSuccessMessage(`买入成功！${result.message || '操作完成'}`);
+        showSuccessMessage(`Buying successful!${result.message || 'The operation is completed'}`);
 
         // 返回结果以便进一步处理
         return result;
@@ -1506,15 +1506,15 @@
         });
 
         // 更详细的错误信息
-        let errorMessage = '买入失败';
+        let errorMessage = 'Buying failed';
         if (error.message.includes('fetch')) {
-          errorMessage += ': 无法连接到服务器，请检查后端是否启动';
+          errorMessage += ': Unable to connect to the server, please check if the backend is running';
         } else if (error.message.includes('CORS')) {
-          errorMessage += ': 跨域请求被阻止';
+          errorMessage += ': Cross-origin request blocked';
         } else if (error.message.includes('404')) {
-          errorMessage += ': API接口不存在';
+          errorMessage += ': API endpoint not found';
         } else if (error.message.includes('500')) {
-          errorMessage += ': 服务器内部错误';
+          errorMessage += ': Internal server error';
         } else {
           errorMessage += ': ' + error.message;
         }
@@ -1529,7 +1529,7 @@
       try {
         const userId = getCurrentUserId();
         if (!userId) {
-          throw new Error('请先登录');
+          throw new Error('Please log in first');
         }
 
         // 准备卖出数据
@@ -1544,20 +1544,20 @@
         }
 
         // 显示加载状态
-        showLoadingMessage('正在处理卖出订单...');
+        showLoadingMessage('Processing the sell order...');
 
         // 调用卖出API
         const result = await HoldingsAPI.sellStock(userId, sellData);
 
         // 显示成功消息
-        showSuccessMessage(`卖出成功！${result.message}`);
+        showSuccessMessage(`Sold Successfully!${result.message}`);
 
         // 返回结果以便进一步处理
         return result;
 
       } catch (error) {
         console.error('Sell stock error:', error);
-        showErrorMessage(`卖出失败: ${error.message}`);
+        showErrorMessage(`Sell Failed: ${error.message}`);
         throw error;
       }
     }
@@ -1585,7 +1585,7 @@
         };
       } catch (error) {
         console.error('Get stock info error:', error);
-        throw new Error(`无法获取 ${ticker} 的详细信息`);
+        throw new Error(`Unable to obtain ${ticker} detailed information`);
       }
     }
 
@@ -1595,17 +1595,17 @@
 
       // 验证股票代码
       if (!ticker || ticker.trim() === '') {
-        errors.push('请输入股票代码');
+        errors.push('Please enter the stock code');
       }
 
       // 验证数量
       if (!quantity || isNaN(quantity) || parseFloat(quantity) <= 0) {
-        errors.push('请输入有效的数量（大于0）');
+        errors.push('Please enter a valid quantity (greater than 0)');
       }
 
       // 验证价格（如果提供）
       if (price !== null && price !== '' && (isNaN(price) || parseFloat(price) <= 0)) {
-        errors.push('请输入有效的价格（大于0）');
+        errors.push('Please enter a valid price (greater than 0)');
       }
 
       return errors;
