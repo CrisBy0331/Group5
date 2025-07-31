@@ -1,4 +1,4 @@
-const sqlite3 = require('sqlite3');
+const sqlite3 = require('sqlite3').verbose();
 const express = require('express');
 const crypto = require('crypto');
 const dotenv = require('dotenv');
@@ -122,6 +122,80 @@ app.post('/api/users/', (req, res) => {
                     message: 'User created successfully', 
                     user_id: this.lastID,
                     username: username
+                });
+            }
+        });
+    });
+});
+
+// Login API - authenticate user by username/email and password
+app.post('/api/login', (req, res) => {
+    const { account, password } = req.body;
+
+    if (!account || !password) {
+        return res.status(400).json({ message: 'Account and password are required' });
+    }
+
+    // Find user by username (treating account as username)
+    db.get('SELECT user_id, username, password FROM users WHERE username = ?', [account], (err, row) => {
+        if (err) {
+            return res.status(500).json({ message: 'Database error', error: err.message });
+        }
+
+        if (!row) {
+            return res.status(401).json({ message: 'Invalid account or password' });
+        }
+
+        // Hash the provided password and compare
+        const hash = crypto.createHash('sha256').update(password).digest('hex');
+
+        if (hash === row.password) {
+            res.status(200).json({
+                message: 'Login successful',
+                user: {
+                    user_id: row.user_id,
+                    account: row.username,
+                    username: row.username,
+                    avatar: 'https://via.placeholder.com/32x32/4285f4/ffffff?text=' + row.username.charAt(0).toUpperCase()
+                }
+            });
+        } else {
+            res.status(401).json({ message: 'Invalid account or password' });
+        }
+    });
+});
+
+// Register API - create new user account
+app.post('/api/register', (req, res) => {
+    const { account, password } = req.body;
+
+    if (!account || !password) {
+        return res.status(400).json({ message: 'Account and password are required' });
+    }
+
+    // Check if username already exists
+    db.get('SELECT user_id FROM users WHERE username = ?', [account], (err, row) => {
+        if (err) {
+            return res.status(500).json({ message: 'Database error', error: err.message });
+        }
+
+        if (row) {
+            return res.status(409).json({ message: 'Account already exists' });
+        }
+
+        // Hash the password
+        const hash = crypto.createHash('sha256').update(password).digest('hex');
+
+        // Create new user (using account as username)
+        db.run('INSERT INTO users (username, password, avatar) VALUES (?, ?, ?)',
+            [account, hash, null], function(err) {
+            if (err) {
+                res.status(500).json({ message: 'Database error', error: err.message });
+            } else {
+                res.status(201).json({
+                    message: 'Registration successful',
+                    user_id: this.lastID,
+                    username: account
                 });
             }
         });
