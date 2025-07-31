@@ -193,8 +193,6 @@
     const loginAccountInput = document.getElementById('loginAccount');
     const rememberMeCheckbox = document.getElementById('rememberMe');
 
-    // 移除了不活跃超时逻辑，因为这是登录页面
-
     // --- 页面加载逻辑 ---
     window.onload = () => {
         // 检查本地存储中是否有记住的账号
@@ -254,68 +252,5 @@
       }
     }
   </script>
-<!--
-  <script>
-   const loginModal = document.getElementById('loginModal');
-    const overlay = document.getElementById('overlay');
-    const authArea = document.getElementById('authArea');
-    const errorMessage = document.getElementById('errorMessage');
-
-    // 页面加载时，默认显示登录按钮
-    window.onload = () => {
-        // 在未来，这里可以检查本地存储的 token 来判断用户是否已登录
-        showLoginModal(); // 为方便测试，页面加载就显示弹窗
-    };
-
-    function showLoginModal() {
-        loginModal.style.display = 'block';
-        overlay.style.display = 'block';
-    }
-
-    function hideLoginModal() {
-        loginModal.style.display = 'none';
-        overlay.style.display = 'none';
-        errorMessage.textContent = ''; // 关闭时清空错误信息
-    }
-    
-    // 点击遮罩层也可以关闭弹窗
-    overlay.onclick = hideLoginModal;
-
-    async function handleLogin() {
-      const account = document.getElementById('loginAccount').value.trim();
-      const password = document.getElementById('loginPassword').value.trim();
-      errorMessage.textContent = ''; // 清空之前的错误信息
-
-      if (!account || !password) {
-        errorMessage.textContent = '请输入账号和密码';
-        return;
-      }
-
-      try {
-        const res = await fetch('http://localhost:3000/api/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ account, password })
-        });
-        const data = await res.json();
-
-        if (res.ok && data.user) {
-          // 登录成功
-          hideLoginModal();
-          authArea.innerHTML = `
-            <div class="user-info">
-              <span>欢迎, ${data.user.account}</span>
-              <img src="${data.user.avatar}" alt="avatar" />
-            </div>`;
-        } else {
-          // 登录失败，显示后端返回的消息
-          errorMessage.textContent = data.message;
-        }
-      } catch (error) {
-        errorMessage.textContent = '登录请求失败，请检查网络或联系管理员。';
-      }
-    }
-  </script>
--->
 </body>
 </html>
