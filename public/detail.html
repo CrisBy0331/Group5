@@ -15,9 +15,17 @@
         }
 
         @keyframes priceFlash {
-            0% { background-color: #fef3c7; }
-            50% { background-color: #fbbf24; }
-            100% { background-color: transparent; }
+            0% {
+                background-color: #fef3c7;
+            }
+
+            50% {
+                background-color: #fbbf24;
+            }
+
+            100% {
+                background-color: transparent;
+            }
         }
 
         /* 实时指示器动画 */
@@ -26,8 +34,15 @@
         }
 
         @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.5;
+            }
         }
 
         /* 卡片悬停效果增强 */
@@ -180,32 +195,38 @@
             <section id="holdings-list" class="space-y-4"></section>
 
             <script>
-                // 外部股票API配置
-                // 🔧 配置说明：
-                // 1. Alpha Vantage: 免费注册 https://www.alphavantage.co/support/#api-key
-                // 2. Finnhub: 免费注册 https://finnhub.io/register
-                // 3. Yahoo Finance: 通过CORS代理访问，无需API Key
+                
                 const STOCK_API_CONFIG = {
-                    // Alpha Vantage API (免费，需要注册获取API Key)
+                    // Alpha Vantage API 
                     ALPHA_VANTAGE: {
                         baseUrl: 'https://www.alphavantage.co/query',
                         apiKey: '30860e660a9e49b697b24a9bb38e8a58', // 🔑 您的新API Key
                         function: 'GLOBAL_QUOTE'
                     },
-                    // Finnhub API (免费层级)
+                    // Finnhub API 
                     FINNHUB: {
                         baseUrl: 'https://finnhub.io/api/v1',
-                        apiKey: '30860e660a9e49b697b24a9bb38e8a58', // 🔑 您的新API Key
+                        apiKey: '30860e660a9e49b697b24a9bb38e8a58', 
                         endpoint: '/quote'
                     },
-                    // Yahoo Finance API (通过第三方代理)
+                    // Yahoo Finance API
                     YAHOO_FINANCE: {
                         baseUrl: 'https://query1.finance.yahoo.com/v8/finance/chart',
                         corsProxy: 'https://api.allorigins.win/raw?url='
                     }
                 };
+                const API_CONFIG = {
+                    TWELVE_DATA: {
+                        baseUrl: 'https://api.twelvedata.com',
+                        apiKey: 'ece0e00571854b3fb054f32896a2ae82', 
+                        endpoints: {
+                            price: '/price', // 获取最新价格
+                            timeSeries: '/time_series' // 获取历史时间序列数据
+                        }
+                    }
+                };
 
-                // 用户区域相关函数 (与index.html一致)
+                // 用户区域相关函数
                 function checkLoginStatus() {
                     // 从localStorage获取登录状态
                     const isLoggedIn = localStorage.getItem('isLoggedIn');
@@ -759,10 +780,10 @@
                                         cornerRadius: 6,
                                         displayColors: false,
                                         callbacks: {
-                                            title: function(context) {
+                                            title: function (context) {
                                                 return context[0].label;
                                             },
-                                            label: function(context) {
+                                            label: function (context) {
                                                 return `$${context.parsed.y.toFixed(2)}`;
                                             }
                                         }
@@ -807,44 +828,40 @@
                 }
 
                 // 获取历史价格数据
+                // 获取历史价格数据 (使用 Twelve Data API)
                 async function fetchHistoricalData(ticker) {
                     try {
-                        // 生成模拟的7天历史数据
                         const days = 7;
+                        const twelveDataConfig = API_CONFIG.TWELVE_DATA;
+                        const url = `${twelveDataConfig.baseUrl}${twelveDataConfig.endpoints.timeSeries}?symbol=${ticker}&interval=1day&outputsize=${days}&apikey=${twelveDataConfig.apiKey}`;
+
+                        console.log(`📈 Fetching historical data for ${ticker} from Twelve Data:`, url);
+
+                        const response = await fetch(url);
+                        if (!response.ok) {
+                            console.error(`Twelve Data Historical API error for ${ticker}: ${response.status} - ${response.statusText}`);
+                            throw new Error(`Failed to fetch historical data from Twelve Data for ${ticker}`);
+                        }
+
+                        const data = await response.json();
+
+                        if (data.status === 'error' || !data.values || data.values.length === 0) {
+                            console.warn(`Twelve Data returned no historical data for ${ticker}:`, data.message || 'No values found');
+                            throw new Error(data.message || 'No historical data found');
+                        }
+
                         const labels = [];
                         const prices = [];
-                        const today = new Date();
 
-                        // 获取当前价格作为基准
-                        let basePrice = 100; // 默认基准价格
-                        try {
-                            const currentPriceResponse = await fetch(`${API_CONFIG.TWELVE_DATA.baseUrl}/price?symbol=${ticker}&apikey=${API_CONFIG.TWELVE_DATA.apiKey}`);
-                            if (currentPriceResponse.ok) {
-                                const currentPriceData = await currentPriceResponse.json();
-                                basePrice = parseFloat(currentPriceData.price) || 100;
-                            }
-                        } catch (error) {
-                            console.warn(`Failed to get current price for ${ticker}, using default`);
+                        // Twelve Data 返回的数据是倒序的 (最新日期在前)，所以需要反转
+                        // 或者直接从后往前遍历，确保图表显示从旧到新的趋势
+                        for (let i = data.values.length - 1; i >= 0; i--) {
+                            const item = data.values[i];
+                            labels.push(new Date(item.datetime).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
+                            prices.push(parseFloat(item.close));
                         }
 
-                        // 生成历史数据点
-                        for (let i = days - 1; i >= 0; i--) {
-                            const date = new Date(today);
-                            date.setDate(date.getDate() - i);
-
-                            // 生成价格变化（模拟真实的价格波动）
-                            const volatility = 0.02; // 2% 日波动率
-                            const randomChange = (Math.random() - 0.5) * 2 * volatility;
-                            const dayPrice = basePrice * (1 + randomChange * (i + 1) / days);
-
-                            labels.push(date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
-                            prices.push(parseFloat(dayPrice.toFixed(2)));
-                        }
-
-                        // 确保最后一个价格是当前价格
-                        prices[prices.length - 1] = basePrice;
-
-                        // 计算趋势
+                        // 计算趋势 (根据第一个和最后一个价格)
                         const firstPrice = prices[0];
                         const lastPrice = prices[prices.length - 1];
                         const trend = lastPrice >= firstPrice ? 'up' : 'down';
@@ -854,12 +871,12 @@
                             prices,
                             trend
                         };
-                    } catch (error) {
-                        console.error(`Error fetching historical data for ${ticker}:`, error);
 
-                        // 返回默认数据
+                    } catch (error) {
+                        console.error(`❌ Error fetching historical data for ${ticker} from Twelve Data:`, error);
+                        // 如果获取失败，返回默认模拟数据作为回退
                         const labels = ['6d ago', '5d ago', '4d ago', '3d ago', '2d ago', '1d ago', 'Today'];
-                        const prices = [100, 102, 98, 105, 103, 107, 105];
+                        const prices = [100, 102, 98, 105, 103, 107, 105]; // 默认模拟数据
                         return {
                             labels,
                             prices,
@@ -1099,7 +1116,7 @@
                 }
 
                 // 页面卸载时清理定时器和图表
-                window.addEventListener('beforeunload', function() {
+                window.addEventListener('beforeunload', function () {
                     if (priceUpdateInterval) {
                         clearInterval(priceUpdateInterval);
                     }
