@@ -1,24 +1,35 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Stock Details</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="js/api.js"></script>
-  <script src="js/trading.js"></script>
+  <!-- <script src="js/api.js"></script>
+  <script src="js/trading.js"></script> -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
   <style>
     /* 价格变化动画 */
     @keyframes priceUp {
-      0% { background-color: rgba(34, 197, 94, 0.1); }
-      100% { background-color: transparent; }
+      0% {
+        background-color: rgba(34, 197, 94, 0.1);
+      }
+
+      100% {
+        background-color: transparent;
+      }
     }
 
     @keyframes priceDown {
-      0% { background-color: rgba(239, 68, 68, 0.1); }
-      100% { background-color: transparent; }
+      0% {
+        background-color: rgba(239, 68, 68, 0.1);
+      }
+
+      100% {
+        background-color: transparent;
+      }
     }
 
     .price-up {
@@ -42,7 +53,7 @@
       left: -100%;
       width: 100%;
       height: 100%;
-      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
       transition: left 0.5s;
     }
 
@@ -57,7 +68,7 @@
 
     .info-card:hover {
       transform: translateY(-2px);
-      box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
     }
 
     /* 加载骨架屏 */
@@ -68,11 +79,17 @@
     }
 
     @keyframes loading {
-      0% { background-position: 200% 0; }
-      100% { background-position: -200% 0; }
+      0% {
+        background-position: 200% 0;
+      }
+
+      100% {
+        background-position: -200% 0;
+      }
     }
   </style>
 </head>
+
 <body class="bg-gradient-to-br from-blue-50 via-white to-blue-100 text-gray-800 min-h-screen">
   <!-- 顶部导航 -->
   <header class="bg-white shadow h-16 px-6 flex justify-between items-center sticky top-0 z-50">
@@ -86,7 +103,8 @@
         <path d="M16 10v8" stroke="#2563eb" stroke-width="2" stroke-linecap="round" />
         <circle cx="16" cy="10" r="2" fill="#2563eb" />
       </svg>
-      <span class="text-2xl font-extrabold text-blue-400 group-hover:text-blue-600 tracking-wide transition leading-none"
+      <span
+        class="text-2xl font-extrabold text-blue-400 group-hover:text-blue-600 tracking-wide transition leading-none"
         style="letter-spacing: 1px;">
         Future Assets
       </span>
@@ -101,9 +119,14 @@
   <!-- 居中搜索框 -->
   <div class="w-full flex mb-8 mt-6">
     <div class="mx-auto w-96 relative">
-      <input id="stockSearchInput" type="text" placeholder="Search stock code or name..." class="w-full px-4 py-2 border border-gray-300 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-blue-200 text-base" autocomplete="off" />
-      <button id="stockSearchBtn" class="absolute right-0 top-0 h-full px-5 bg-blue-500 text-white rounded-r-lg hover:bg-blue-600 transition">Search</button>
-      <ul id="stockSearchSuggest" class="absolute left-0 top-full w-full bg-white border border-gray-200 rounded-b-lg shadow z-10 hidden max-h-60 overflow-y-auto"></ul>
+      <input id="stockSearchInput" type="text" placeholder="Search stock code or name..."
+        class="w-full px-4 py-2 border border-gray-300 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-blue-200 text-base"
+        autocomplete="off" />
+      <button id="stockSearchBtn"
+        class="absolute right-0 top-0 h-full px-5 bg-blue-500 text-white rounded-r-lg hover:bg-blue-600 transition">Search</button>
+      <ul id="stockSearchSuggest"
+        class="absolute left-0 top-full w-full bg-white border border-gray-200 rounded-b-lg shadow z-10 hidden max-h-60 overflow-y-auto">
+      </ul>
     </div>
   </div>
   <script>
@@ -111,7 +134,7 @@
     const btn = document.getElementById('stockSearchBtn');
     const suggest = document.getElementById('stockSearchSuggest');
     let timer = null;
-    input.addEventListener('input', function() {
+    input.addEventListener('input', function () {
       clearTimeout(timer);
       const val = input.value.trim();
       if (!val) {
@@ -142,19 +165,19 @@
       }, 300);
     });
     input.addEventListener('blur', () => setTimeout(() => suggest.classList.add('hidden'), 200));
-    suggest.addEventListener('mousedown', function(e) {
+    suggest.addEventListener('mousedown', function (e) {
       const li = e.target.closest('li[data-symbol]');
       if (li) {
         window.location.href = `stock.html?query=${encodeURIComponent(li.getAttribute('data-symbol'))}`;
       }
     });
-    btn.onclick = function() {
+    btn.onclick = function () {
       const keyword = input.value.trim();
       if (keyword) {
         window.location.href = `stock.html?query=${encodeURIComponent(keyword)}`;
       }
     };
-    input.addEventListener('keydown', function(e) {
+    input.addEventListener('keydown', function (e) {
       if (e.key === 'Enter') {
         btn.click();
       }
@@ -162,35 +185,54 @@
   </script>
   <div class="flex">
     <!-- 左侧导航栏（完全同步index.html结构） -->
-    <aside id="sidebar" class="w-48 bg-white shadow min-h-screen p-3 flex flex-col items-center transition-all duration-300 hidden md:flex fixed top-16 left-0 z-40">
-      <button id="sidebarToggle" class="mb-6 p-2 rounded hover:bg-blue-100 transition self-end" onclick="toggleSidebar()">
-        <svg id="sidebarToggleIcon" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 12H5" /></svg>
+    <aside id="sidebar"
+      class="w-48 bg-white shadow min-h-screen p-3 flex flex-col items-center transition-all duration-300 hidden md:flex fixed top-16 left-0 z-40">
+      <button id="sidebarToggle" class="mb-6 p-2 rounded hover:bg-blue-100 transition self-end"
+        onclick="toggleSidebar()">
+        <svg id="sidebarToggleIcon" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-500" fill="none"
+          viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 12H5" />
+        </svg>
       </button>
       <nav class="space-y-4 flex flex-col items-center w-full mt-20">
         <a href="index.html"
-          class="flex flex-col items-center justify-center px-2 py-2 rounded hover:bg-blue-50 transition text-gray-700 hover:text-blue-500 sidebar-link" data-i18n="dashboard">
-            <svg class="w-6 h-6 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8v-10h-8v10zm0-18v6h8V3h-8z"/></svg>
-            <span class="sidebar-text mt-1 text-center">Dashboard</span>
+          class="flex flex-col items-center justify-center px-2 py-2 rounded hover:bg-blue-50 transition text-gray-700 hover:text-blue-500 sidebar-link"
+          data-i18n="dashboard">
+          <svg class="w-6 h-6 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8v-10h-8v10zm0-18v6h8V3h-8z" />
+          </svg>
+          <span class="sidebar-text mt-1 text-center">Dashboard</span>
         </a>
         <a href="detail.html"
-          class="flex flex-col items-center justify-center px-2 py-2 rounded hover:bg-blue-50 transition text-gray-700 hover:text-blue-500 sidebar-link" data-i18n="allocation">
-            <svg class="w-6 h-6 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 2v10l6 6"/></svg>
-            <span class="sidebar-text mt-1 text-center">Position Details</span>
+          class="flex flex-col items-center justify-center px-2 py-2 rounded hover:bg-blue-50 transition text-gray-700 hover:text-blue-500 sidebar-link"
+          data-i18n="allocation">
+          <svg class="w-6 h-6 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="10" />
+            <path d="M12 2v10l6 6" />
+          </svg>
+          <span class="sidebar-text mt-1 text-center">Position Details</span>
         </a>
         <a href="management.html"
-          class="flex flex-col items-center justify-center px-2 py-2 rounded hover:bg-blue-50 transition text-gray-700 hover:text-blue-500 sidebar-link" data-i18n="positions">
-            <svg class="w-6 h-6 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M16 3v4M8 3v4"/></svg>
-            <span class="sidebar-text mt-1 text-center">Position Management</span>
+          class="flex flex-col items-center justify-center px-2 py-2 rounded hover:bg-blue-50 transition text-gray-700 hover:text-blue-500 sidebar-link"
+          data-i18n="positions">
+          <svg class="w-6 h-6 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <rect x="3" y="7" width="18" height="13" rx="2" />
+            <path d="M16 3v4M8 3v4" />
+          </svg>
+          <span class="sidebar-text mt-1 text-center">Position Management</span>
         </a>
       </nav>
     </aside>
     <main id="mainContent" class="flex-1 p-8 pt-6 md:ml-48 transition-all duration-300">
       <div class="w-full max-w-6xl mx-auto">
         <!-- 股票标题和基本信息 -->
-        <div class="mb-8 bg-gradient-to-r from-white via-blue-50 to-white rounded-3xl shadow-2xl border border-blue-100 overflow-hidden">
+        <div
+          class="mb-8 bg-gradient-to-r from-white via-blue-50 to-white rounded-3xl shadow-2xl border border-blue-100 overflow-hidden">
           <div class="p-8">
             <div class="text-center mb-6">
-              <div class="text-4xl font-extrabold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-blue-700 via-blue-500 to-cyan-500" id="stock-title">Loading...</div>
+              <div
+                class="text-4xl font-extrabold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-blue-700 via-blue-500 to-cyan-500"
+                id="stock-title">Loading...</div>
               <div id="stock-subtitle" class="text-gray-600 text-lg"></div>
             </div>
 
@@ -223,21 +265,34 @@
             <div class="flex items-center justify-between mb-4">
               <h3 id="chart-title" class="text-lg font-semibold text-gray-800 flex items-center">
                 <svg class="w-5 h-5 mr-2 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z">
+                  </path>
                 </svg>
                 1-Day Price Chart
               </h3>
               <div class="flex space-x-1">
-                <button id="chart-1d" class="chart-period-btn px-3 py-1 text-xs bg-blue-500 text-white rounded-md hover:bg-blue-600 transition font-medium active" data-period="1d" data-interval="5min" data-size="78">1D</button>
-                <button id="chart-1w" class="chart-period-btn px-3 py-1 text-xs bg-gray-100 text-gray-600 rounded-md hover:bg-gray-200 transition" data-period="1w" data-interval="1day" data-size="7">1W</button>
-                <button id="chart-1m" class="chart-period-btn px-3 py-1 text-xs bg-gray-100 text-gray-600 rounded-md hover:bg-gray-200 transition" data-period="1m" data-interval="1day" data-size="30">1M</button>
-                <button id="chart-1y" class="chart-period-btn px-3 py-1 text-xs bg-gray-100 text-gray-600 rounded-md hover:bg-gray-200 transition" data-period="1y" data-interval="1week" data-size="52">1Y</button>
+                <button id="chart-1d"
+                  class="chart-period-btn px-3 py-1 text-xs bg-blue-500 text-white rounded-md hover:bg-blue-600 transition font-medium active"
+                  data-period="1d" data-interval="5min" data-size="78">1D</button>
+                <button id="chart-1w"
+                  class="chart-period-btn px-3 py-1 text-xs bg-gray-100 text-gray-600 rounded-md hover:bg-gray-200 transition"
+                  data-period="1w" data-interval="1day" data-size="7">1W</button>
+                <button id="chart-1m"
+                  class="chart-period-btn px-3 py-1 text-xs bg-gray-100 text-gray-600 rounded-md hover:bg-gray-200 transition"
+                  data-period="1m" data-interval="1day" data-size="30">1M</button>
+                <button id="chart-1y"
+                  class="chart-period-btn px-3 py-1 text-xs bg-gray-100 text-gray-600 rounded-md hover:bg-gray-200 transition"
+                  data-period="1y" data-interval="1week" data-size="52">1Y</button>
               </div>
             </div>
-            <div id="stock-chart" class="rounded-xl bg-white p-4 border border-gray-100 shadow-sm" style="height: 380px;">
+            <div id="stock-chart" class="rounded-xl bg-white p-4 border border-gray-100 shadow-sm"
+              style="height: 380px;">
               <div class="w-full h-full flex items-center justify-center text-gray-400">
                 <svg class="animate-spin w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15">
+                  </path>
                 </svg>
                 Loading chart data...
               </div>
@@ -248,24 +303,31 @@
         <!-- 操作按钮区域 -->
         <div class="bg-white rounded-2xl shadow-lg border border-blue-100 p-6">
           <div class="flex items-center justify-center gap-4">
-            <button id="buyBtn" class="btn-hover-effect group relative px-8 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl text-base font-semibold shadow-md hover:shadow-lg transform hover:-translate-y-1 transition-all duration-300 overflow-hidden">
+            <button id="buyBtn"
+              class="btn-hover-effect group relative px-8 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl text-base font-semibold shadow-md hover:shadow-lg transform hover:-translate-y-1 transition-all duration-300 overflow-hidden">
               <span class="relative z-10 flex items-center">
                 <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6">
+                  </path>
                 </svg>
                 BUY
               </span>
-              <div class="absolute inset-0 bg-gradient-to-r from-green-600 to-emerald-700 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></div>
+              <div
+                class="absolute inset-0 bg-gradient-to-r from-green-600 to-emerald-700 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left">
+              </div>
             </button>
 
-            <button id="soldBtn" class="btn-hover-effect group relative px-8 py-3 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-xl text-base font-semibold shadow-md hover:shadow-lg transform hover:-translate-y-1 transition-all duration-300 overflow-hidden hidden">
+            <button id="soldBtn"
+              class="btn-hover-effect group relative px-8 py-3 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-xl text-base font-semibold shadow-md hover:shadow-lg transform hover:-translate-y-1 transition-all duration-300 overflow-hidden hidden">
               <span class="relative z-10 flex items-center">
                 <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"></path>
                 </svg>
                 SOLD
               </span>
-              <div class="absolute inset-0 bg-gradient-to-r from-red-600 to-red-700 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></div>
+              <div
+                class="absolute inset-0 bg-gradient-to-r from-red-600 to-red-700 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left">
+              </div>
             </button>
           </div>
         </div>
@@ -275,7 +337,8 @@
 
   <!-- 买入弹窗 -->
   <div id="buyModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
-    <div class="bg-white rounded-lg shadow-xl max-w-lg w-full mx-4 transform transition-all duration-300 scale-95" id="buyModalContent">
+    <div class="bg-white rounded-lg shadow-xl max-w-lg w-full mx-4 transform transition-all duration-300 scale-95"
+      id="buyModalContent">
       <div class="p-6">
         <div class="flex items-center mb-6">
           <div class="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center mr-3">
@@ -287,17 +350,22 @@
         <div class="space-y-4">
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-2">资产代码</label>
-            <input type="text" id="buyModalTicker" readonly class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-600" />
+            <input type="text" id="buyModalTicker" readonly
+              class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-600" />
           </div>
 
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">资产名称 <span class="text-gray-500 text-sm">(留空自动获取)</span></label>
-            <input type="text" id="buyModalName" placeholder="例如: Apple Inc. (可留空)" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+            <label class="block text-sm font-medium text-gray-700 mb-2">资产名称 <span
+                class="text-gray-500 text-sm">(留空自动获取)</span></label>
+            <input type="text" id="buyModalName" placeholder="例如: Apple Inc. (可留空)"
+              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
           </div>
 
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">资产类型 <span class="text-gray-500 text-sm">(自动检测，除非选择黄金或货币)</span></label>
-            <select id="buyModalType" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+            <label class="block text-sm font-medium text-gray-700 mb-2">资产类型 <span
+                class="text-gray-500 text-sm">(自动检测，除非选择黄金或货币)</span></label>
+            <select id="buyModalType"
+              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
               <option value="auto">自动检测 (Auto-Detect)</option>
               <option value="stock">股票 (Stock)</option>
               <option value="bond">债券 (Bond)</option>
@@ -309,20 +377,25 @@
 
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-2">购买数量</label>
-            <input type="number" id="buyModalQuantity" placeholder="输入数量" min="1" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+            <input type="number" id="buyModalQuantity" placeholder="输入数量" min="1"
+              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
           </div>
 
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">购买价格 <span class="text-gray-500 text-sm">(留空使用当前市价)</span></label>
-            <input type="number" id="buyModalPrice" placeholder="输入价格或留空" step="0.01" min="0" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+            <label class="block text-sm font-medium text-gray-700 mb-2">购买价格 <span
+                class="text-gray-500 text-sm">(留空使用当前市价)</span></label>
+            <input type="number" id="buyModalPrice" placeholder="输入价格或留空" step="0.01" min="0"
+              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
           </div>
         </div>
 
         <div class="flex justify-end space-x-3 mt-8">
-          <button onclick="closeBuyModal()" class="bg-gray-300 hover:bg-gray-400 text-gray-700 px-6 py-2 rounded-lg font-medium transition duration-200">
+          <button onclick="closeBuyModal()"
+            class="bg-gray-300 hover:bg-gray-400 text-gray-700 px-6 py-2 rounded-lg font-medium transition duration-200">
             取消
           </button>
-          <button onclick="confirmBuy()" class="bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded-lg font-medium transition duration-200">
+          <button onclick="confirmBuy()"
+            class="bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded-lg font-medium transition duration-200">
             确认买入
           </button>
         </div>
@@ -332,7 +405,8 @@
 
   <!-- 卖出弹窗 -->
   <div id="sellModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
-    <div class="bg-white rounded-lg shadow-xl max-w-lg w-full mx-4 transform transition-all duration-300 scale-95" id="sellModalContent">
+    <div class="bg-white rounded-lg shadow-xl max-w-lg w-full mx-4 transform transition-all duration-300 scale-95"
+      id="sellModalContent">
       <div class="p-6">
         <div class="flex items-center mb-6">
           <div class="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center mr-3">
@@ -349,21 +423,26 @@
 
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-2">卖出数量</label>
-            <input type="number" id="sellModalQuantity" placeholder="输入数量" min="1" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+            <input type="number" id="sellModalQuantity" placeholder="输入数量" min="1"
+              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
             <p id="sellModalMaxQuantity" class="text-sm text-gray-500 mt-1"></p>
           </div>
 
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">卖出价格 <span class="text-gray-500 text-sm">(留空使用当前市价)</span></label>
-            <input type="number" id="sellModalPrice" placeholder="输入价格或留空" step="0.01" min="0" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+            <label class="block text-sm font-medium text-gray-700 mb-2">卖出价格 <span
+                class="text-gray-500 text-sm">(留空使用当前市价)</span></label>
+            <input type="number" id="sellModalPrice" placeholder="输入价格或留空" step="0.01" min="0"
+              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
           </div>
         </div>
 
         <div class="flex justify-end space-x-3 mt-8">
-          <button onclick="closeSellModal()" class="bg-gray-300 hover:bg-gray-400 text-gray-700 px-6 py-2 rounded-lg font-medium transition duration-200">
+          <button onclick="closeSellModal()"
+            class="bg-gray-300 hover:bg-gray-400 text-gray-700 px-6 py-2 rounded-lg font-medium transition duration-200">
             取消
           </button>
-          <button onclick="confirmSell()" class="bg-red-500 hover:bg-red-600 text-white px-6 py-2 rounded-lg font-medium transition duration-200">
+          <button onclick="confirmSell()"
+            class="bg-red-500 hover:bg-red-600 text-white px-6 py-2 rounded-lg font-medium transition duration-200">
             确认卖出
           </button>
         </div>
@@ -620,10 +699,10 @@
               cornerRadius: 8,
               displayColors: false,
               callbacks: {
-                title: function(context) {
+                title: function (context) {
                   return context[0].label;
                 },
-                label: function(context) {
+                label: function (context) {
                   return 'Price: $' + context.parsed.y.toFixed(2);
                 }
               }
@@ -655,7 +734,7 @@
                 font: {
                   size: 11
                 },
-                callback: function(value) {
+                callback: function (value) {
                   return '$' + value.toFixed(2);
                 }
               }
@@ -703,12 +782,12 @@
       }
     }
 
-    document.addEventListener('DOMContentLoaded', async function() {
+    document.addEventListener('DOMContentLoaded', async function () {
       checkLoginStatus();
 
       // 添加时间段按钮事件监听器
       document.querySelectorAll('.chart-period-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
+        btn.addEventListener('click', function () {
           const period = this.dataset.period;
           const interval = this.dataset.interval;
           const size = parseInt(this.dataset.size);
@@ -794,13 +873,13 @@
         document.getElementById('soldBtn').classList.toggle('hidden', !bought);
       }
     }
-    document.getElementById('buyBtn').onclick = function() {
+    document.getElementById('buyBtn').onclick = function () {
       const symbol = window.currentSymbol;
       if (!symbol) return;
       showBuyModal(symbol);
     };
 
-    document.getElementById('soldBtn').onclick = async function() {
+    document.getElementById('soldBtn').onclick = async function () {
       const symbol = window.currentSymbol;
       if (!symbol) return;
 
@@ -962,20 +1041,20 @@
     }
 
     // 点击弹窗外部关闭弹窗
-    document.getElementById('buyModal').onclick = function(e) {
+    document.getElementById('buyModal').onclick = function (e) {
       if (e.target === this) {
         closeBuyModal();
       }
     };
 
-    document.getElementById('sellModal').onclick = function(e) {
+    document.getElementById('sellModal').onclick = function (e) {
       if (e.target === this) {
         closeSellModal();
       }
     };
 
     // 键盘事件处理
-    document.addEventListener('keydown', function(e) {
+    document.addEventListener('keydown', function (e) {
       if (e.key === 'Enter') {
         if (!document.getElementById('buyModal').classList.contains('hidden')) {
           confirmBuy();
@@ -1073,35 +1152,35 @@
         document.getElementById('stock-meta').innerHTML = `<span class="text-red-500 col-span-full text-center">Quote API Error: ${errorMsg}</span>`;
         console.error('Quote API Error:', quoteData);
       } else {
-          // 更新价格显示区域
-          const currentPrice = parseFloat(quoteData.price || 0);
-          const change = parseFloat(quoteData.change || 0);
-          const changePercent = parseFloat(quoteData.percent_change || 0);
+        // 更新价格显示区域
+        const currentPrice = parseFloat(quoteData.price || 0);
+        const change = parseFloat(quoteData.change || 0);
+        const changePercent = parseFloat(quoteData.percent_change || 0);
 
-          const priceElement = document.getElementById('current-price');
-          const oldPrice = parseFloat(priceElement.textContent.replace('$', '')) || 0;
-          priceElement.textContent = `$${currentPrice.toFixed(2)}`;
+        const priceElement = document.getElementById('current-price');
+        const oldPrice = parseFloat(priceElement.textContent.replace('$', '')) || 0;
+        priceElement.textContent = `$${currentPrice.toFixed(2)}`;
 
-          // 添加价格变化动画
-          if (oldPrice !== 0 && oldPrice !== currentPrice) {
-            priceElement.classList.remove('price-up', 'price-down');
-            if (currentPrice > oldPrice) {
-              priceElement.classList.add('price-up');
-            } else {
-              priceElement.classList.add('price-down');
-            }
+        // 添加价格变化动画
+        if (oldPrice !== 0 && oldPrice !== currentPrice) {
+          priceElement.classList.remove('price-up', 'price-down');
+          if (currentPrice > oldPrice) {
+            priceElement.classList.add('price-up');
+          } else {
+            priceElement.classList.add('price-down');
           }
+        }
 
-          const changeColor = change >= 0 ? 'text-green-600' : 'text-red-600';
-          const changeSign = change >= 0 ? '+' : '';
-          document.getElementById('price-change').className = `text-2xl font-semibold ${changeColor}`;
-          document.getElementById('price-change').textContent = `${changeSign}$${change.toFixed(2)}`;
+        const changeColor = change >= 0 ? 'text-green-600' : 'text-red-600';
+        const changeSign = change >= 0 ? '+' : '';
+        document.getElementById('price-change').className = `text-2xl font-semibold ${changeColor}`;
+        document.getElementById('price-change').textContent = `${changeSign}$${change.toFixed(2)}`;
 
-          document.getElementById('price-change-percent').className = `text-2xl font-semibold ${changeColor}`;
-          document.getElementById('price-change-percent').textContent = `${changeSign}${changePercent.toFixed(2)}%`;
+        document.getElementById('price-change-percent').className = `text-2xl font-semibold ${changeColor}`;
+        document.getElementById('price-change-percent').textContent = `${changeSign}${changePercent.toFixed(2)}%`;
 
-          // 更新详细信息网格
-          document.getElementById('stock-meta').innerHTML = `
+        // 更新详细信息网格
+        document.getElementById('stock-meta').innerHTML = `
             <div class='info-card bg-white/90 rounded-lg shadow-sm p-3 border border-blue-50'>
               <div class='text-xs text-gray-500 uppercase tracking-wide mb-1'>Exchange</div>
               <div class='font-semibold text-gray-800 text-sm'>${quoteData.exchange || '-'}</div>
@@ -1135,7 +1214,7 @@
               <div class='font-semibold text-gray-800 text-sm'>${quoteData.average_volume ? parseInt(quoteData.average_volume).toLocaleString() : '-'}</div>
             </div>
           `;
-        }
+      }
       // 3. 加载默认图表数据 (1天)
       const activeBtn = document.querySelector('.chart-period-btn.active') || document.querySelector('[data-period="1d"]');
       const interval = activeBtn ? activeBtn.dataset.interval : '5min';
@@ -1168,8 +1247,472 @@
         document.getElementById('sidebarToggleIcon').innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 12H5" />';
       }
     }
+
+    // API配置和工具函数
+    const API_CONFIG = {
+      BASE_URL: 'http://localhost:3000', // 后端服务器地址
+      ENDPOINTS: {
+        // 用户相关
+        USERS: '/api/users',
+        USER_BY_ID: (userId) => `/api/users/${userId}`,
+
+        // 持仓相关
+        HOLDINGS: (userId) => `/api/holdings/${userId}`,
+        HOLDING_BY_ID: (userId, recordId) => `/api/holdings/${userId}/${recordId}`,
+        BUY: (userId) => `/api/holdings/${userId}/buy`,
+        SELL: (userId) => `/api/holdings/${userId}/sell`,
+
+        // 股票数据
+        STOCK_PRICE: (ticker) => `/api/stock/price/${ticker}`,
+        STOCK_QUOTE: (ticker) => `/api/stock/quote/${ticker}`,
+
+        // 缓存管理
+        CACHE_REFRESH: (ticker) => `/api/cache/refresh/${ticker}`,
+        CACHE_STATUS: '/api/cache/status'
+      }
+    };
+
+    // API请求工具函数
+    class APIClient {
+      constructor() {
+        this.baseURL = API_CONFIG.BASE_URL;
+      }
+
+      // 通用请求方法
+      async request(endpoint, options = {}) {
+        const url = `${this.baseURL}${endpoint}`;
+        const config = {
+          headers: {
+            'Content-Type': 'application/json',
+            ...options.headers
+          },
+          ...options
+        };
+
+        console.log('API请求:', {
+          url,
+          method: config.method || 'GET',
+          body: config.body
+        });
+
+        try {
+          const response = await fetch(url, config);
+          console.log('API响应状态:', response.status, response.statusText);
+
+          let data;
+          try {
+            data = await response.json();
+            console.log('API响应数据:', data);
+          } catch (parseError) {
+            console.error('JSON解析错误:', parseError);
+            throw new Error('服务器返回了无效的JSON数据');
+          }
+
+          if (!response.ok) {
+            const errorMessage = data.message || data.error || `HTTP error! status: ${response.status}`;
+            console.error('API错误:', errorMessage);
+            throw new Error(errorMessage);
+          }
+
+          return data;
+        } catch (error) {
+          console.error('API Request Error:', error);
+
+          // 网络错误的特殊处理
+          if (error.name === 'TypeError' && error.message.includes('fetch')) {
+            throw new Error('无法连接到服务器，请检查后端是否启动 (http://localhost:3000)');
+          }
+
+          throw error;
+        }
+      }
+
+      // GET请求
+      async get(endpoint) {
+        return this.request(endpoint, { method: 'GET' });
+      }
+
+      // POST请求
+      async post(endpoint, data) {
+        return this.request(endpoint, {
+          method: 'POST',
+          body: JSON.stringify(data)
+        });
+      }
+
+      // PUT请求
+      async put(endpoint, data) {
+        return this.request(endpoint, {
+          method: 'PUT',
+          body: JSON.stringify(data)
+        });
+      }
+
+      // DELETE请求
+      async delete(endpoint) {
+        return this.request(endpoint, { method: 'DELETE' });
+      }
+    }
+
+    // 创建全局API客户端实例
+    const apiClient = new APIClient();
+
+    // 用户API
+    const UserAPI = {
+      // 获取所有用户
+      async getAllUsers() {
+        return apiClient.get(API_CONFIG.ENDPOINTS.USERS);
+      },
+
+      // 获取特定用户
+      async getUserById(userId) {
+        return apiClient.get(API_CONFIG.ENDPOINTS.USER_BY_ID(userId));
+      },
+
+      // 创建用户
+      async createUser(userId, userData) {
+        return apiClient.post(API_CONFIG.ENDPOINTS.USER_BY_ID(userId), userData);
+      },
+
+      // 更新用户
+      async updateUser(userId, userData) {
+        return apiClient.put(API_CONFIG.ENDPOINTS.USER_BY_ID(userId), userData);
+      },
+
+      // 删除用户
+      async deleteUser(userId) {
+        return apiClient.delete(API_CONFIG.ENDPOINTS.USER_BY_ID(userId));
+      }
+    };
+
+    // 持仓API
+    const HoldingsAPI = {
+      // 获取用户持仓
+      async getUserHoldings(userId) {
+        return apiClient.get(API_CONFIG.ENDPOINTS.HOLDINGS(userId));
+      },
+
+      // 添加持仓
+      async addHolding(userId, holdingData) {
+        return apiClient.post(API_CONFIG.ENDPOINTS.HOLDINGS(userId), holdingData);
+      },
+
+      // 更新持仓
+      async updateHolding(userId, recordId, holdingData) {
+        return apiClient.put(API_CONFIG.ENDPOINTS.HOLDING_BY_ID(userId, recordId), holdingData);
+      },
+
+      // 删除持仓
+      async deleteHolding(userId, recordId) {
+        return apiClient.delete(API_CONFIG.ENDPOINTS.HOLDING_BY_ID(userId, recordId));
+      },
+
+      // 买入操作
+      async buyStock(userId, buyData) {
+        return apiClient.post(API_CONFIG.ENDPOINTS.BUY(userId), buyData);
+      },
+
+      // 卖出操作
+      async sellStock(userId, sellData) {
+        return apiClient.post(API_CONFIG.ENDPOINTS.SELL(userId), sellData);
+      }
+    };
+
+    // 股票数据API
+    const StockAPI = {
+      // 获取股票价格
+      async getStockPrice(ticker) {
+        return apiClient.get(API_CONFIG.ENDPOINTS.STOCK_PRICE(ticker));
+      },
+
+      // 获取股票报价
+      async getStockQuote(ticker) {
+        return apiClient.get(API_CONFIG.ENDPOINTS.STOCK_QUOTE(ticker));
+      }
+    };
+
+    // 缓存API
+    const CacheAPI = {
+      // 刷新缓存
+      async refreshCache(ticker) {
+        return apiClient.post(API_CONFIG.ENDPOINTS.CACHE_REFRESH(ticker));
+      },
+
+      // 获取缓存状态
+      async getCacheStatus() {
+        return apiClient.get(API_CONFIG.ENDPOINTS.CACHE_STATUS);
+      }
+    };
+
+    // 导出API对象
+    window.UserAPI = UserAPI;
+    window.HoldingsAPI = HoldingsAPI;
+    window.StockAPI = StockAPI;
+    window.CacheAPI = CacheAPI;
+    window.apiClient = apiClient;
+
+    // 交易操作相关函数
+
+    // 买入股票
+    async function buyStock(ticker, quantity, price = null, type = null, name = null) {
+      try {
+        console.log('开始买入操作:', { ticker, quantity, price, type, name });
+
+        const userId = getCurrentUserId();
+        if (!userId) {
+          throw new Error('请先登录');
+        }
+        console.log('用户ID:', userId);
+
+        // 准备买入数据
+        const buyData = {
+          ticker: ticker.toUpperCase(),
+          quantity: parseFloat(quantity)
+        };
+
+        // 可选参数
+        if (price !== null && price !== '') {
+          buyData.price = parseFloat(price);
+        }
+        if (type) {
+          buyData.type = type;
+        }
+        if (name) {
+          buyData.name = name;
+        }
+
+        console.log('买入数据:', buyData);
+
+        // 显示加载状态
+        showLoadingMessage('正在处理买入订单...');
+
+        // 调用买入API
+        console.log('调用API: /api/holdings/' + userId + '/buy');
+        const result = await HoldingsAPI.buyStock(userId, buyData);
+        console.log('API返回结果:', result);
+
+        // 显示成功消息
+        showSuccessMessage(`买入成功！${result.message || '操作完成'}`);
+
+        // 返回结果以便进一步处理
+        return result;
+
+      } catch (error) {
+        console.error('Buy stock error:', error);
+        console.error('Error details:', {
+          message: error.message,
+          stack: error.stack,
+          name: error.name
+        });
+
+        // 更详细的错误信息
+        let errorMessage = '买入失败';
+        if (error.message.includes('fetch')) {
+          errorMessage += ': 无法连接到服务器，请检查后端是否启动';
+        } else if (error.message.includes('CORS')) {
+          errorMessage += ': 跨域请求被阻止';
+        } else if (error.message.includes('404')) {
+          errorMessage += ': API接口不存在';
+        } else if (error.message.includes('500')) {
+          errorMessage += ': 服务器内部错误';
+        } else {
+          errorMessage += ': ' + error.message;
+        }
+
+        showErrorMessage(errorMessage);
+        throw error;
+      }
+    }
+
+    // 卖出股票
+    async function sellStock(ticker, quantity, price = null) {
+      try {
+        const userId = getCurrentUserId();
+        if (!userId) {
+          throw new Error('请先登录');
+        }
+
+        // 准备卖出数据
+        const sellData = {
+          ticker: ticker.toUpperCase(),
+          quantity: parseFloat(quantity)
+        };
+
+        // 可选价格
+        if (price !== null && price !== '') {
+          sellData.price = parseFloat(price);
+        }
+
+        // 显示加载状态
+        showLoadingMessage('正在处理卖出订单...');
+
+        // 调用卖出API
+        const result = await HoldingsAPI.sellStock(userId, sellData);
+
+        // 显示成功消息
+        showSuccessMessage(`卖出成功！${result.message}`);
+
+        // 返回结果以便进一步处理
+        return result;
+
+      } catch (error) {
+        console.error('Sell stock error:', error);
+        showErrorMessage(`卖出失败: ${error.message}`);
+        throw error;
+      }
+    }
+
+    // 获取股票当前价格
+    async function getCurrentStockPrice(ticker) {
+      try {
+        const priceData = await StockAPI.getStockPrice(ticker);
+        return parseFloat(priceData.price);
+      } catch (error) {
+        console.error('Get price error:', error);
+        throw new Error(`无法获取 ${ticker} 的当前价格`);
+      }
+    }
+
+    // 获取股票详细信息
+    async function getStockInfo(ticker) {
+      try {
+        const quoteData = await StockAPI.getStockQuote(ticker);
+        return {
+          name: quoteData.name,
+          price: parseFloat(quoteData.close || quoteData.price),
+          change: quoteData.change,
+          changePercent: quoteData.percent_change
+        };
+      } catch (error) {
+        console.error('Get stock info error:', error);
+        throw new Error(`无法获取 ${ticker} 的详细信息`);
+      }
+    }
+
+    // 验证交易输入
+    function validateTradeInput(ticker, quantity, price = null) {
+      const errors = [];
+
+      // 验证股票代码
+      if (!ticker || ticker.trim() === '') {
+        errors.push('请输入股票代码');
+      }
+
+      // 验证数量
+      if (!quantity || isNaN(quantity) || parseFloat(quantity) <= 0) {
+        errors.push('请输入有效的数量（大于0）');
+      }
+
+      // 验证价格（如果提供）
+      if (price !== null && price !== '' && (isNaN(price) || parseFloat(price) <= 0)) {
+        errors.push('请输入有效的价格（大于0）');
+      }
+
+      return errors;
+    }
+
+    // 显示消息的工具函数
+    function showLoadingMessage(message) {
+      // 可以显示一个加载模态框或通知
+      console.log('Loading:', message);
+      // 实现具体的UI显示逻辑
+    }
+
+    function showSuccessMessage(message) {
+      // 显示成功通知
+      console.log('Success:', message);
+      alert(message); // 简单实现，可以替换为更好的UI
+    }
+
+    function showErrorMessage(message) {
+      // 显示错误通知
+      console.error('Error:', message);
+      alert(message); // 简单实现，可以替换为更好的UI
+    }
+
+    // 获取当前用户ID
+    function getCurrentUserId() {
+      return localStorage.getItem('currentUserId') || '1';
+    }
+
+    // 交易表单处理示例
+    function setupTradingForm() {
+      // 买入表单处理
+      const buyForm = document.getElementById('buyForm');
+      if (buyForm) {
+        buyForm.addEventListener('submit', async (e) => {
+          e.preventDefault();
+
+          const ticker = document.getElementById('buyTicker').value;
+          const quantity = document.getElementById('buyQuantity').value;
+          const price = document.getElementById('buyPrice').value;
+
+          // 验证输入
+          const errors = validateTradeInput(ticker, quantity, price);
+          if (errors.length > 0) {
+            showErrorMessage(errors.join('\n'));
+            return;
+          }
+
+          try {
+            const result = await buyStock(ticker, quantity, price);
+            // 清空表单
+            buyForm.reset();
+            // 刷新持仓数据
+            if (typeof loadPortfolioData === 'function') {
+              loadPortfolioData();
+            }
+          } catch (error) {
+            // 错误已在buyStock函数中处理
+          }
+        });
+      }
+
+      // 卖出表单处理
+      const sellForm = document.getElementById('sellForm');
+      if (sellForm) {
+        sellForm.addEventListener('submit', async (e) => {
+          e.preventDefault();
+
+          const ticker = document.getElementById('sellTicker').value;
+          const quantity = document.getElementById('sellQuantity').value;
+          const price = document.getElementById('sellPrice').value;
+
+          // 验证输入
+          const errors = validateTradeInput(ticker, quantity, price);
+          if (errors.length > 0) {
+            showErrorMessage(errors.join('\n'));
+            return;
+          }
+
+          try {
+            const result = await sellStock(ticker, quantity, price);
+            // 清空表单
+            sellForm.reset();
+            // 刷新持仓数据
+            if (typeof loadPortfolioData === 'function') {
+              loadPortfolioData();
+            }
+          } catch (error) {
+            // 错误已在sellStock函数中处理
+          }
+        });
+      }
+    }
+
+    // 页面加载时设置表单
+    document.addEventListener('DOMContentLoaded', setupTradingForm);
+
+    // 导出函数供全局使用
+    window.buyStock = buyStock;
+    window.sellStock = sellStock;
+    window.getCurrentStockPrice = getCurrentStockPrice;
+    window.getStockInfo = getStockInfo;
+    window.validateTradeInput = validateTradeInput;
+
+
     // 页面加载后初始化一次，防止刷新后状态不同步
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', function () {
       const sidebar = document.getElementById('sidebar');
       const texts = sidebar.querySelectorAll('.sidebar-text');
       if (sidebarCollapsed) {
@@ -1180,4 +1723,5 @@
     });
   </script>
 </body>
-</html> 
+
+</html>
